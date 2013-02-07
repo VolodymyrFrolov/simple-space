@@ -12,6 +12,7 @@
 #include <iostream>
 #include <math.h>
 using std::pair;
+using std::string;
 
 #define CONST_G 6.67385e-11
 
@@ -45,9 +46,9 @@ namespace phys {
     {
     public:
         // Constructor
-        Body(string name = "Unnamed Body",
-             Position<T> pos = {0,0},
-             Velocity<T> vel = {0,0});
+        Body(Position<T> pos,
+             Velocity<T> vel,
+             string name = "unnamed");
         
         // Public interface
         string getName() const;
@@ -63,9 +64,9 @@ namespace phys {
     
     // Constructor
     template <class T>
-    Body<T>::Body(string name,
-                  Position<T> pos,
-                  Velocity<T> vel) : _name(name), _pos(pos), _vel(vel) {}
+    Body<T>::Body(Position<T> pos,
+                  Velocity<T> vel,
+                  string name) : _name(name), _pos(pos), _vel(vel) {}
     
     // Public interface
     template <class T>
