@@ -15,211 +15,163 @@ using std::pair;
 using std::string;
 
 #define CONST_G 6.67385e-11
+#define DevByZero -1
 
 namespace phys {
-    
+
+
     // Position, Velocity and Acceleration structures
-    template <class T>
     struct Position
     {
-        T x;
-        T y;
+        Position(double coord_x = 0,
+                 double coord_y = 0) : x(coord_x), y(coord_y) {}
+        double x;
+        double y;
     };
     
-    template <class T>
     struct Velocity
     {
-        T x;
-        T y;
+        Velocity(double vel_x = 0,
+                 double vel_y = 0) : x(vel_x), y(vel_y) {}
+        double x;
+        double y;
     };
     
-    template <class T>
     struct Acceleration
     {
-        T x;
-        T y;
+        Acceleration(double accel_x = 0,
+                     double accel_y = 0) : x(accel_x), y(accel_y) {}
+        double x;
+        double y;
     };
-    
+    // Position, Velocity and Acceleration structures end
+
+
     // Body class
-    template <class T>
     class Body
     {
     public:
         // Constructor
-        Body(Position<T> pos,
-             Velocity<T> vel,
-             string name = "unnamed");
+        Body(string name = "unnamed",
+             Position pos = Position(),
+             Velocity vel = Velocity()) : _name(name), _pos(pos), _vel(vel) {};
         
-        // Public interface
-        string getName() const;
-        Position<T> getPos() const;
-        Velocity<T> getVel() const;
+        // Getters
+        const string& Name() const { return _name; }
+        const Position& Pos() const { return _pos; }
+        const Velocity& Vel() const { return _vel; }
 
     protected:
-        // Private members
+        // Private members for derived classes
         string _name;
-        Position<T> _pos;
-        Velocity<T> _vel;
-    };
-    
-    // Constructor
-    template <class T>
-    Body<T>::Body(Position<T> pos,
-                  Velocity<T> vel,
-                  string name) : _name(name), _pos(pos), _vel(vel) {}
-    
-    // Public interface
-    template <class T>
-    string Body<T>::getName() const
-    {
-        return _name;
-    }
-    
-    template <class T>
-    Position<T> Body<T>::getPos() const
-    {
-        return _pos;
-    }
-    
-    template <class T>
-    Velocity<T> Body<T>::getVel() const
-    {
-        return _vel;
-    }
-    
+        Position _pos;
+        Velocity _vel;
+    }; // Body class end
+
     
     // Angle conversions: Deg->Rad & Rad->Deg
-    template <class T>
-    T DegToRad(const T& Deg)
+    double DegToRad(const double& Deg)
     {
-        return ( Deg * T(M_PI) ) / T(180);
+        return ( Deg * double(M_PI) ) / double(180);
     }
     
-    template <class T>
-    T RadToDeg(const T& Rad)
+    double RadToDeg(const double& Rad)
     {
-        return (Rad * 180) / T(M_PI);
+        return (Rad * 180) / double(M_PI);
     }
     
     
     // Hypotenoose: c = sqrt( a^2 + b^2 )
-    template <class T>
-    T getHypotenuse(const T& a, const T& b)
+    double Hypotenuse(const double& a, const double& b)
     {
         return sqrt( (a*a) + (b*b) );
     }
-
-    // Input: coordinates of two points (x0,y0; x1,y1)
-    // Return: Distance and Angle (returned by pair)
-    template <class T>
-    pair<T,T> DistAngleFromPos(const T& x0, const T& y0, const T& x1, const T& y1)
+    
+    
+    // Distance by two points: x0,y0 and x1,y1
+    double DistFromPos(const double& x0, const double& y0, const double& x1, const double& y1)
     {
-        // Pair of return values:
-        // .first = Distance; .second = Angle;
-        pair<T,T> ret;
+        double tmpX = x1 - x0;
+        double tmpY = y1 - y0;
+        return Hypotenuse( tmpX, tmpY );
+    }
+
+
+    // Distance by two points: pos1, pos2
+    double DistFromPos(const Position& pos0, const Position& pos1)
+    {
+        return DistFromPos( pos0.x, pos0.y, pos1.x, pos1.y );
+    }
+
+
+    // Angle (in Radians) of line by two points: (x0,y0), (x1,y1)
+    double AngleFromPos(const double& x0, const double& y0, const double& x1, const double& y1)
+    {
+        double tmpX = x1 - x0;
+        double tmpY = y1 - y0;
         
-        T tmpX = x1 - x0;
-        T tmpY = y1 - y0;
+        // Case of same position
+        if ( (tmpX == 0) && (tmpY == 0) )
+            return 0;
         
-        // Distance
-        ret.first = sqrt( (tmpX * tmpX) + (tmpY * tmpY) );
-        
-        // Angle
         if (tmpX < 0)
         {
-            ret.second = ( T(M_PI) + atan(tmpY/tmpX) );
+            return ( double(M_PI) + atan(tmpY/tmpX) );
         }
         else
         {
-            if (tmpY > 0)
-                ret.second = ( atan(tmpY/tmpX) );
+            if (tmpY < 0)
+                return (2 * double(M_PI) + atan(tmpY/tmpX));
             else
-                ret.second = (2 * T(M_PI) + atan(tmpY/tmpX));
+                return ( atan(tmpY/tmpX) );
         }
-        
+    }
+    
+    // Angle (in Radians) of line by two points: pos1, pos2
+    double AngleFromPos(const Position& pos0, const Position& pos1)
+    {
+        return AngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y );
+    }
+
+
+    // Input: coordinates of two points (x0,y0; x1,y1)
+    // Return: Distance and Angle (returned by pair)
+    pair<double, double> DistAngleFromPos(const double& x0, const double& y0, const double& x1, const double& y1)
+    {
+        // Pair of return values:
+        // .first = Distance; .second = Angle;
+        pair<double,double> ret;
+
+        // Distance
+        ret.first = DistFromPos( x0, y0, x1, y1 );
+
+        // Angle
+        ret.second = AngleFromPos( x0, y0, x1, y1 );
+
         return ret;
     }
     
     
     // Input: coordinates of points (pos0, pos1)
     // Return: Distance and Angle (returned by pair)
-    template <class T>
-    pair<T,T> DistAngleFromPos(const Position<T>& pos0, const Position<T>& pos1)
+    pair<double, double> DistAngleFromPos(const Position& pos0, const Position& pos1)
     {
-        // Pair of return values:
-        // .first = Distance; .second = Angle;
-        pair<T,T> ret;
-        
-        T tmpX = pos1.x - pos0.x;
-        T tmpY = pos1.y - pos0.y;
-        
-        // Distance
-        ret.first = sqrt( (tmpX * tmpX) + (tmpY * tmpY) );
-        
-        // Angle
-        if (tmpX < 0)
-        {
-            ret.second = ( T(M_PI) + atan(tmpY/tmpX) );
-        }
-        else
-        {
-            if (tmpY > 0)
-                ret.second = ( atan(tmpY/tmpX) );
-            else
-                ret.second = (2 * T(M_PI) + atan(tmpY/tmpX));
-        }
-        
-        return ret;
+        return DistAngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y );
     }
 
 
-    // Functionality included by DistAngleFromPos()
-#if (0)
-    // Distance using x0,y0 and x1,y1
-    template <class T>
-    T DistFromPos(const T& x0, const T& y0, const T& x1, const T& y1)
-    {
-        T tmpX = x1 - x0;
-        T tmpY = y1 - y0;
-        return sqrt( (tmpX * tmpX) + (tmpY * tmpY) );
-    }
-#endif
-
-
-    // Functionality included by DistAngleFromPos()
-#if (0)
-    // Angle (in Radians) of line defined by two points: (x0,y0), (x1,y1)
-    template <class T>
-    T AngleFromPos(const T& x0, const T& y0, const T& x1, const T& y1)
-    {
-        T tmpX = x1 - x0;
-        T tmpY = y1 - y0;
-        if (tmpX < 0)
-        {
-            return ( T(M_PI) + atan(tmpY/tmpX) );
-        }
-        else
-        {
-            if (tmpY > 0)
-                return ( atan(tmpY/tmpX) );
-            else
-                return (2 * T(M_PI) + atan(tmpY/tmpX));
-        }
-    }
-#endif
-    
-    
     // G-force
-    template <class T>
-    T getGravAcc(const T& massKg, const T& distRM)
+    double getGravAcc(const double& massKg, const double& distM)
     {
-        return ( ( T(CONST_G) * massKg) / (distRM * distRM) );
+        if (distM == 0)
+            throw (DevByZero);
+
+        return ( ( double(CONST_G) * massKg) / (distM * distM) );
     }
     
     
     // Movement with constant acceleration
-    template <class T>
-    void moveOneStep(Position<T>& pos, Velocity<T>& vel, const Acceleration<T>& acc, const T& time)
+    void moveOneStep(Position& pos, Velocity& vel, const Acceleration& acc, const double& time)
     {
         // x = x0 + v0 * t + [(a * t^2) / 2]
         pos.x = pos.x + vel.x * time + (acc.x * time * time) / 2.0;
@@ -229,6 +181,7 @@ namespace phys {
         vel.x = vel.x + acc.x * time;
         vel.y = vel.y + acc.y * time;
     }
-}
+
+} // namespace phys
 
 #endif
