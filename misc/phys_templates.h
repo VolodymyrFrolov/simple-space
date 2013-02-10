@@ -28,7 +28,7 @@ namespace phys_templates {
         T x;
         T y;
     };
-    
+
     template <class T>
     struct Velocity
     {
@@ -36,7 +36,7 @@ namespace phys_templates {
         T x;
         T y;
     };
-    
+
     template <class T>
     struct Acceleration
     {
