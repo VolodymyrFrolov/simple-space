@@ -14,9 +14,7 @@
 using std::string;
 
 #include "physics.h"
-using physics::Position;
-using physics::Velocity;
-using physics::Force;
+using physics::Vector;
 
 // Earth
 #define EARTH_MASS_KG 5.9722e24
@@ -30,29 +28,28 @@ using physics::Force;
 #define SUN_MASS_KG 1.9891e30
 #define SUN_RAD_M   6.955e8
 
-
 enum PlanetName {
     EARTH,
     MOON,
     SUN
 };
 
-
 class Planet : public physics::Body {
 public:
     // Constructor
-    Planet(string Name = "Earth",
-           double MassKg = EARTH_MASS_KG,
-           double RadM = EARTH_RAD_M,
-           Position Pos = Position(),
-           Velocity Vel = Velocity()) : Body(Name, Pos, Vel), massKg(MassKg), radM(RadM), newPos(Pos) {}
+    Planet(string Name,
+           double MassKg,
+           double RadM,
+           Vector Pos,
+           Vector Vel) : Body(Name, Pos, Vel), massKg(MassKg), radM(RadM), newPos(Pos) {}
 
     // Mass and Radius
     double massKg;
     double radM;
 
-    // Newly calculated position
-    Position newPos;
+    // temp Position for gravity calculations
+    Vector newPos;
+    // TODO: make private members
 };
 
 #endif /* defined(__simple_space__planet__) */

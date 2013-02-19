@@ -18,37 +18,12 @@ using std::string;
 #define DevByZero -1
 
 namespace physics {
-
-
-    // Position, Velocity and Acceleration structures
-    struct Position
+   
+    // Vector structure
+    struct Vector
     {
-        Position(double coord_x = 0,
-                 double coord_y = 0) : x(coord_x), y(coord_y) {}
-        double x;
-        double y;
-    };
-
-    struct Velocity
-    {
-        Velocity(double vel_x = 0,
-                 double vel_y = 0) : x(vel_x), y(vel_y) {}
-        double x;
-        double y;
-    };
-
-    struct Force
-    {
-        Force(double force_x = 0,
-              double force_y = 0) : x(force_x), y(force_y) {}
-        double x;
-        double y;
-    };
-
-    struct Acceleration
-    {
-        Acceleration(double accel_x = 0,
-                     double accel_y = 0) : x(accel_x), y(accel_y) {}
+        Vector( double new_x = 0,
+                double new_y = 0) : x(new_x), y(new_y) {}
         double x;
         double y;
     };
@@ -59,38 +34,37 @@ namespace physics {
     {
     public:
         // Constructor
-        Body(string Name = "unnamed",
-             Position Pos = Position(),
-             Velocity Vel = Velocity()) : name(Name), pos(Pos), vel(Vel) {};
+        Body(string Name,
+             Vector Pos,
+             Vector Vel) : name(Name), pos(Pos), vel(Vel) {};
 
         string name;
-        Position pos;
-        Velocity vel;
+        Vector pos;
+        Vector vel;
     };
 
-    // Angle conversions: Deg->Rad & Rad->Deg
     double DegToRad(const double& Deg);
     double RadToDeg(const double& Rad);
-
-    // Hypotenoose: c = sqrt( a^2 + b^2 )
     double Hypotenuse(const double& a, const double& b);
+    
+    void RotateVector(Vector& vec, const double& angle);
+    void TranslateVector(Vector& vec, const double& dx, const double& dy);
 
     // Distance by two points: x0,y0 and x1,y1
-    double DistFromPos(const double& x0, const double& y0, const double& x1, const double& y1);
     // Distance by two points: pos1, pos2
-    double DistFromPos(const Position& pos0, const Position& pos1);
+    double DistFromPos(const double& x0, const double& y0, const double& x1, const double& y1);
+    double DistFromPos(const Vector& pos0, const Vector& pos1);
 
-    // Angle (in Radians) of line by two points: (x0,y0), (x1,y1)
+    // Angle [0 - 2*Pi] (Rad) of line by two points: (x0,y0), (x1,y1)
+    // Angle [0 - 2*Pi] (Rad) of line by two points: pos1, pos2
     double AngleFromPos(const double& x0, const double& y0, const double& x1, const double& y1);
-    // Angle (in Radians) of line by two points: pos1, pos2
-    double AngleFromPos(const Position& pos0, const Position& pos1);
+    double AngleFromPos(const Vector& pos0, const Vector& pos1);
 
     // Input: coordinates of two points (x0,y0; x1,y1)
-    // Return: Distance and Angle (returned by pair)
-    pair<double, double> DistAngleFromPos(const double& x0, const double& y0, const double& x1, const double& y1);
     // Input: coordinates of points (pos0, pos1)
     // Return: Distance and Angle (returned by pair)
-    pair<double, double> DistAngleFromPos(const Position& pos0, const Position& pos1);
+    pair<double, double> DistAngleFromPos(const double& x0, const double& y0, const double& x1, const double& y1);
+    pair<double, double> DistAngleFromPos(const Vector& pos0, const Vector& pos1);
 
     // Gravity acceleration, m/s^2
     double GravAcc(const double& massKg, const double& distM);
@@ -98,7 +72,7 @@ namespace physics {
     double GravForce(const double& mass1Kg, const double& mass2Kg, const double& distM);
 
     // Movement with constant acceleration
-    void MoveWithConstAcc(Position& pos, Velocity& vel, const Acceleration& acc, const double& time);
+    void MoveWithConstAcc(Vector& pos, Vector& vel, const Vector& acc, const double& time);
 
 } // namespace physics
 

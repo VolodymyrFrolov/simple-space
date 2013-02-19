@@ -1,21 +1,19 @@
-CC=g++
-CFLAGS=-c -Wall
-LDFLAGS=
-
-SOURCES=src/main.cpp src/simplespace.h src/simplespace.cpp src/planet.h src/planet.cpp src/physics.h src/physics.cpp
+CC = g++
+CFLAGS = -c -Wall -Iinc
+LDFLAGS = -framework GLUT -framework OpenGL
 TARGET=simple-space
 
 all: $(TARGET)
 
 $(TARGET): main.o simplespace.o planet.o physics.o
-	$(CC) main.o simplespace.o planet.o physics.o -o simple-space
+	$(CC) $(LDFLAGS) main.o physics.o simplespace.o planet.o -o simple-space
 
 main.o: src/main.cpp
 	$(CC) $(CFLAGS) src/main.cpp
 
 simplespace.o: src/simplespace.cpp
 	$(CC) $(CFLAGS) src/simplespace.cpp
-
+	
 planet.o: src/planet.cpp
 	$(CC) $(CFLAGS) src/planet.cpp
 
