@@ -1,4 +1,4 @@
 simple-space
 ============
 
-Simple space with simulator with planets and satellites
+Simple space simulator with planets and satellites
