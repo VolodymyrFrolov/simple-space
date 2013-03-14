@@ -10,8 +10,15 @@
 using std::cout;
 using std::endl;
 
-#include <OpenGL/OpenGL.h>
-#include <GLUT/glut.h>
+#ifdef __APPLE__
+    #include <OpenGL/OpenGL.h>
+    #include <GLUT/glut.h>
+#elif __linux__
+  //#include <GL/glut.h>
+    #include <GL/freeglut.h>
+#else
+    // Unsupproted platform
+#endif
 
 #include <stdlib.h> // For rand()
 #include <time.h>   // For time()
