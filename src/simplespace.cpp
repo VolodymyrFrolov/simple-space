@@ -40,11 +40,11 @@ void SimpleSpace::MoveOneStep()
     // Collision detection and resolving
     for (list<Planet>::iterator it_A = PlanetList.begin(), it_A_end = PlanetList.end(); it_A != it_A_end; ++it_A)
     {
-        for (list<Planet>::iterator it_B = PlanetList.begin()++, it_B_end = PlanetList.end(); it_B != it_B_end; ++it_B)
+        for (list<Planet>::iterator it_B = ++PlanetList.begin(), it_B_end = PlanetList.end(); it_B != it_B_end; ++it_B)
         {
             if (it_A == it_B)
                 continue;
-            
+
             double DistAB = physics::DistFromPos(it_A->pos, it_B->pos);
 
             // Resolving here
@@ -56,6 +56,7 @@ void SimpleSpace::MoveOneStep()
                 double angle_AB = physics::AngleFromPos(it_A->pos, it_B->pos);
 
                 // 1. Pull the bodies apart as they are overlapping (correlating with their masses)
+                // from m1*s1 = m2*s2 and s = s1+s2 we get s1 = s*m2/(m1+m2); s2 = s*m1/(m1+m2)
                 double pullDist = (it_A->radM + it_B->radM) - DistAB;
                 double pullDistA = (pullDist * it_B->massKg) / (it_A->massKg + it_B->massKg);
                 double pullDistB = (pullDist * it_A->massKg) / (it_A->massKg + it_B->massKg);
@@ -97,9 +98,9 @@ void SimpleSpace::MoveOneStep()
                 // vbf = ((e+1)*ma*(vai)n – (vbi)n*(ma – e*mb))/(ma + mb)
                 // Get velocities after collision (in NT coordinates)
                 Vector U1, U2;
-                U1.x = ( (1+E_COEF)*it_B->massKg*V2.x + V1.x * (it_A->massKg - E_COEF*it_B->massKg)) / (it_A->massKg + it_B->massKg);
+                U1.x = ((1+E_COEF)*it_B->massKg*V2.x + V1.x*(it_A->massKg - E_COEF*it_B->massKg)) / (it_A->massKg + it_B->massKg);
                 U1.y = V1.y;
-                U2.x = ( (1+E_COEF)*it_A->massKg*V1.x - V2.x * (it_A->massKg - E_COEF*it_B->massKg)) / (it_A->massKg + it_B->massKg);
+                U2.x = ((1+E_COEF)*it_A->massKg*V1.x - V2.x*(it_A->massKg - E_COEF*it_B->massKg)) / (it_A->massKg + it_B->massKg);
                 U2.y = V2.y;
 
                 // Move velocities back to XY coordinate system from NT
