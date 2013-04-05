@@ -52,13 +52,13 @@ namespace physics {
         if ( (relX == 0) && (relY == 0) )
             return 0;
 
-        // Angle calculation usung atan2() [New]
+        // Angle calculation usung atan2(): algo #1
         double ret = atan2(relY, relX); // atan2(Y,X) is correct
         if (ret < 0)
             ret += 2*M_PI;
         return ret;
 
-        // Angle calculation usung atan() [Old]
+        // Angle calculation usung atan(): algo #2
         /*
         if (relX < 0) {
             return (double(M_PI) + atan(relY/relX));
@@ -105,7 +105,7 @@ namespace physics {
     }
 
     // Gravity force, N [Not currently used]
-    inline double GravForce(const double& mass1Kg, const double& mass2Kg, const double& distM)
+    double GravForce(const double& mass1Kg, const double& mass2Kg, const double& distM)
     {
         return (double(CONST_G) * mass1Kg * mass2Kg) / (distM * distM);
     }
