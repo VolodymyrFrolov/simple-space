@@ -65,9 +65,8 @@ void initRendering()
 
 void update(int value)
 {
-    
-    for (int i=0; i<animation_accel; ++i) {
-        pSimpleSpace->MoveOneStep();
+    for (int i = 0; i < animation_accel; ++i) {
+        pSimpleSpace->move_one_step();
     }
     
     glutPostRedisplay(); //Tell GLUT that the display has changed
@@ -95,7 +94,8 @@ void drawScene()
     
     double coef = 200000;
     
-    for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(), it_end = pSimpleSpace->planets.end(); it != it_end; ++it)
+    for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
+         it_end = pSimpleSpace->planets.end(); it != it_end; ++it)
     {
         DrawFilledCircle(it->radM/coef, 20, it->pos.x/coef, it->pos.y/coef);
     }
@@ -165,9 +165,9 @@ int main(int argc, char * argv[])
 
     // SimpleSpace testing begin
     double dist = 4e7;
-    pSimpleSpace->addPlanet(Planet("P1", EARTH_MASS_KG   , EARTH_RAD_M, phys_vector(0, 0), phys_vector(0,0)));
-    pSimpleSpace->addPlanet(Planet("P2", EARTH_MASS_KG/5 , EARTH_RAD_M/2, phys_vector(dist,dist), phys_vector(-1000,-500)));
-    pSimpleSpace->addPlanet(Planet("P3", EARTH_MASS_KG*2 , EARTH_RAD_M*1.5, phys_vector(-dist,-dist), phys_vector(200,1000)));
+    pSimpleSpace->add_planet(Planet("P1", EARTH_MASS_KG   , EARTH_RAD_M, phys_vector(0, 0), phys_vector(0,0)));
+    pSimpleSpace->add_planet(Planet("P2", EARTH_MASS_KG/5 , EARTH_RAD_M/2, phys_vector(dist,dist), phys_vector(-1000,-500)));
+    pSimpleSpace->add_planet(Planet("P3", EARTH_MASS_KG*2 , EARTH_RAD_M*1.5, phys_vector(-dist,-dist), phys_vector(200,1000)));
 
     glutInit(&argc, argv);
     

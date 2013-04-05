@@ -21,8 +21,7 @@ using std::vector;
 using physics::phys_vector;
 
 #define ENABLE_GRAVITY 1    // Gravity: 1-on; 0-off
-#define E_COEF 1            // Coefficient of restitution [0-1] 1-absolute elastic
-
+#define E_COEF         1    // Coefficient of restitution [0-1] 1-absolute elastic
 #define ENABLE_BORDERS 1    // Borders: 1-on; 0-off
 #define LEFT_BORDER   -5e7
 #define RIGHT_BORDER   5e7
@@ -34,12 +33,12 @@ class SimpleSpace
 public:
     SimpleSpace();
 
-    void addPlanet(const Planet& newPlanet);
-    void MoveOneStep();
+    void add_planet(const Planet& newPlanet);
+    void move_one_step();
     vector<Planet> planets;
     // TODO: make private members
 private:
-    int _timeStepMs;
+    int _time_step_ms;
 };
 
 #endif /* defined(__simple_space__simplespace__) */
