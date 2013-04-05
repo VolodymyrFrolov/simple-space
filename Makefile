@@ -21,13 +21,13 @@ $(TARGET): $(OBJECTS)
 main.o: src/main.cpp
 	$(CC) $(CFLAGS) src/main.cpp
 
-simplespace.o: src/simplespace.cpp
+simplespace.o: src/simplespace.cpp inc/simplespace.h
 	$(CC) $(CFLAGS) src/simplespace.cpp
 	
-planet.o: src/planet.cpp
+planet.o: src/planet.cpp inc/planet.h
 	$(CC) $(CFLAGS) src/planet.cpp
 
-physics.o: src/physics.cpp
+physics.o: src/physics.cpp inc/physics.h
 	$(CC) $(CFLAGS) src/physics.cpp
 
 clean:

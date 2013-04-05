@@ -1,0 +1,6 @@
+# Git ignore file (also check ~/.gitignore_global)
+.gitignore
+
+# XCode project files and folder
+*.xcodeproj
+*.xcodeproj/*
