@@ -14,14 +14,14 @@ namespace physics {
     inline double RadToDeg(const double& Rad) { return (Rad * 180) / double(M_PI); }
     inline double Hypotenuse(const double& a, const double& b) { return sqrt((a*a) + (b*b)); }
 
-    void RotateVector(Vector& vec, const double& angle)
+    void RotateVector(phys_vector& vec, const double& angle)
     {
-        Vector temp( vec.x * cos(angle) - vec.y * sin(angle),    // x` = x * cos(fi) - y * sin(fi)
-                     vec.x * sin(angle) + vec.y * cos(angle));   // x` = x * sin(fi) + y * cos(fi)
+        phys_vector temp(vec.x * cos(angle) - vec.y * sin(angle),    // x` = x * cos(fi) - y * sin(fi)
+                         vec.x * sin(angle) + vec.y * cos(angle));   // x` = x * sin(fi) + y * cos(fi)
         vec = temp;
     }
     
-    void TranslateVector(Vector& vec, const double& dx, const double& dy)
+    void TranslateVector(phys_vector& vec, const double& dx, const double& dy)
     {
         vec.x += dx;
         vec.y += dy;
@@ -36,7 +36,7 @@ namespace physics {
     }
 
     // Distance by two points: pos1, pos2
-    double DistFromPos(const Vector& pos0, const Vector& pos1)
+    double DistFromPos(const phys_vector& pos0, const phys_vector& pos1)
     {
         return DistFromPos( pos0.x, pos0.y, pos1.x, pos1.y );
     }
@@ -45,28 +45,34 @@ namespace physics {
     // Angle [0 - 2*Pi] (Rad) of line by two points: (x0,y0), (x1,y1)
     double AngleFromPos(const double& x0, const double& y0, const double& x1, const double& y1)
     {
-        double tmpX = x1 - x0;
-        double tmpY = y1 - y0;
+        double relX = x1 - x0;
+        double relY = y1 - y0;
 
         // Case of same position
-        if ( (tmpX == 0) && (tmpY == 0) )
+        if ( (relX == 0) && (relY == 0) )
             return 0;
 
-        if (tmpX < 0)
-        {
-            return ( double(M_PI) + atan(tmpY/tmpX) );
-        }
-        else
-        {
-            if (tmpY < 0)
-                return (2 * double(M_PI) + atan(tmpY/tmpX));
+        // Angle calculation usung atan2() [New]
+        double ret = atan2(relY, relX); // atan2(Y,X) is correct
+        if (ret < 0)
+            ret += 2*M_PI;
+        return ret;
+
+        // Angle calculation usung atan() [Old]
+        /*
+        if (relX < 0) {
+            return (double(M_PI) + atan(relY/relX));
+        } else {
+            if (relY < 0)
+                return (2 * double(M_PI) + atan(relY/relX));
             else
-                return ( atan(tmpY/tmpX) );
+                return atan(relY/relX);
         }
+        */
     }
 
     // Angle [0 - 2*Pi] (Rad) of line by two points: pos1, pos2
-    double AngleFromPos(const Vector& pos0, const Vector& pos1) { return AngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y ); }
+    double AngleFromPos(const phys_vector& pos0, const phys_vector& pos1) { return AngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y ); }
 
     // Input: coordinates of two points (x0,y0; x1,y1)
     // Return: Distance and Angle (returned by pair)
@@ -87,7 +93,7 @@ namespace physics {
 
     // Input: coordinates of points (pos0, pos1)
     // Return: Distance and Angle (returned by pair)
-    pair<double, double> DistAngleFromPos(const Vector& pos0, const Vector& pos1) { return DistAngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y ); }
+    pair<double, double> DistAngleFromPos(const phys_vector& pos0, const phys_vector& pos1) { return DistAngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y ); }
 
     // Gravity acceleration, m/s^2
     double GravAcc(const double& massKg, const double& distM)
@@ -105,7 +111,7 @@ namespace physics {
     }
 
     // Movement with constant acceleration
-    void MoveWithConstAcc(Vector& pos, Vector& vel, const Vector& acc, const double& time)
+    void MoveWithConstAcc(phys_vector& pos, phys_vector& vel, const phys_vector& acc, const double& time)
     {
         // x = x0 + v0 * t + [(a * t^2) / 2]
         pos.x = pos.x + vel.x * time + (acc.x * time * time) / 2.0;

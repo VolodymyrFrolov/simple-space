@@ -9,6 +9,8 @@
 #include <iostream>
 using std::cout;
 using std::endl;
+#include <vector>
+using std::vector;
 
 #ifdef __APPLE__
     #include <OpenGL/OpenGL.h>
@@ -93,7 +95,7 @@ void drawScene()
     
     double coef = 200000;
     
-    for (list<Planet>::iterator it = pSimpleSpace->PlanetList.begin(), it_end = pSimpleSpace->PlanetList.end(); it != it_end; ++it)
+    for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(), it_end = pSimpleSpace->planets.end(); it != it_end; ++it)
     {
         DrawFilledCircle(it->radM/coef, 20, it->pos.x/coef, it->pos.y/coef);
     }
@@ -163,9 +165,9 @@ int main(int argc, char * argv[])
 
     // SimpleSpace testing begin
     double dist = 4e7;
-    pSimpleSpace->addPlanet(Planet("P1", EARTH_MASS_KG   , EARTH_RAD_M, Vector(0, 0), Vector(0,0)));
-    pSimpleSpace->addPlanet(Planet("P2", EARTH_MASS_KG/5 , EARTH_RAD_M/2, Vector(dist,dist), Vector(-1000,-500)));
-    pSimpleSpace->addPlanet(Planet("P3", EARTH_MASS_KG*2 , EARTH_RAD_M*1.5, Vector(-dist,-dist), Vector(200,1000)));
+    pSimpleSpace->addPlanet(Planet("P1", EARTH_MASS_KG   , EARTH_RAD_M, phys_vector(0, 0), phys_vector(0,0)));
+    pSimpleSpace->addPlanet(Planet("P2", EARTH_MASS_KG/5 , EARTH_RAD_M/2, phys_vector(dist,dist), phys_vector(-1000,-500)));
+    pSimpleSpace->addPlanet(Planet("P3", EARTH_MASS_KG*2 , EARTH_RAD_M*1.5, phys_vector(-dist,-dist), phys_vector(200,1000)));
 
     glutInit(&argc, argv);
     

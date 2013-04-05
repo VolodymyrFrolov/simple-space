@@ -10,14 +10,15 @@
 #define __simple_space__simplespace__
 
 #include <iostream>
-#include <list>
-using std::list;
-using std::cout;  // temp
-using std::endl; // temp
+#include <vector>
 #include <stdlib.h> // For rand()
+using std::cout;   // temp
+using std::endl;   // temp
+using std::vector;
 
 #include "physics.h"
 #include "planet.h"
+using physics::phys_vector;
 
 #define ENABLE_GRAVITY 1    // Gravity: 1-on; 0-off
 #define E_COEF 1            // Coefficient of restitution [0-1] 1-absolute elastic
@@ -33,10 +34,9 @@ class SimpleSpace
 public:
     SimpleSpace();
 
-    void ShowLogs(); //temp
     void addPlanet(const Planet& newPlanet);
     void MoveOneStep();
-    list<Planet> PlanetList;
+    vector<Planet> planets;
     // TODO: make private members
 private:
     int _timeStepMs;

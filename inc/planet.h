@@ -14,7 +14,7 @@
 using std::string;
 
 #include "physics.h"
-using physics::Vector;
+using physics::phys_vector;
 
 // Earth
 #define EARTH_MASS_KG 5.9722e24
@@ -40,15 +40,15 @@ public:
     Planet(string Name,
            double MassKg,
            double RadM,
-           Vector Pos,
-           Vector Vel) : Body(Name, Pos, Vel), massKg(MassKg), radM(RadM), newPos(Pos) {}
+           phys_vector Pos,
+           phys_vector Vel) : Body(Name, Pos, Vel), massKg(MassKg), radM(RadM), newPos(Pos) {}
 
     // Mass and Radius
     double massKg;
     double radM;
 
     // temp Position for gravity calculations
-    Vector newPos;
+    phys_vector newPos;
     // TODO: make private members
 };
 

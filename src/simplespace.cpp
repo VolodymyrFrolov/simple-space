@@ -10,24 +10,13 @@
 
 SimpleSpace::SimpleSpace() : _timeStepMs(100) {}
 
-// temp
-void SimpleSpace::ShowLogs()
-{
-    if (PlanetList.size() == 0) {
-        cout << "ShowLogs: No planets" << endl;
-    } else {
-        for (list<Planet>::const_iterator it = PlanetList.begin(), it_end = PlanetList.end(); it != it_end; ++it)
-        cout << it->name << " X:" << it->pos.x << " Y:" << it->pos.y << endl;
-    }
-}
-
 void SimpleSpace::MoveOneStep()
 {
-    if (PlanetList.size() == 0)
+    if (planets.size() == 0)
         cout << "MoveOneStep: no planets" << endl;
     
 #if (ENABLE_BORDERS > 0)
-    for (list<Planet>::iterator it = PlanetList.begin(), it_end = PlanetList.end(); it != it_end; ++it)
+    for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it)
     {
         if ( ((it->pos.x+it->radM)<LEFT_BORDER) || ((it->pos.x+it->radM)>RIGHT_BORDER) )
             it->vel.x = -it->vel.x;
@@ -38,9 +27,9 @@ void SimpleSpace::MoveOneStep()
 #endif
     
     // Collision detection and resolving
-    for (list<Planet>::iterator it_A = PlanetList.begin(), it_A_end = PlanetList.end(); it_A != it_A_end; ++it_A)
+    for (vector<Planet>::iterator it_A = planets.begin(), it_A_end = planets.end(); it_A != it_A_end; ++it_A)
     {
-        for (list<Planet>::iterator it_B = ++PlanetList.begin(), it_B_end = PlanetList.end(); it_B != it_B_end; ++it_B)
+        for (vector<Planet>::iterator it_B = ++planets.begin(), it_B_end = planets.end(); it_B != it_B_end; ++it_B)
         {
             if (it_A == it_B)
                 continue;
@@ -63,8 +52,8 @@ void SimpleSpace::MoveOneStep()
                 cout << "MoveOneStep: Collision!!! Overlaped: " << pullDist << endl;
 
                 // Translate and rotate vectors to NT
-                physics::Vector AB = it_B->pos;
-                physics::Vector BA = it_A->pos;
+                physics::phys_vector AB = it_B->pos;
+                physics::phys_vector BA = it_A->pos;
                 physics::TranslateVector(AB, -it_A->pos.x, -it_A->pos.y);
                 physics::TranslateVector(BA, -it_B->pos.x, -it_B->pos.y);
                 physics::RotateVector(AB, -angle_AB);
@@ -88,8 +77,8 @@ void SimpleSpace::MoveOneStep()
                 // V1, V2 - velocities of body1,2 before impact
                 // U1, U2 - velocities of body1,2 after impact
                 // Move velocities to NT coordinate system
-                physics::Vector V1 = it_A->vel;
-                physics::Vector V2 = it_B->vel;
+                physics::phys_vector V1 = it_A->vel;
+                physics::phys_vector V2 = it_B->vel;
                 physics::RotateVector(V1, -angle_AB);
                 physics::RotateVector(V2, -angle_AB);
 
@@ -97,7 +86,7 @@ void SimpleSpace::MoveOneStep()
                 // vaf = ((e+1)*mb*(vbi)n + (vai)n*(ma – e*mb))/(ma + mb)
                 // vbf = ((e+1)*ma*(vai)n – (vbi)n*(ma – e*mb))/(ma + mb)
                 // Get velocities after collision (in NT coordinates)
-                Vector U1, U2;
+                phys_vector U1, U2;
                 U1.x = ((1+E_COEF)*it_B->massKg*V2.x + V1.x*(it_A->massKg - E_COEF*it_B->massKg)) / (it_A->massKg + it_B->massKg);
                 U1.y = V1.y;
                 U2.x = ((1+E_COEF)*it_A->massKg*V1.x - V2.x*(it_A->massKg - E_COEF*it_B->massKg)) / (it_A->massKg + it_B->massKg);
@@ -115,12 +104,12 @@ void SimpleSpace::MoveOneStep()
     // Calculate new positions for planets
     // TODO: implement gravity forces calculation only for all combinations of planet pairs
     // to reduce calculations
-    for (list<Planet>::iterator it_A = PlanetList.begin(), it_A_end = PlanetList.end(); it_A != it_A_end; ++it_A)
+    for (vector<Planet>::iterator it_A = planets.begin(), it_A_end = planets.end(); it_A != it_A_end; ++it_A)
     {
         // Calculate acceleration
-        physics::Vector acc_curr;
+        physics::phys_vector acc_curr;
 #if (ENABLE_GRAVITY > 0)
-        for (list<Planet>::const_iterator it_B = PlanetList.begin(), it_B_end = PlanetList.end(); it_B != it_B_end; ++it_B)
+        for (vector<Planet>::const_iterator it_B = planets.begin(), it_B_end = planets.end(); it_B != it_B_end; ++it_B)
         {
             if (it_A != it_B)
             {
@@ -139,13 +128,13 @@ void SimpleSpace::MoveOneStep()
     }
 
     // Set all planets to new positions
-    for (list<Planet>::iterator it = PlanetList.begin(), it_end = PlanetList.end(); it != it_end; ++it) {
+    for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
         it->pos = it->newPos;
     }
 }
 
 void SimpleSpace::addPlanet(const Planet& newPlanet)
 {
-    PlanetList.push_back(newPlanet);
+    planets.push_back(newPlanet);
     // TODO: Check if new added planet overlaps with existing
 }
