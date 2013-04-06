@@ -95,10 +95,18 @@ void drawScene()
     double coef = 200000;
     
     for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
-         it_end = pSimpleSpace->planets.end(); it != it_end; ++it)
-    {
+         it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
         DrawFilledCircle(it->radM/coef, 20, it->pos.x/coef, it->pos.y/coef);
     }
+
+#if (ENABLE_BORDERS > 0)
+    glBegin(GL_LINE_LOOP);
+    glVertex2d(RIGHT_BORDER/coef, TOP_BORDER/coef);
+    glVertex2d(LEFT_BORDER/coef, TOP_BORDER/coef);
+    glVertex2d(LEFT_BORDER/coef, BOTTOM_BORDER/coef);
+    glVertex2d(RIGHT_BORDER/coef, BOTTOM_BORDER/coef);
+    glEnd();
+#endif
     
     glutSwapBuffers();
 }
@@ -124,6 +132,9 @@ void handleKeypress(unsigned char key, int x, int y)
 {
 	switch (key) {
 		case 27: //Escape key
+            delete pSimpleSpace;
+            pSimpleSpace = NULL;
+            cout << "Simple-Space: exiting by exit(0)" << endl;
 			exit(0);
 	}
 }
@@ -162,7 +173,6 @@ int main(int argc, char * argv[])
     // Seed for random values
     //srand ( (unsigned int)(time(NULL)) );
 
-
     // SimpleSpace testing begin
     double dist = 4e7;
     pSimpleSpace->add_planet(Planet("P1", EARTH_MASS_KG   , EARTH_RAD_M, phys_vector(0, 0), phys_vector(0,0)));
@@ -172,7 +182,7 @@ int main(int argc, char * argv[])
     glutInit(&argc, argv);
     
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-	glutInitWindowSize(640, 480);
+	glutInitWindowSize(1024, 600);
 	
 	glutCreateWindow("My test");
 	initRendering();

@@ -10,19 +10,16 @@
 
 SimpleSpace::SimpleSpace() : _time_step_ms(100) {}
 
-void SimpleSpace::move_one_step()
-{
+void SimpleSpace::move_one_step() {
     // Debug logs
     if (planets.size() == 0)
         cout << "MoveOneStep: no planets" << endl;
     
 #if (ENABLE_BORDERS > 0)
-    for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it)
-    {
-        if ( ((it->pos.x+it->radM)<LEFT_BORDER) || ((it->pos.x+it->radM)>RIGHT_BORDER) )
+    for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
+        if (((it->pos.x - it->radM) < LEFT_BORDER) || ((it->pos.x + it->radM) > RIGHT_BORDER))
             it->vel.x = -it->vel.x;
-
-        if ( ((it->pos.y+it->radM)>TOP_BORDER) || ((it->pos.y+it->radM)<BOTTOM_BORDER) )
+        if (((it->pos.y + it->radM) > TOP_BORDER)  || ((it->pos.y - it->radM) < BOTTOM_BORDER))
             it->vel.y = -it->vel.y;
     }
 #endif

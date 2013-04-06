@@ -23,8 +23,8 @@ using physics::phys_vector;
 #define ENABLE_GRAVITY 1    // Gravity: 1-on; 0-off
 #define E_COEF         1  // Coefficient of restitution [0-1] 1-absolute elastic
 #define ENABLE_BORDERS 1    // Borders: 1-on; 0-off
-#define LEFT_BORDER   -5e7
-#define RIGHT_BORDER   5e7
+#define LEFT_BORDER   -8e7
+#define RIGHT_BORDER   8e7
 #define TOP_BORDER     5e7
 #define BOTTOM_BORDER -5e7
 
