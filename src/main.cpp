@@ -115,14 +115,14 @@ void drawScene()
     }
 
 
-#   if (ENABLE_BORDERS > 0)
+    #if (ENABLE_BORDERS > 0)
     glBegin(GL_LINE_LOOP);
-    glVertex2d(RIGHT_BORDER/model_scale, TOP_BORDER/model_scale);
-    glVertex2d(LEFT_BORDER/model_scale, TOP_BORDER/model_scale);
-    glVertex2d(LEFT_BORDER/model_scale, BOTTOM_BORDER/model_scale);
-    glVertex2d(RIGHT_BORDER/model_scale, BOTTOM_BORDER/model_scale);
+    glVertex2d(RIGHT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
+    glVertex2d(LEFT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
+    glVertex2d(LEFT_BORDER/double(model_scale), BOTTOM_BORDER/double(model_scale));
+    glVertex2d(RIGHT_BORDER/double(model_scale), BOTTOM_BORDER/double(model_scale));
     glEnd();
-#   endif
+    #endif
 
     glutSwapBuffers();
 }
@@ -213,8 +213,8 @@ void handleMouse(int button, int state, int x, int y) {
         cout << "Drag X=" << mouse_moved_x << " Y=" << mouse_moved_y << endl;
 
         pSimpleSpace->add_planet(Planet("New Planet",
-                                        EARTH_MASS_KG/2,
-                                        EARTH_RAD_M/2,
+                                        1e29,
+                                        2e6,
                                         phys_vector(model_x, model_y),
                                         phys_vector(mouse_moved_x * model_scale, mouse_moved_y * model_scale)));
         cout << " objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
@@ -262,8 +262,11 @@ int main(int argc, char * argv[])
 
     // SimpleSpace testing begin
     double dist = 4e7;
-    pSimpleSpace->add_planet(Planet("P2", EARTH_MASS_KG, EARTH_RAD_M, phys_vector(0, 0), phys_vector(0, 0)));
-    pSimpleSpace->add_planet(Planet("P1", EARTH_MASS_KG/1e3, EARTH_RAD_M/10, phys_vector(dist/4, 0), phys_vector(0,-8e3)));
+    pSimpleSpace->add_planet(Planet("P1", 1e30, 3e6, phys_vector(0, 0), phys_vector(0, 0)));
+    pSimpleSpace->add_planet(Planet("P2", 1e15, 1e6, phys_vector(dist/4,   0), phys_vector(0,  -2e6)));
+    pSimpleSpace->add_planet(Planet("P2", 1e15, 1e6, phys_vector(-dist/4,  0), phys_vector(0,   2e6)));
+    pSimpleSpace->add_planet(Planet("P4", 1e15, 1e6, phys_vector(0, dist/1.5), phys_vector(-1.5e6, 0)));
+    pSimpleSpace->add_planet(Planet("P4", 1e15, 1e6, phys_vector(0, -dist/1.5), phys_vector(1.5e6, 0)));
 
     glutInit(&argc, argv);
 

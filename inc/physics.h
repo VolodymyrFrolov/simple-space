@@ -14,8 +14,7 @@
 using std::pair;
 using std::string;
 
-//#define CONST_G 6.67385e-11  // Real physical constant
-#define CONST_G 1e-3       // Increased constant for model to run faster
+#define CONST_G 6.67385e-11
 #define DevByZero -1
 
 namespace physics {

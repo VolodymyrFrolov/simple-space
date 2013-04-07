@@ -119,23 +119,27 @@ void SimpleSpace::move_one_step() {
     #if (ENABLE_BORDERS > 0)
     for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
         if ((it->pos.x + it->radM) > RIGHT_BORDER) {
-            it->pos.x = RIGHT_BORDER - (it->radM);
-            it->vel.x = -it->vel.x * 0.75;
+            it->pos.x = RIGHT_BORDER - it->radM;
+            if (it->vel.x > 0)
+                it->vel.x = -it->vel.x * COEF_RES;
             //cout << "RIGHT_BORDER detected!" << endl;
         }
         if ((it->pos.x - it->radM) < LEFT_BORDER) {
-            it->pos.x = LEFT_BORDER + (it->radM);
-            it->vel.x = -it->vel.x * 0.75;
+            it->pos.x = LEFT_BORDER + it->radM;
+            if (it->vel.x < 0)
+                it->vel.x = -it->vel.x * COEF_RES;
             //cout << "LEFT_BORDER detected!" << endl;
         }
         if ((it->pos.y + it->radM) > TOP_BORDER) {
-            it->pos.y = TOP_BORDER - (it->radM);
-            it->vel.y = -it->vel.y * 0.75;
+            it->pos.y = TOP_BORDER - it->radM;
+            if (it->vel.y > 0)
+                it->vel.y = -it->vel.y * COEF_RES;
             //cout << "TOP_BORDER detected!" << endl;
         }
         if((it->pos.y - it->radM) < BOTTOM_BORDER) {
-            it->pos.y = BOTTOM_BORDER + (it->radM);
-            it->vel.y = -it->vel.y * 0.75;
+            it->pos.y = BOTTOM_BORDER + it->radM;
+            if (it->vel.y < 0)
+                it->vel.y = -it->vel.y * COEF_RES;
             //cout << "BOTTOM_BORDER detected!" << endl;
         }
     }
