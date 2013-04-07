@@ -29,17 +29,23 @@ using std::vector;
 #include "planet.h"
 #include "physics.h"
 
-// Creating global SimpleSpace
-SimpleSpace * pSimpleSpace = new SimpleSpace;
-
 const int FRAMERATE = 60;
-int animation_accel = 3000;
+int model_speed = 1;
+int model_scale = 200000;
+
+// Creating global SimpleSpace
+SimpleSpace * pSimpleSpace = new SimpleSpace(1000/FRAMERATE);
 
 void initRendering();
 void update(int value);
+
 void drawScene();
 void handleResize(int w, int h);
-void handleKeypress(unsigned char key, int x, int y);
+
+void handleNormalKeys(unsigned char key, int x, int y);
+void handleSpecialKeys(int key, int x, int y);
+void handleMouse(int button, int state, int x, int y);
+
 void DrawFilledCircle(GLdouble rad, int segments, GLdouble x_center, GLdouble y_center);
 
 //Initializes rendering
@@ -65,13 +71,11 @@ void initRendering()
 
 void update(int value)
 {
-    for (int i = 0; i < animation_accel; ++i) {
+    for (int i = 0; i < model_speed; ++i) {
         pSimpleSpace->move_one_step();
     }
-    
     glutPostRedisplay(); //Tell GLUT that the display has changed
-    
-    glutTimerFunc( 1000/FRAMERATE, update, 0);
+    glutTimerFunc(1000/FRAMERATE, update, 0);
 }
 
 //Draws the 3D scene
@@ -91,23 +95,21 @@ void drawScene()
     //glPopMatrix(); //Undo the move to the center
     
     //DrawFilledCircle(5);
-    
-    double coef = 200000;
-    
+
     for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
          it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
-        DrawFilledCircle(it->radM/coef, 20, it->pos.x/coef, it->pos.y/coef);
+        DrawFilledCircle(it->radM/double(model_scale), 20, it->pos.x/double(model_scale), it->pos.y/double(model_scale));
     }
 
-#if (ENABLE_BORDERS > 0)
+#   if (ENABLE_BORDERS > 0)
     glBegin(GL_LINE_LOOP);
-    glVertex2d(RIGHT_BORDER/coef, TOP_BORDER/coef);
-    glVertex2d(LEFT_BORDER/coef, TOP_BORDER/coef);
-    glVertex2d(LEFT_BORDER/coef, BOTTOM_BORDER/coef);
-    glVertex2d(RIGHT_BORDER/coef, BOTTOM_BORDER/coef);
+        glVertex2d(RIGHT_BORDER/model_scale, TOP_BORDER/model_scale);
+        glVertex2d(LEFT_BORDER/model_scale, TOP_BORDER/model_scale);
+        glVertex2d(LEFT_BORDER/model_scale, BOTTOM_BORDER/model_scale);
+        glVertex2d(RIGHT_BORDER/model_scale, BOTTOM_BORDER/model_scale);
     glEnd();
-#endif
-    
+#   endif
+
     glutSwapBuffers();
 }
 
@@ -128,15 +130,56 @@ void handleResize(int w, int h)
 }
 
 //Called when a key is pressed
-void handleKeypress(unsigned char key, int x, int y)
-{
+void handleNormalKeys(unsigned char key, int x, int y) {
 	switch (key) {
-		case 27: //Escape key
+        case 'c':
+            pSimpleSpace->remove_all_objects();
+			break;
+		case 27:  // Escape key
+        case 'q':
             delete pSimpleSpace;
             pSimpleSpace = NULL;
-            cout << "Simple-Space: exiting by exit(0)" << endl;
+            cout << "handleKeypress(): exit(0)" << endl;
 			exit(0);
 	}
+}
+
+void handleSpecialKeys(int key, int x, int y) {
+    switch (key) {
+        case GLUT_KEY_RIGHT:
+            if (!(model_speed * pSimpleSpace->get_model_timestep_ms() > 100000)) {
+                model_speed *= 10;
+                cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+            }
+            break;
+        case GLUT_KEY_LEFT:
+            if (model_speed > 1) {
+                model_speed /= 10;
+                cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+            }
+            break;
+        case GLUT_KEY_UP:
+            model_scale /= 2;
+            cout << "model scale: " << model_scale << endl;
+            break;
+        case GLUT_KEY_DOWN:
+            model_scale *= 2;
+            cout << "model scale: " << model_scale << endl;
+            break;
+    }
+}
+
+void handleMouse(int button, int state, int x, int y) {
+    if (state == 0) {
+        int window_width = glutGet(GLUT_WINDOW_WIDTH);
+        int window_height = glutGet(GLUT_WINDOW_HEIGHT);
+
+        int model_x = (x - window_width/2) * model_scale;
+        int model_y = (y - window_height/2) * model_scale;
+
+        pSimpleSpace->add_planet(Planet("New Planet", EARTH_MASS_KG/5, EARTH_RAD_M/5, phys_vector(model_x, model_y), phys_vector(0, 0)));
+        cout << " objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+    }
 }
 
 //Draw a 2D painted cicle using GL_TRIANGLE_FAN
@@ -168,37 +211,40 @@ void DrawFilledCircle(GLdouble rad, int segments, GLdouble x_center, GLdouble y_
 //int main(int argc, const char * argv[])
 int main(int argc, char * argv[])
 {
-    cout << "Simple-Space: main Stared" << endl;
+    cout << "main(): Stared" << endl;
 
     // Seed for random values
     //srand ( (unsigned int)(time(NULL)) );
 
     // SimpleSpace testing begin
     double dist = 4e7;
-    pSimpleSpace->add_planet(Planet("P1", EARTH_MASS_KG   , EARTH_RAD_M, phys_vector(0, 0), phys_vector(0,0)));
-    pSimpleSpace->add_planet(Planet("P2", EARTH_MASS_KG/5 , EARTH_RAD_M/2, phys_vector(dist,dist), phys_vector(-1000,-500)));
-    pSimpleSpace->add_planet(Planet("P3", EARTH_MASS_KG*2 , EARTH_RAD_M*1.5, phys_vector(-dist,-dist), phys_vector(200,1000)));
+    pSimpleSpace->add_planet(Planet("P1", EARTH_MASS_KG,   EARTH_RAD_M,     phys_vector( dist/4, 0), phys_vector(0, 3700)));
+    pSimpleSpace->add_planet(Planet("P2", EARTH_MASS_KG,   EARTH_RAD_M,     phys_vector(-dist/4, 0), phys_vector(0,-3700)));
+    pSimpleSpace->add_planet(Planet("P3", EARTH_MASS_KG/10, EARTH_RAD_M/5,   phys_vector(dist/2, 0), phys_vector(0, -3500)));
 
     glutInit(&argc, argv);
-    
+
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(1024, 600);
-	
+
 	glutCreateWindow("My test");
 	initRendering();
-    
+
 	glutDisplayFunc(drawScene);
-	glutKeyboardFunc(handleKeypress);
-	glutReshapeFunc(handleResize);
-    
+    glutReshapeFunc(handleResize);
+
+	glutKeyboardFunc(handleNormalKeys);
+    glutSpecialFunc(handleSpecialKeys);
+    glutMouseFunc(handleMouse);
+
 	glutTimerFunc(1000/FRAMERATE, update, 0); //Add a timer
-	
+
 	glutMainLoop();
 
     // Delete global SimpleSpace
     // TODO: find where deinit should be, as we don't get here
     delete pSimpleSpace;
     pSimpleSpace = NULL;
-    cout << "Simple-Space: main Finished" << endl;
+    cout << "main(): Finished" << endl;
     return 0;
 }

@@ -8,23 +8,41 @@
 
 #include "simplespace.h"
 
-SimpleSpace::SimpleSpace() : _time_step_ms(100) {}
+SimpleSpace::SimpleSpace(int timestep_ms) : _timestep_ms(timestep_ms) {
+    cout << "SimpleSpace instance created with _timestep_ms: " << get_model_timestep_ms() << endl;
+}
+SimpleSpace::~SimpleSpace() {
+    cout << "SimpleSpace instance destroyed" << endl;
+}
+int SimpleSpace::get_model_timestep_ms() const {return _timestep_ms;}
+void SimpleSpace::set_model_timestep_ms(int timestep_ms) {_timestep_ms = timestep_ms;}
 
 void SimpleSpace::move_one_step() {
-    // Debug logs
-    if (planets.size() == 0)
-        cout << "MoveOneStep: no planets" << endl;
     
-#if (ENABLE_BORDERS > 0)
+#   if (ENABLE_BORDERS > 0)
     for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
-        if (((it->pos.x - it->radM) < LEFT_BORDER) || ((it->pos.x + it->radM) > RIGHT_BORDER))
+        if ((it->pos.x + it->radM) > RIGHT_BORDER) {
+            it->pos.x = RIGHT_BORDER - it->radM;
             it->vel.x = -it->vel.x;
-        if (((it->pos.y + it->radM) > TOP_BORDER)  || ((it->pos.y - it->radM) < BOTTOM_BORDER))
+        }
+        if ((it->pos.x - it->radM) < LEFT_BORDER) {
+            it->pos.x = LEFT_BORDER + it->radM;
+            it->vel.x = -it->vel.x;
+        }
+        if ((it->pos.y + it->radM) > TOP_BORDER) {
+            it->pos.y = TOP_BORDER - it->radM;
             it->vel.y = -it->vel.y;
+        }
+        if((it->pos.y - it->radM) < BOTTOM_BORDER) {
+            it->pos.y = BOTTOM_BORDER + it->radM;
+            it->vel.y = -it->vel.y;
+        }
     }
-#endif
-    
+#   endif
+
     // Collision detection and resolving
+    // Use for collision resolving of only two bodies at once.
+    // For many particles sytem collision detection need another algo
     for (vector<Planet>::iterator ita = planets.begin(), ita_end = planets.end(); ita != ita_end; ++ita) {
         for (vector<Planet>::iterator itb = ++planets.begin(), itb_end = planets.end(); itb != itb_end; ++itb) {
             if (ita == itb)
@@ -53,9 +71,9 @@ void SimpleSpace::move_one_step() {
                 itb->pos = itb->newPos;
                 
                 // Debug logs
-                cout.precision(10);
-                cout << "Collision detected! overlap: " << rad_sum - dist_ab
-                     << "; after-push-real-dist: " << physics::DistFromPos(ita->pos, itb->pos) - (ita->radM + itb->radM) << endl;
+                //cout.precision(10);
+                //cout << "Collision detected! overlap: " << rad_sum - dist_ab
+                //     << "; after-push-real-dist: " << physics::DistFromPos(ita->pos, itb->pos) - (ita->radM + itb->radM) << endl;
 
                 // Find new velocities after collision
                 // V1, V2 - velocities of body1,2 before impact
@@ -83,7 +101,7 @@ void SimpleSpace::move_one_step() {
                 itb->vel = U2;
             }
         }
-    } // End of Collision detection and resolving
+    }
 
     // Calculate new positions for planets
     // TODO: decide wether need to implement gravity forces calculation
@@ -92,7 +110,8 @@ void SimpleSpace::move_one_step() {
     {
         // Calculate acceleration
         phys_vector acc_curr;
-#if (ENABLE_GRAVITY > 0)
+
+#       if (ENABLE_GRAVITY > 0)
         for (vector<Planet>::const_iterator itb = planets.begin(), itb_end = planets.end(); itb != itb_end; ++itb)
         {
             if (ita != itb)
@@ -105,10 +124,10 @@ void SimpleSpace::move_one_step() {
                 acc_curr.y += acc_abs * sin(DistAngle.second);    // accY = acc * sin(fi)
             }
         }
-#endif
+#       endif
         
-        // Apply movement for time "_time_step_ms" to position "nextPos"
-        physics::MoveWithConstAcc(ita->newPos, ita->vel, acc_curr, (_time_step_ms/1000.0));
+        // Apply movement for time "_timestep_ms" to position "nextPos"
+        physics::MoveWithConstAcc(ita->newPos, ita->vel, acc_curr, (_timestep_ms/1000.0));
     }
 
     // Set all planets to new positions
@@ -117,8 +136,11 @@ void SimpleSpace::move_one_step() {
     }
 }
 
-void SimpleSpace::add_planet(const Planet& newPlanet)
-{
+void SimpleSpace::add_planet(const Planet& newPlanet) {
     planets.push_back(newPlanet);
     // TODO: Check if new added planet overlaps with existing
+}
+
+void SimpleSpace::remove_all_objects() {
+    planets.clear();
 }
