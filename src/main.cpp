@@ -33,6 +33,13 @@ const int FRAMERATE = 60;
 int model_speed = 1;
 int model_scale = 200000;
 
+int mouse_x_pressed = 0;
+int mouse_y_pressed = 0;
+int mouse_x_current = 0;
+int mouse_y_current = 0;
+bool mouse_pressed_left = false;
+bool mouse_pressed_right = false;
+
 // Creating global SimpleSpace
 SimpleSpace * pSimpleSpace = new SimpleSpace(1000/FRAMERATE);
 
@@ -45,6 +52,7 @@ void handleResize(int w, int h);
 void handleNormalKeys(unsigned char key, int x, int y);
 void handleSpecialKeys(int key, int x, int y);
 void handleMouse(int button, int state, int x, int y);
+void handleMouseMotion(int x, int y);
 
 void DrawFilledCircle(GLdouble rad, int segments, GLdouble x_center, GLdouble y_center);
 
@@ -88,25 +96,31 @@ void drawScene()
     
     int window_width = glutGet(GLUT_WINDOW_WIDTH);
     int window_height = glutGet(GLUT_WINDOW_HEIGHT);
-    glTranslatef( window_width/2.0f, window_height/2.0f, 0.0f);
+    glTranslated(window_width/2.0, window_height/2.0, 0.0);
     
     //glRotatef(-_cameraAngle, 0.0f, 1.0f, 0.0f); //Rotate the camera
     //glPushMatrix(); //Save the transformations performed thus far
     //glPopMatrix(); //Undo the move to the center
     
-    //DrawFilledCircle(5);
-
     for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
-         it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
+        it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
         DrawFilledCircle(it->radM/double(model_scale), 20, it->pos.x/double(model_scale), it->pos.y/double(model_scale));
     }
 
+    if (mouse_pressed_left) {
+        glBegin(GL_LINES);
+        glVertex2d(mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0);
+        glVertex2d(mouse_x_current - window_width/2.0, mouse_y_current - window_height/2.0);
+        glEnd();
+    }
+
+
 #   if (ENABLE_BORDERS > 0)
     glBegin(GL_LINE_LOOP);
-        glVertex2d(RIGHT_BORDER/model_scale, TOP_BORDER/model_scale);
-        glVertex2d(LEFT_BORDER/model_scale, TOP_BORDER/model_scale);
-        glVertex2d(LEFT_BORDER/model_scale, BOTTOM_BORDER/model_scale);
-        glVertex2d(RIGHT_BORDER/model_scale, BOTTOM_BORDER/model_scale);
+    glVertex2d(RIGHT_BORDER/model_scale, TOP_BORDER/model_scale);
+    glVertex2d(LEFT_BORDER/model_scale, TOP_BORDER/model_scale);
+    glVertex2d(LEFT_BORDER/model_scale, BOTTOM_BORDER/model_scale);
+    glVertex2d(RIGHT_BORDER/model_scale, BOTTOM_BORDER/model_scale);
     glEnd();
 #   endif
 
@@ -170,16 +184,46 @@ void handleSpecialKeys(int key, int x, int y) {
 }
 
 void handleMouse(int button, int state, int x, int y) {
-    if (state == 0) {
+    mouse_x_current = x;
+    mouse_y_current = y;
+
+    if (button == GLUT_LEFT_BUTTON) {
+        mouse_pressed_left = (state == GLUT_DOWN);
+    } else if (button == GLUT_RIGHT_BUTTON) {
+        mouse_pressed_right = (state == GLUT_DOWN);
+    }
+
+    // Save mouse press position
+    if ((state == GLUT_DOWN) && (button == GLUT_LEFT_BUTTON)) {
+        mouse_x_pressed = x;
+        mouse_y_pressed = y;
+    }
+
+    // Add planet when left mouse button release
+    if ((state == GLUT_UP) && (button == GLUT_LEFT_BUTTON)) {
+        // Calculate model coordinates
         int window_width = glutGet(GLUT_WINDOW_WIDTH);
         int window_height = glutGet(GLUT_WINDOW_HEIGHT);
+        int model_x = (mouse_x_pressed - window_width/2) * model_scale;
+        int model_y = (mouse_y_pressed - window_height/2) * model_scale;
 
-        int model_x = (x - window_width/2) * model_scale;
-        int model_y = (y - window_height/2) * model_scale;
+        // Calculate speed depending on mouse grag distance
+        int mouse_moved_x = x - mouse_x_pressed;
+        int mouse_moved_y = y - mouse_y_pressed;
+        cout << "Drag X=" << mouse_moved_x << " Y=" << mouse_moved_y << endl;
 
-        pSimpleSpace->add_planet(Planet("New Planet", EARTH_MASS_KG/5, EARTH_RAD_M/5, phys_vector(model_x, model_y), phys_vector(0, 0)));
+        pSimpleSpace->add_planet(Planet("New Planet",
+                                        EARTH_MASS_KG/2,
+                                        EARTH_RAD_M/2,
+                                        phys_vector(model_x, model_y),
+                                        phys_vector(mouse_moved_x * model_scale, mouse_moved_y * model_scale)));
         cout << " objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
     }
+}
+
+void handleMouseMotion(int x, int y) {
+    mouse_x_current = x;
+    mouse_y_current = y;
 }
 
 //Draw a 2D painted cicle using GL_TRIANGLE_FAN
@@ -218,9 +262,8 @@ int main(int argc, char * argv[])
 
     // SimpleSpace testing begin
     double dist = 4e7;
-    pSimpleSpace->add_planet(Planet("P1", EARTH_MASS_KG,   EARTH_RAD_M,     phys_vector( dist/4, 0), phys_vector(0, 3700)));
-    pSimpleSpace->add_planet(Planet("P2", EARTH_MASS_KG,   EARTH_RAD_M,     phys_vector(-dist/4, 0), phys_vector(0,-3700)));
-    pSimpleSpace->add_planet(Planet("P3", EARTH_MASS_KG/10, EARTH_RAD_M/5,   phys_vector(dist/2, 0), phys_vector(0, -3500)));
+    pSimpleSpace->add_planet(Planet("P2", EARTH_MASS_KG, EARTH_RAD_M, phys_vector(0, 0), phys_vector(0, 0)));
+    pSimpleSpace->add_planet(Planet("P1", EARTH_MASS_KG/1e3, EARTH_RAD_M/10, phys_vector(dist/4, 0), phys_vector(0,-8e3)));
 
     glutInit(&argc, argv);
 
@@ -236,6 +279,7 @@ int main(int argc, char * argv[])
 	glutKeyboardFunc(handleNormalKeys);
     glutSpecialFunc(handleSpecialKeys);
     glutMouseFunc(handleMouse);
+    glutMotionFunc(handleMouseMotion);
 
 	glutTimerFunc(1000/FRAMERATE, update, 0); //Add a timer
 

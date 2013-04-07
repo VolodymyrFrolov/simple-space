@@ -41,14 +41,16 @@ public:
            double MassKg,
            double RadM,
            phys_vector Pos,
-           phys_vector Vel) : Body(Name, Pos, Vel), massKg(MassKg), radM(RadM), newPos(Pos) {}
+           phys_vector Vel) : Body(Name, Pos, Vel), massKg(MassKg), radM(RadM), temp_pos(Pos) {}
 
     // Mass and Radius
     double massKg;
     double radM;
 
-    // temp Position for gravity calculations
-    phys_vector newPos;
+    // temp position for gravity calculations
+    phys_vector temp_pos;
+    void apply_temp_pos();
+
     // TODO: make private members
 };
 

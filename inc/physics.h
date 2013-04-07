@@ -14,8 +14,8 @@
 using std::pair;
 using std::string;
 
-#define CONST_G 6.67385e-11  // Real physical constant
-//#define CONST_G 1e-4       // Increased constant for model to run faster
+//#define CONST_G 6.67385e-11  // Real physical constant
+#define CONST_G 1e-3       // Increased constant for model to run faster
 #define DevByZero -1
 
 namespace physics {
@@ -24,6 +24,9 @@ namespace physics {
     struct phys_vector {
         phys_vector(double new_x = 0,
                     double new_y = 0) : x(new_x), y(new_y) {}
+        bool operator==(const phys_vector &rhs) const {
+            return ((x == rhs.x) && (y == rhs.y));
+        }
         double x;
         double y;
     };
