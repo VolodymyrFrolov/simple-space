@@ -8,8 +8,4 @@
 
 #include "planet.h"
 
-void Planet::apply_temp_pos() {
-    pos = temp_pos;
-}
-
 // Empty

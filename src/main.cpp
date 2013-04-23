@@ -212,11 +212,8 @@ void handleMouse(int button, int state, int x, int y) {
         int mouse_moved_y = y - mouse_y_pressed;
         cout << "Drag X=" << mouse_moved_x << " Y=" << mouse_moved_y << endl;
 
-        pSimpleSpace->add_planet(Planet("New Planet",
-                                        1e29,
-                                        2e6,
-                                        phys_vector(model_x, model_y),
-                                        phys_vector(mouse_moved_x * model_scale, mouse_moved_y * model_scale)));
+        pSimpleSpace->add_planet_by_Pos_and_Vel(phys_vector(model_x, model_y),
+                                                phys_vector(mouse_moved_x * model_scale, mouse_moved_y * model_scale));
         cout << " objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
     }
 }
@@ -262,11 +259,11 @@ int main(int argc, char * argv[])
 
     // SimpleSpace testing begin
     double dist = 4e7;
-    pSimpleSpace->add_planet(Planet("P1", 1e30, 3e6, phys_vector(0, 0), phys_vector(0, 0)));
-    pSimpleSpace->add_planet(Planet("P2", 1e15, 1e6, phys_vector(dist/4,   0), phys_vector(0,  -2e6)));
-    pSimpleSpace->add_planet(Planet("P2", 1e15, 1e6, phys_vector(-dist/4,  0), phys_vector(0,   2e6)));
-    pSimpleSpace->add_planet(Planet("P4", 1e15, 1e6, phys_vector(0, dist/1.5), phys_vector(-1.5e6, 0)));
-    pSimpleSpace->add_planet(Planet("P4", 1e15, 1e6, phys_vector(0, -dist/1.5), phys_vector(1.5e6, 0)));
+    pSimpleSpace->add_planet(Planet("Planet-1", 1e30, 3e6, phys_vector(0, 0), phys_vector(0, 0)));
+    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(dist/4,   0), phys_vector(0,  -2e6)));
+    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(-dist/4,  0), phys_vector(0,   2e6)));
+    pSimpleSpace->add_planet(Planet("Planet-4", 1e15, 1e6, phys_vector(0, dist/1.5), phys_vector(-1.5e6, 0)));
+    pSimpleSpace->add_planet(Planet("Planet-5", 1e15, 1e6, phys_vector(0, -dist/1.5), phys_vector(1.5e6, 0)));
 
     glutInit(&argc, argv);
 

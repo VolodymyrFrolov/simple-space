@@ -34,14 +34,19 @@ class SimpleSpace
 public:
     SimpleSpace(int timestep_ms = 10);
     ~SimpleSpace();
-    void add_planet(const Planet& newPlanet);
+    void add_planet(const Planet& new_planet);
+    void add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel);
     void remove_all_objects();
     void move_one_step();
     vector<Planet> planets;
     // TODO: make private members
     int  get_model_timestep_ms() const;
     void set_model_timestep_ms(int timestep_ms);
+
+    static int planet_id;
+
 private:
+    void pull_apart_planets(Planet& p1, Planet& p2);
     int _timestep_ms;
 };
 
