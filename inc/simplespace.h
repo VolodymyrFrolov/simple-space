@@ -15,6 +15,7 @@
 using std::cout;   // temp
 using std::endl;   // temp
 using std::vector;
+#include <pthread.h>
 
 #include "physics.h"
 #include "planet.h"
@@ -43,9 +44,9 @@ public:
     int  get_model_timestep_ms() const;
     void set_model_timestep_ms(int timestep_ms);
 
-    static int planet_id;
-
 private:
+    int planet_id;
+    pthread_mutex_t step_mutex;
     void pull_apart_planets(Planet& p1, Planet& p2);
     int _timestep_ms;
 };

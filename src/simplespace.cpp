@@ -9,20 +9,20 @@
 #include "simplespace.h"
 #include <sstream>
 
-int SimpleSpace::planet_id;
-
 SimpleSpace::SimpleSpace(int timestep_ms) : _timestep_ms(timestep_ms) {
     planet_id = 0;
+    pthread_mutex_init(&step_mutex, NULL);
     cout << "SimpleSpace instance created with _timestep_ms: " << get_model_timestep_ms() << endl;
 }
 SimpleSpace::~SimpleSpace() {
+    pthread_mutex_destroy(&step_mutex);
     cout << "SimpleSpace instance destroyed" << endl;
 }
 int SimpleSpace::get_model_timestep_ms() const {return _timestep_ms;}
 void SimpleSpace::set_model_timestep_ms(int timestep_ms) {_timestep_ms = timestep_ms;}
 
 void SimpleSpace::move_one_step() {
-
+    pthread_mutex_lock(&step_mutex);
     // Save current parameters to previous values, except acc
     for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
         it->prev_pos = it->pos;
@@ -155,15 +155,18 @@ void SimpleSpace::move_one_step() {
     }
     #endif
 
+    pthread_mutex_unlock(&step_mutex);
 }
 
 void SimpleSpace::add_planet(const Planet& new_planet) {
+    pthread_mutex_lock(&step_mutex);
     planet_id++;
     Planet p = new_planet;
     for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
         pull_apart_planets(p, *it);
     }
     planets.push_back(p);
+    pthread_mutex_unlock(&step_mutex);
 }
 
 void SimpleSpace::pull_apart_planets(Planet& p1, Planet& p2) {
