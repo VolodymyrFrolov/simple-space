@@ -158,17 +158,6 @@ void SimpleSpace::move_one_step() {
     pthread_mutex_unlock(&step_mutex);
 }
 
-void SimpleSpace::add_planet(const Planet& new_planet) {
-    pthread_mutex_lock(&step_mutex);
-    planet_id++;
-    Planet p = new_planet;
-    for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
-        pull_apart_planets(p, *it);
-    }
-    planets.push_back(p);
-    pthread_mutex_unlock(&step_mutex);
-}
-
 void SimpleSpace::pull_apart_planets(Planet& p1, Planet& p2) {
     // Pull bodies apart (correlating with their masses) if they are overlapping
     // from: d = d1 + d2; and: m1 * d1 = m2 * d2;
@@ -188,6 +177,17 @@ void SimpleSpace::pull_apart_planets(Planet& p1, Planet& p2) {
     }
 }
 
+void SimpleSpace::add_planet(const Planet& new_planet) {
+    pthread_mutex_lock(&step_mutex);
+    planet_id++;
+    Planet p = new_planet;
+    for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
+        pull_apart_planets(p, *it);
+    }
+    planets.push_back(p);
+    pthread_mutex_unlock(&step_mutex);
+}
+
 void SimpleSpace::add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel) {
     std::stringstream ss;
     ss << planet_id;
@@ -195,6 +195,8 @@ void SimpleSpace::add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_v
 }
 
 void SimpleSpace::remove_all_objects() {
+    pthread_mutex_lock(&step_mutex);
     planet_id = 0;
     planets.clear();
+    pthread_mutex_unlock(&step_mutex);
 }
