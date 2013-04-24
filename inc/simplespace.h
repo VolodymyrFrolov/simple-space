@@ -48,6 +48,7 @@ private:
     int planet_id;
     pthread_mutex_t step_mutex;
     void pull_apart_planets(Planet& p1, Planet& p2);
+    void resolve_border_collision(Planet& p);
     int _timestep_ms;
 };
 

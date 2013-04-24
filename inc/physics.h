@@ -26,6 +26,9 @@ namespace physics {
         bool operator==(const phys_vector &rhs) const {
             return ((x == rhs.x) && (y == rhs.y));
         }
+        bool operator!=(const phys_vector &rhs) const {
+            return ((x != rhs.x) || (y != rhs.y));
+        }
         double x;
         double y;
     };
