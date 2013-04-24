@@ -53,7 +53,7 @@ public:
 
     phys_vector prev_pos;
     phys_vector prev_vel;
-    phys_vector prev_acc;
+    phys_vector acc;
 
     // TODO: make private members
 };

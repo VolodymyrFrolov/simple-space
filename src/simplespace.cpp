@@ -26,7 +26,7 @@ void SimpleSpace::move_one_step() {
     // Save current parameters to previous values, except acc
     for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
         it->prev_pos = it->pos;
-        it->prev_vel = it->pos;
+        it->prev_vel = it->vel;
     }
 
     // Calculate new positions for planets with or w/o gravity after movement
@@ -38,13 +38,13 @@ void SimpleSpace::move_one_step() {
             if (ita != itb) {
                 // Calculate acceleration for planet (ita), produced by one of other planets (itb)
                 double acc_abs;
-                pair<double, double> DistAngle = physics::DistAngleFromPos(ita->prev_pos, itb->prev_pos);
+                pair<double, double> DistAngle = physics::DistAngleFromPos(ita->pos, itb->pos);
                 acc_abs = physics::GravAcc(itb->massKg, DistAngle.first);
                 acc.x += acc_abs * cos(DistAngle.second);    // accX = acc * cos(fi)
                 acc.y += acc_abs * sin(DistAngle.second);    // accY = acc * sin(fi)
             }
         }
-        ita->prev_acc = acc;
+        ita->acc = acc;
         #endif
 
         physics::MoveWithConstAcc(ita->pos, ita->vel, acc, (_timestep_ms/1000.0));
@@ -56,16 +56,20 @@ void SimpleSpace::move_one_step() {
             if (ita == itb)
                 continue;
 
-            double dist_ab = physics::DistFromPos(ita->pos, itb->pos);
+            double dist = physics::DistFromPos(ita->pos, itb->pos);
             double rad_sum = ita->radM + itb->radM;
-            if (dist_ab < rad_sum) {
+            if (dist < rad_sum) {
 
                 // Debug log
                 cout << "Collision between: " << ita->name << " and " << itb->name << endl;
 
                 // Make step back for both bodies
                 ita->pos = ita->prev_pos;
+                ita->vel = ita->prev_vel;
                 itb->pos = itb->prev_pos;
+                itb->vel = itb->prev_vel;
+
+                // TODO: pull planets apart according their celocities
 
                 // "angle_ab" is also angle between XY and Normal-Tangential (NT) coordinates system
                 double angle_ab = physics::AngleFromPos(ita->pos, itb->pos);
@@ -75,7 +79,7 @@ void SimpleSpace::move_one_step() {
                 // from: d = d1 + d2; and: m1 * d1 = m2 * d2;
                 // we get: d1 = d * m2 / (m1 + m2); d2 = d * m1 / (m1 + m2);
                 // also make little addition to prevent dublicate collision detection
-                double push_dist = (rad_sum - dist_ab);
+                double push_dist = (rad_sum - dist);
                 double push_dist_a = (push_dist * itb->massKg) / (ita->massKg + itb->massKg);
                 double push_dist_b = (push_dist * ita->massKg) / (ita->massKg + itb->massKg);
                 ita->pos.x -= push_dist_a * cos(angle_ab);
@@ -85,7 +89,7 @@ void SimpleSpace::move_one_step() {
 
                 // Debug logs
                 //cout.precision(10);
-                //cout << "Collision detected! overlap: " << rad_sum - dist_ab
+                //cout << "Collision detected! overlap: " << rad_sum - dist
                 //     << "; after-push-real-dist: " << physics::DistFromPos(ita->pos, itb->pos) - (ita->radM + itb->radM) << endl;
                 */
 
@@ -103,7 +107,6 @@ void SimpleSpace::move_one_step() {
                 // vb2 = (e+1)*ma*va1 + vb1(mb - e*ma)/(ma+mb)
                 // Get velocities after collision (in NT coordinates)
                 phys_vector U1, U2;
-
                 U1.y = V1.y;
                 U2.y = V2.y;
                 U1.x = ((1 + COEF_RES) * itb->massKg * V2.x + V1.x * (ita->massKg - COEF_RES * itb->massKg)) / (ita->massKg + itb->massKg);
@@ -113,14 +116,14 @@ void SimpleSpace::move_one_step() {
                 //U2.x = (itb->massKg * V2.x + ita->massKg * V1.x + ita->massKg * COEF_RES * (V1.x - V2.x)) / (ita->massKg + itb->massKg);
 
                 // Move velocities back to XY coordinate system from NT
-                physics::RotateVector( U1, angle_ab );
-                physics::RotateVector( U2, angle_ab );
+                physics::RotateVector(U1, angle_ab);
+                physics::RotateVector(U2, angle_ab);
                 ita->vel = U1;
                 itb->vel = U2;
 
                 // re-make a step after collision for both bodies
-                physics::MoveWithConstAcc(ita->pos, ita->vel, ita->prev_acc, (_timestep_ms/1000.0));
-                physics::MoveWithConstAcc(itb->pos, ita->vel, itb->prev_acc, (_timestep_ms/1000.0));
+                physics::MoveWithConstAcc(ita->pos, ita->vel, ita->acc, (_timestep_ms/1000.0));
+                physics::MoveWithConstAcc(itb->pos, itb->vel, itb->acc, (_timestep_ms/1000.0));
             }
         }
     }
@@ -205,6 +208,7 @@ void SimpleSpace::add_planet(const Planet& new_planet) {
     pthread_mutex_lock(&step_mutex);
     planet_id++;
     Planet p = new_planet;
+    resolve_border_collision(p);
     for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
         pull_apart_planets(p, *it);
     }
