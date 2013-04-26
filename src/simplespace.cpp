@@ -69,44 +69,24 @@ void SimpleSpace::move_one_step() {
                 itb->pos = itb->prev_pos;
                 itb->vel = itb->prev_vel;
 
-                // TODO: pull planets apart according their celocities
+                // Angle betwwn bodies is also angle between XY and Normal-Tangential (NT) coordinates system
+                double angle = physics::AngleFromPos(ita->pos, itb->pos);
 
-                // "angle_ab" is also angle between XY and Normal-Tangential (NT) coordinates system
-                double angle_ab = physics::AngleFromPos(ita->pos, itb->pos);
-
-                /*
-                // Pull bodies apart (correlating with their masses) as they are overlapping
-                // from: d = d1 + d2; and: m1 * d1 = m2 * d2;
-                // we get: d1 = d * m2 / (m1 + m2); d2 = d * m1 / (m1 + m2);
-                // also make little addition to prevent dublicate collision detection
-                double push_dist = (rad_sum - dist);
-                double push_dist_a = (push_dist * itb->massKg) / (ita->massKg + itb->massKg);
-                double push_dist_b = (push_dist * ita->massKg) / (ita->massKg + itb->massKg);
-                ita->pos.x -= push_dist_a * cos(angle_ab);
-                ita->pos.y -= push_dist_a * sin(angle_ab);
-                itb->pos.x += push_dist_b * cos(angle_ab);
-                itb->pos.y += push_dist_b * sin(angle_ab);
-
-                // Debug logs
-                //cout.precision(10);
-                //cout << "Collision detected! overlap: " << rad_sum - dist
-                //     << "; after-push-real-dist: " << physics::DistFromPos(ita->pos, itb->pos) - (ita->radM + itb->radM) << endl;
-                */
-
-                // Find new velocities after collision
-                // V1, V2 - velocities of body1,2 before impact
-                // U1, U2 - velocities of body1,2 after impact
-                // Move velocities to NT coordinate system
+                // V1, V2 - velocities of body1, body2 before impact
                 phys_vector V1 = ita->vel;
                 phys_vector V2 = itb->vel;
-                physics::RotateVector(V1, -angle_ab);
-                physics::RotateVector(V2, -angle_ab);
+
+                // Move velocities to NT coordinate system
+                physics::RotateVector(V1, -angle);
+                physics::RotateVector(V2, -angle);
+
+                // U1, U2 - velocities of body1, body2 after impact
+                phys_vector U1, U2;
 
                 // Bodies: (a), (b); velocities: initial (1), final (2)
                 // va2 = (e+1)*mb*vb1 + va1(ma - e*mb)/(ma+mb)
                 // vb2 = (e+1)*ma*va1 + vb1(mb - e*ma)/(ma+mb)
                 // Get velocities after collision (in NT coordinates)
-                phys_vector U1, U2;
                 U1.y = V1.y;
                 U2.y = V2.y;
                 U1.x = ((1 + COEF_RES) * itb->massKg * V2.x + V1.x * (ita->massKg - COEF_RES * itb->massKg)) / (ita->massKg + itb->massKg);
@@ -116,14 +96,16 @@ void SimpleSpace::move_one_step() {
                 //U2.x = (itb->massKg * V2.x + ita->massKg * V1.x + ita->massKg * COEF_RES * (V1.x - V2.x)) / (ita->massKg + itb->massKg);
 
                 // Move velocities back to XY coordinate system from NT
-                physics::RotateVector(U1, angle_ab);
-                physics::RotateVector(U2, angle_ab);
+                physics::RotateVector(U1, angle);
+                physics::RotateVector(U2, angle);
                 ita->vel = U1;
                 itb->vel = U2;
 
-                // re-make a step after collision for both bodies
+                // Re-do a step after collision with new vel's for both bodies
                 physics::MoveWithConstAcc(ita->pos, ita->vel, ita->acc, (_timestep_ms/1000.0));
                 physics::MoveWithConstAcc(itb->pos, itb->vel, itb->acc, (_timestep_ms/1000.0));
+
+                move_apart_if_needed(*ita, *itb);
             }
         }
     }
@@ -185,22 +167,34 @@ void SimpleSpace::resolve_border_collision(Planet& p) {
     }
 }
 
-void SimpleSpace::pull_apart_planets(Planet& p1, Planet& p2) {
-    // Pull bodies apart (correlating with their masses) if they are overlapping
+void SimpleSpace::move_apart_if_needed(Planet& p1, Planet& p2) {
+    // Move bodies apart (correlating with their masses) if they are overlapping
     // from: d = d1 + d2; and: m1 * d1 = m2 * d2;
     // we get: d1 = d * m2 / (m1 + m2); d2 = d * m1 / (m1 + m2);
     double dist = physics::DistFromPos(p1.pos, p2.pos);
     double rad_sum = p1.radM + p2.radM;
-    if (dist <= rad_sum) {
+    if (dist < rad_sum) {
         double angle = physics::AngleFromPos(p1.pos, p2.pos);
-
         double pull_dist = (rad_sum - dist);
-        double pull_dist_1 = (pull_dist * p2.massKg) / (p1.massKg + p2.massKg);
-        double pull_dist_2 = (pull_dist * p1.massKg) / (p1.massKg + p2.massKg);
-        p1.pos.x -= pull_dist_1 * cos(angle);
-        p1.pos.y -= pull_dist_1 * sin(angle);
-        p2.pos.x += pull_dist_2 * cos(angle);
-        p2.pos.y += pull_dist_2 * sin(angle);
+        // Debug log
+        cout << "Moving apart for: " << pull_dist << endl;
+        double move_dist_1 = (pull_dist * p2.massKg) / (p1.massKg + p2.massKg);
+        double move_dist_2 = (pull_dist * p1.massKg) / (p1.massKg + p2.massKg);
+        p1.pos.x -= move_dist_1 * cos(angle);
+        p1.pos.y -= move_dist_1 * sin(angle);
+        p2.pos.x += move_dist_2 * cos(angle);
+        p2.pos.y += move_dist_2 * sin(angle);
+        
+        /*
+        Planet * parr[2] = {&p1, &p1};
+        for (int i = 0; i < 2; ++i) {
+            for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
+                Planet * pit = &(*it);
+                if (parr[i] != pit)
+                    move_apart_if_needed(p1, *it);
+            }
+        }
+         */
     }
 }
 
@@ -210,7 +204,7 @@ void SimpleSpace::add_planet(const Planet& new_planet) {
     Planet p = new_planet;
     resolve_border_collision(p);
     for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
-        pull_apart_planets(p, *it);
+        move_apart_if_needed(p, *it);
     }
     planets.push_back(p);
     pthread_mutex_unlock(&step_mutex);
