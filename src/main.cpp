@@ -40,6 +40,14 @@ int mouse_y_current = 0;
 bool mouse_pressed_left = false;
 bool mouse_pressed_right = false;
 
+enum AliasMode {
+    ALIAS_MODE_ALIASED,
+    ALIAS_MODE_ANTIALIASED,
+    ALIAS_MODE_MULTISAMPLE
+};
+
+AliasMode gMode = ALIAS_MODE_MULTISAMPLE;
+
 // Creating global SimpleSpace
 SimpleSpace * pSimpleSpace = new SimpleSpace(1000/FRAMERATE);
 
@@ -54,11 +62,21 @@ void handleSpecialKeys(int key, int x, int y);
 void handleMouse(int button, int state, int x, int y);
 void handleMouseMotion(int x, int y);
 
-void DrawFilledCircle(GLdouble rad, int segments, GLdouble x_center, GLdouble y_center);
+void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y);
 
 //Initializes rendering
 void initRendering()
 {
+    glEnable( GL_BLEND );
+    glDisable( GL_DEPTH_TEST );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+    glHint( GL_POLYGON_SMOOTH_HINT, GL_NICEST );
+    glDisable( GL_LINE_SMOOTH );
+    glDisable( GL_POLYGON_SMOOTH );
+    glDisable( GL_MULTISAMPLE );
+
     int window_width = glutGet(GLUT_WINDOW_WIDTH);
     int window_height = glutGet(GLUT_WINDOW_HEIGHT);
     glViewport(0, 0, window_width, window_height);
@@ -90,7 +108,28 @@ void update(int value)
 void drawScene()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
+    switch(gMode)
+    {
+        case ALIAS_MODE_ALIASED:
+            glDisable(GL_LINE_SMOOTH);
+            glDisable(GL_POLYGON_SMOOTH);
+            glDisable(GL_MULTISAMPLE);
+            break;
+
+        case ALIAS_MODE_ANTIALIASED:
+            glEnable(GL_LINE_SMOOTH);
+            glEnable(GL_POLYGON_SMOOTH);
+            glDisable(GL_MULTISAMPLE);
+            break;
+
+        case ALIAS_MODE_MULTISAMPLE:
+            glDisable(GL_LINE_SMOOTH);
+            glDisable(GL_POLYGON_SMOOTH);
+            glEnable(GL_MULTISAMPLE);
+            break;
+    }
+
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
     
@@ -104,7 +143,7 @@ void drawScene()
     
     for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
         it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
-        DrawFilledCircle(it->radM/double(model_scale), 20, it->pos.x/double(model_scale), it->pos.y/double(model_scale));
+        DrawFilledCircle(it->radM/double(model_scale), it->pos.x/double(model_scale), it->pos.y/double(model_scale));
     }
 
     if (mouse_pressed_left) {
@@ -123,6 +162,21 @@ void drawScene()
     glVertex2d(RIGHT_BORDER/double(model_scale), BOTTOM_BORDER/double(model_scale));
     glEnd();
     #endif
+
+    switch(gMode)
+    {
+        case ALIAS_MODE_ANTIALIASED:
+            glDisable( GL_LINE_SMOOTH );
+            glDisable( GL_POLYGON_SMOOTH );
+            break;
+
+        case ALIAS_MODE_MULTISAMPLE:
+            glDisable( GL_MULTISAMPLE );
+            break;
+
+        case ALIAS_MODE_ALIASED:
+            break;
+    }
 
     glutSwapBuffers();
 }
@@ -145,21 +199,43 @@ void handleResize(int w, int h)
 
 //Called when a key is pressed
 void handleNormalKeys(unsigned char key, int x, int y) {
-	switch (key) {
+	switch (key)
+    {
         case 'c':
             pSimpleSpace->remove_all_objects();
 			break;
+
 		case 27:  // Escape key
         case 'q':
             delete pSimpleSpace;
             pSimpleSpace = NULL;
             cout << "handleKeypress(): exit(0)" << endl;
 			exit(0);
+
+        case 'a':
+            switch(gMode)
+            {
+                case ALIAS_MODE_ALIASED:
+                    cout << "Antialiased" << endl;
+                    gMode = ALIAS_MODE_ANTIALIASED;
+                    break;
+
+                case ALIAS_MODE_ANTIALIASED:
+                    cout << "Multisampled" << endl;
+                    gMode = ALIAS_MODE_MULTISAMPLE;
+                    break;
+
+                case ALIAS_MODE_MULTISAMPLE:
+                    cout << "Aliased" << endl;
+                    gMode = ALIAS_MODE_ALIASED;
+                    break;
+            }
 	}
 }
 
 void handleSpecialKeys(int key, int x, int y) {
-    switch (key) {
+    switch (key)
+    {
         case GLUT_KEY_RIGHT:
             if (!(model_speed * pSimpleSpace->get_model_timestep_ms() > 100000)) {
                 model_speed *= 10;
@@ -224,27 +300,16 @@ void handleMouseMotion(int x, int y) {
 }
 
 //Draw a 2D painted cicle using GL_TRIANGLE_FAN
-void DrawFilledCircle(GLdouble rad, int segments, GLdouble x_center, GLdouble y_center)
+void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y)
 {
-    // Input data check
-    segments = M_PI_2 * rad;
     if (rad < 1)
         rad = 1;
-    if (segments < 10)
-        segments = 10;
-    
-    GLdouble x = 0;
-    GLdouble y = 0;
-    
-    // Drawing the circle
+
     glBegin(GL_TRIANGLE_FAN);
-    glVertex2d( x_center, y_center );
-    for (int i = 0; i <= segments; ++i)
-    {
-        x = rad * cos( (i * 2 * M_PI) / double(segments) );
-        y = rad * sin( (i * 2 * M_PI) / double(segments) );
-        glVertex2d( x+x_center, y+y_center );
-    }
+    glVertex2d(centre_x, centre_y);
+    double delta = M_PI / 100;
+    for (double angle = 0; angle <= 2 * M_PI; angle += delta)
+        glVertex2d(rad * cos(angle) + centre_x, rad * sin(angle) + centre_y);
     glEnd();
 }
 
@@ -267,7 +332,7 @@ int main(int argc, char * argv[])
 
     glutInit(&argc, argv);
 
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
 	glutInitWindowSize(1024, 600);
 
 	glutCreateWindow("My test");
