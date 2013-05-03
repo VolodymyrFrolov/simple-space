@@ -32,6 +32,8 @@ using std::vector;
 const int FRAMERATE = 60;
 int model_speed = 1;
 int model_scale = 200000;
+int view_offset_x = 0;
+int view_offset_y = 0;
 
 int mouse_x_pressed = 0;
 int mouse_y_pressed = 0;
@@ -135,7 +137,7 @@ void drawScene()
     
     int window_width = glutGet(GLUT_WINDOW_WIDTH);
     int window_height = glutGet(GLUT_WINDOW_HEIGHT);
-    glTranslated(window_width/2.0, window_height/2.0, 0.0);
+    glTranslated(window_width/2.0 + view_offset_x, window_height/2.0 + view_offset_y, 0.0);
     
     //glRotatef(-_cameraAngle, 0.0f, 1.0f, 0.0f); //Rotate the camera
     //glPushMatrix(); //Save the transformations performed thus far
@@ -201,10 +203,12 @@ void handleResize(int w, int h)
 void handleNormalKeys(unsigned char key, int x, int y) {
 	switch (key)
     {
+        // Remove objects
         case 'c':
             pSimpleSpace->remove_all_objects();
 			break;
 
+        // Exit
 		case 27:  // Escape key
         case 'q':
             delete pSimpleSpace;
@@ -212,6 +216,7 @@ void handleNormalKeys(unsigned char key, int x, int y) {
             cout << "handleKeypress(): exit(0)" << endl;
 			exit(0);
 
+        // Antialiazing mode
         case 'a':
             switch(gMode)
             {
@@ -230,6 +235,33 @@ void handleNormalKeys(unsigned char key, int x, int y) {
                     gMode = ALIAS_MODE_ALIASED;
                     break;
             }
+            break;
+
+        // Zoom
+        case '-':
+            model_scale *= 2;
+            cout << "model scale: " << model_scale << endl;
+            break;
+
+        case '=':
+            model_scale /= 2;
+            cout << "model scale: " << model_scale << endl;
+            break;
+
+        // Speed
+        case ',':
+            if (model_speed > 1) {
+                model_speed /= 10;
+                cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+            }
+            break;
+
+        case '.':
+            if (!(model_speed * pSimpleSpace->get_model_timestep_ms() > 100000)) {
+                model_speed *= 10;
+                cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+            }
+            break;
 	}
 }
 
@@ -237,24 +269,19 @@ void handleSpecialKeys(int key, int x, int y) {
     switch (key)
     {
         case GLUT_KEY_RIGHT:
-            if (!(model_speed * pSimpleSpace->get_model_timestep_ms() > 100000)) {
-                model_speed *= 10;
-                cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
-            }
+            view_offset_x += 50;
             break;
-        case GLUT_KEY_LEFT:
-            if (model_speed > 1) {
-                model_speed /= 10;
-                cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
-            }
-            break;
+
         case GLUT_KEY_UP:
-            model_scale /= 2;
-            cout << "model scale: " << model_scale << endl;
+            view_offset_y -= 50;
             break;
+
+        case GLUT_KEY_LEFT:
+            view_offset_x -= 50;
+            break;
+
         case GLUT_KEY_DOWN:
-            model_scale *= 2;
-            cout << "model scale: " << model_scale << endl;
+            view_offset_y += 50;
             break;
     }
 }
