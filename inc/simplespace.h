@@ -10,12 +10,13 @@
 #define __simple_space__simplespace__
 
 #include <iostream>
+
 #include <vector>
 #include <stdlib.h> // For rand()
 using std::cout;   // temp
 using std::endl;   // temp
 using std::vector;
-#include <pthread.h>
+#include <mutex>
 
 #include "physics.h"
 #include "planet.h"
@@ -46,7 +47,7 @@ public:
 
 private:
     int planet_id;
-    pthread_mutex_t step_mutex;
+    std::mutex step_mutex;
     void move_apart_if_needed(Planet& p1, Planet& p2);
     void resolve_border_collision(Planet& p);
     int _timestep_ms;

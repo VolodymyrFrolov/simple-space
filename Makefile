@@ -1,6 +1,6 @@
 CC = g++
-CFLAGS = -c -Wall -Iinc
-LDFLAGS =
+CFLAGS = -std=c++0x -Wall -c -Iinc
+LDFLAGS = -pthread
 SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 TARGET = simple-space
@@ -16,7 +16,7 @@ endif
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(TARGET) main.o physics.o simplespace.o planet.o $(LDLIBS)
+	$(CC) $(LDFLAGS) main.o physics.o simplespace.o planet.o $(LDLIBS) -o $(TARGET)
 
 main.o: src/main.cpp
 	$(CC) $(CFLAGS) src/main.cpp
