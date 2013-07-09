@@ -44,7 +44,7 @@ public:
     SimpleSpace(int timestep_ms = 10);
     ~SimpleSpace();
     void add_planet(const Planet& new_planet);
-    void add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel);
+    void add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel, const ColorF_RGB col);
     void remove_all_objects();
     void move_one_step();
     vector<Planet> planets;

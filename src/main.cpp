@@ -66,6 +66,8 @@ void handleMouseMotion(int x, int y);
 
 void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y);
 
+ColorF_RGB getRandomColor();
+
 //Initializes rendering
 void initRendering()
 {
@@ -145,18 +147,20 @@ void drawScene()
     
     for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
         it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
+        glColor3f(it->color.R, it->color.G, it->color.B);
         DrawFilledCircle(it->radM/double(model_scale), it->pos.x/double(model_scale), it->pos.y/double(model_scale));
     }
 
     if (mouse_pressed_left) {
         glBegin(GL_LINES);
+        glColor3f(1.0f, 1.0f, 1.0f);
         glVertex2d(mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0);
         glVertex2d(mouse_x_current - window_width/2.0, mouse_y_current - window_height/2.0);
         glEnd();
     }
 
-
     #if (BORDERS_ENABLED > 0)
+    glColor3f(1.0f, 1.0f, 1.0f);
     glBegin(GL_LINE_LOOP);
     glVertex2d(RIGHT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
     glVertex2d(LEFT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
@@ -316,7 +320,8 @@ void handleMouse(int button, int state, int x, int y) {
         cout << "Drag X=" << mouse_moved_x << " Y=" << mouse_moved_y << endl;
 
         pSimpleSpace->add_planet_by_Pos_and_Vel(phys_vector(model_x, model_y),
-                                                phys_vector(mouse_moved_x * model_scale, mouse_moved_y * model_scale));
+                                                phys_vector(mouse_moved_x * model_scale, mouse_moved_y * model_scale),
+                                                getRandomColor());
         cout << " objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
     }
 }
@@ -331,13 +336,20 @@ void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y)
 {
     if (rad < 1)
         rad = 1;
-
     glBegin(GL_TRIANGLE_FAN);
     glVertex2d(centre_x, centre_y);
     double delta = M_PI / 100;
     for (double angle = 0; angle <= 2 * M_PI; angle += delta)
         glVertex2d(rad * cos(angle) + centre_x, rad * sin(angle) + centre_y);
     glEnd();
+}
+
+ColorF_RGB getRandomColor() {
+    ColorF_RGB ret = {static_cast<float>((rand()%10 + 1)/10.0),
+        static_cast<float>((rand()%10 + 1)/10.0),
+        static_cast<float>((rand()%10 + 1)/10.0)};
+    cout << "color: " << ret.R << " "  << ret.G << " " << ret.B << endl;
+    return ret;
 }
 
 // default changed to make glutInit() work
@@ -347,15 +359,15 @@ int main(int argc, char * argv[])
     cout << "main(): Stared" << endl;
 
     // Seed for random values
-    //srand ( (unsigned int)(time(NULL)) );
+    srand ( (unsigned int)(time(NULL)) );
 
     // SimpleSpace testing begin
     double dist = 4e7;
-    pSimpleSpace->add_planet(Planet("Planet-1", 1e30, 3e6, phys_vector(0, 0), phys_vector(0, 0)));
-    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(dist/4,   0), phys_vector(0,  -2e6)));
-    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(-dist/4,  0), phys_vector(0,   2e6)));
-    pSimpleSpace->add_planet(Planet("Planet-4", 1e15, 1e6, phys_vector(0, dist/1.5), phys_vector(-1.5e6, 0)));
-    pSimpleSpace->add_planet(Planet("Planet-5", 1e15, 1e6, phys_vector(0, -dist/1.5), phys_vector(1.5e6, 0)));
+    pSimpleSpace->add_planet(Planet("Planet-1", 1e30, 3e6, phys_vector(0, 0), phys_vector(0, 0), getRandomColor()));
+    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(dist/4,   0), phys_vector(0,  -2e6), getRandomColor()));
+    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(-dist/4,  0), phys_vector(0,   2e6), getRandomColor()));
+    pSimpleSpace->add_planet(Planet("Planet-4", 1e15, 1e6, phys_vector(0, dist/1.5), phys_vector(-1.5e6, 0), getRandomColor()));
+    pSimpleSpace->add_planet(Planet("Planet-5", 1e15, 1e6, phys_vector(0, -dist/1.5), phys_vector(1.5e6, 0), getRandomColor()));
 
     glutInit(&argc, argv);
 

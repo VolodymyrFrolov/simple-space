@@ -168,10 +168,10 @@ void SimpleSpace::add_planet(const Planet& new_planet) {
     planets.push_back(p);
 }
 
-void SimpleSpace::add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel) {
+void SimpleSpace::add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel, const ColorF_RGB col) {
     std::stringstream ss;
     ss << planet_id;
-    SimpleSpace::add_planet(Planet(ss.str(), 1e29, 2e6, pos, vel));
+    SimpleSpace::add_planet(Planet(ss.str(), 1e29, 2e6, pos, vel, col));
 }
 
 void SimpleSpace::remove_all_objects() {

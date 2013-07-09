@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++0x -Wall -c -Iinc
+CFLAGS = -std=c++11 -Wall -c -Iinc
 LDFLAGS = -pthread
 SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
