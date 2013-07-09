@@ -22,10 +22,10 @@ using std::vector;
 #include "planet.h"
 using physics::phys_vector;
 
-#define ENABLE_GRAVITY 1    // Gravity: 1-on; 0-off
-#define COEF_RES       0.5  // Coefficient of restitution [0..1] = [absolutely inelastic .. absolute elastic]
+#define GRAVITY_ENABLED 1    // Gravity: 1-on; 0-off
+#define COEF_RES        0.5  // Coefficient of restitution [0..1] = [absolutely inelastic .. absolute elastic]
 
-#define ENABLE_BORDERS 1    // Borders: 1-on; 0-off
+#define BORDERS_ENABLED 1    // Borders: 1-on; 0-off
 #define LEFT_BORDER   -8e7
 #define RIGHT_BORDER   8e7
 #define TOP_BORDER     5e7
@@ -33,6 +33,13 @@ using physics::phys_vector;
 
 class SimpleSpace
 {
+    int planet_id;
+    std::mutex step_mutex;
+    void move_apart_bodies(Planet& p1, Planet& p2);
+    void move_apart_bodies_v2(Planet& p1, Planet& p2);
+    void resolve_border_collision(Planet& p);
+    double _time_step_ms;
+
 public:
     SimpleSpace(int timestep_ms = 10);
     ~SimpleSpace();
@@ -41,16 +48,10 @@ public:
     void remove_all_objects();
     void move_one_step();
     vector<Planet> planets;
-    // TODO: make private members
-    int  get_model_timestep_ms() const;
-    void set_model_timestep_ms(int timestep_ms);
 
-private:
-    int planet_id;
-    std::mutex step_mutex;
-    void move_apart_if_needed(Planet& p1, Planet& p2);
-    void resolve_border_collision(Planet& p);
-    int _timestep_ms;
+    // TODO: move to private
+    int  get_model_time_step_ms() const;
+    void set_model_time_step_ms(int time_step_ms);
 };
 
 #endif /* defined(__simple_space__simplespace__) */

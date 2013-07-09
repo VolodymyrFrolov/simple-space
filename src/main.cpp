@@ -156,7 +156,7 @@ void drawScene()
     }
 
 
-    #if (ENABLE_BORDERS > 0)
+    #if (BORDERS_ENABLED > 0)
     glBegin(GL_LINE_LOOP);
     glVertex2d(RIGHT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
     glVertex2d(LEFT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
@@ -257,7 +257,7 @@ void handleNormalKeys(unsigned char key, int x, int y) {
             break;
 
         case '.':
-            if (!(model_speed * pSimpleSpace->get_model_timestep_ms() > 100000)) {
+            if (!(model_speed * pSimpleSpace->get_model_time_step_ms() > 100000)) {
                 model_speed *= 10;
                 cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
             }
@@ -381,6 +381,7 @@ int main(int argc, char * argv[])
     // TODO: find where deinit should be, as we don't get here
     delete pSimpleSpace;
     pSimpleSpace = NULL;
+
     cout << "main(): Finished" << endl;
     return 0;
 }

@@ -76,8 +76,10 @@ namespace physics {
     double GravForce(const double& mass1Kg, const double& mass2Kg, const double& distM);
 
     // Movement with constant acceleration
-    void MoveWithConstAcc(phys_vector& pos, phys_vector& vel, const phys_vector& acc, const double& time);
-
+    void MoveWithConstAcc(phys_vector& pos,
+                          phys_vector& vel,
+                          const phys_vector& acc,
+                          const double& time);
 } // namespace physics
 
 #endif
