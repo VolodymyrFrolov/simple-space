@@ -43,6 +43,11 @@ void SimpleSpace::move_one_step() {
         ita->acc = acc;
         #endif
 
+        #if (BORDERS_ENABLED > 0)
+        acc.x += GLOBAL_GRAVITY_ACC_X;
+        acc.y += GLOBAL_GRAVITY_ACC_Y;
+        #endif
+
         // Third: make movement, updating position and velocity
         physics::MoveWithConstAcc(ita->pos, ita->vel, acc, (_time_step_ms/1000.0));
     }
@@ -111,6 +116,7 @@ void SimpleSpace::resolve_border_collision(Planet& pl) {
             pl.pos.x = RIGHT_BORDER - pl.radM;
         if (pl.vel.x > 0)
             pl.vel.x = -pl.vel.x * COEF_RES;
+        pl.vel.y *= BORDER_FRICTION;
     }
 
     if ((pl.pos.x - pl.radM) < LEFT_BORDER) {
@@ -118,6 +124,7 @@ void SimpleSpace::resolve_border_collision(Planet& pl) {
             pl.pos.x = LEFT_BORDER + pl.radM;
         if (pl.vel.x < 0)
             pl.vel.x = -pl.vel.x * COEF_RES;
+        pl.vel.y *= BORDER_FRICTION;
     }
 
     if ((pl.pos.y + pl.radM) > TOP_BORDER) {
@@ -125,6 +132,7 @@ void SimpleSpace::resolve_border_collision(Planet& pl) {
             pl.pos.y = TOP_BORDER - pl.radM;
         if (pl.vel.y > 0)
             pl.vel.y = -pl.vel.y * COEF_RES;
+        pl.vel.x *= BORDER_FRICTION;
     }
 
     if ((pl.pos.y - pl.radM) < BOTTOM_BORDER) {
@@ -132,6 +140,7 @@ void SimpleSpace::resolve_border_collision(Planet& pl) {
             pl.pos.y = BOTTOM_BORDER + pl.radM;
         if (pl.vel.y < 0)
             pl.vel.y = -pl.vel.y * COEF_RES;
+        pl.vel.x *= BORDER_FRICTION;
     }
 }
 

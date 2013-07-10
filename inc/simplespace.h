@@ -22,14 +22,18 @@ using std::vector;
 #include "planet.h"
 using physics::phys_vector;
 
-#define GRAVITY_ENABLED 0    // Gravity: 1-on; 0-off
-#define COEF_RES        0.5  // Coefficient of restitution [0..1] = [absolutely inelastic .. absolute elastic]
+#define GRAVITY_ENABLED  0    // Gravity: 1-on; 0-off
+#define COEF_RES         0.5  // Coefficient of restitution [0..1] = [absolutely inelastic .. absolute elastic]
 
-#define BORDERS_ENABLED 1    // Borders: 1-on; 0-off
-#define LEFT_BORDER   -8e7
-#define RIGHT_BORDER   8e7
-#define TOP_BORDER     5e7
-#define BOTTOM_BORDER -5e7
+#define BORDERS_ENABLED  1    // Borders: 1-on; 0-off
+#define BORDER_FRICTION  0.5  // Friction of borders: 0..1
+#define LEFT_BORDER     -8e7
+#define RIGHT_BORDER     8e7
+#define TOP_BORDER       5e7
+#define BOTTOM_BORDER   -5e7
+
+#define GLOBAL_GRAVITY_ACC_X 1e5
+#define GLOBAL_GRAVITY_ACC_Y 1e5
 
 class SimpleSpace
 {
