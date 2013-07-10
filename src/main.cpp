@@ -42,6 +42,16 @@ int mouse_y_current = 0;
 bool mouse_pressed_left = false;
 bool mouse_pressed_right = false;
 
+bool shift_pressed = false;
+bool ctrl_pressed = false;
+bool alt_pressed = false;
+
+const double default_planet_mass = 1e29;
+const double default_planet_rad = 2e6;
+double mass_for_new_planet = default_planet_mass;
+double rad_for_new_planet = default_planet_rad;
+Color_RGB next_color = {0.0f, 0.0f, 0.0f};
+
 enum AliasMode {
     ALIAS_MODE_ALIASED,
     ALIAS_MODE_ANTIALIASED,
@@ -64,9 +74,10 @@ void handleSpecialKeys(int key, int x, int y);
 void handleMouse(int button, int state, int x, int y);
 void handleMouseMotion(int x, int y);
 
-void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y, GLdouble ang);
+void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, Color_RGBA color);
+void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RGBA color, GLdouble angle);
 
-ColorF_RGB getRandomColor();
+Color_RGB getRandomColor();
 
 //Initializes rendering
 void initRendering()
@@ -80,6 +91,8 @@ void initRendering()
     glDisable( GL_LINE_SMOOTH );
     glDisable( GL_POLYGON_SMOOTH );
     glDisable( GL_MULTISAMPLE );
+    
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     int window_width = glutGet(GLUT_WINDOW_WIDTH);
     int window_height = glutGet(GLUT_WINDOW_HEIGHT);
@@ -147,13 +160,19 @@ void drawScene()
     
     for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
         it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
-        glColor3f(it->color.R, it->color.G, it->color.B);
-        DrawFilledCircle(it->radM/double(model_scale), it->pos.x/double(model_scale), it->pos.y/double(model_scale), it->angle);
+        draw_planet(it->radM/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f}, it->angle);
     }
 
-    if (mouse_pressed_left) {
+    if (mouse_pressed_left) {        
+        draw_planet(rad_for_new_planet/model_scale, mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0, \
+                    {next_color.R, next_color.G, next_color.B, 1.0f}, 0);
+        render_bitmap_string_2d("Rad: xxx Mass: xxx",
+                                mouse_x_pressed - window_width/2.0 - 50,
+                                mouse_y_pressed - window_height/2.0 + 22,
+                                GLUT_BITMAP_HELVETICA_12,
+                                {1.0f, 1.0f, 1.0f, 0.5f});
         glBegin(GL_LINES);
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(next_color.R, next_color.G, next_color.B, 1.0f);
         glVertex2d(mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0);
         glVertex2d(mouse_x_current - window_width/2.0, mouse_y_current - window_height/2.0);
         glEnd();
@@ -291,6 +310,7 @@ void handleSpecialKeys(int key, int x, int y) {
 }
 
 void handleMouse(int button, int state, int x, int y) {
+
     mouse_x_current = x;
     mouse_y_current = y;
 
@@ -299,14 +319,21 @@ void handleMouse(int button, int state, int x, int y) {
     } else if (button == GLUT_RIGHT_BUTTON) {
         mouse_pressed_right = (state == GLUT_DOWN);
     }
+    
+    //shift_pressed = glutGetModifiers() & GLUT_ACTIVE_SHIFT;
+    //ctrl_pressed = glutGetModifiers() & GLUT_ACTIVE_CTRL;
+    //alt_pressed = glutGetModifiers() & GLUT_ACTIVE_ALT;
 
-    // Save mouse press position
+    // Save mouse pressed down position
     if ((state == GLUT_DOWN) && (button == GLUT_LEFT_BUTTON)) {
         mouse_x_pressed = x;
         mouse_y_pressed = y;
     }
+    
+    if (mouse_pressed_left)
+        next_color = getRandomColor();
 
-    // Add planet when left mouse button release
+    // Add planet when left mouse button released
     if ((state == GLUT_UP) && (button == GLUT_LEFT_BUTTON)) {
         // Calculate model coordinates
         int window_width = glutGet(GLUT_WINDOW_WIDTH);
@@ -322,36 +349,49 @@ void handleMouse(int button, int state, int x, int y) {
         pSimpleSpace->add_planet_by_Pos_and_Vel(phys_vector(model_x, model_y),
                                                 phys_vector(mouse_moved_x * model_scale, mouse_moved_y * model_scale),
                                                 0,
-                                                getRandomColor());
+                                                next_color);
         cout << " objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
     }
 }
 
 void handleMouseMotion(int x, int y) {
-    mouse_x_current = x;
-    mouse_y_current = y;
+    if (mouse_pressed_left) {
+        mouse_x_current = x;
+        mouse_y_current = y;
+    }
+}
+
+// Render 2D text
+void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, Color_RGBA color) {
+    const char * ch;
+    glColor4f(color.R, color.G, color.B, color.A);
+    glRasterPos2f(x, y);
+    for (ch = cstr; *ch != '\0'; ch++)
+        glutBitmapCharacter(font, *ch);
 }
 
 //Draw a 2D painted cicle using GL_TRIANGLE_FAN
-void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y, GLdouble ang)
+void draw_planet(GLdouble rad, GLdouble centre_x, GLdouble centre_y, Color_RGBA color, GLdouble angle)
 {
     if (rad < 1)
         rad = 1;
+
+    glColor4f(color.R, color.G, color.B, color.A);
     glBegin(GL_TRIANGLE_FAN);
     glVertex2d(centre_x, centre_y);
     double delta = M_PI / 100;
-    for (double angle = 0; angle <= 2 * M_PI; angle += delta)
-        glVertex2d(rad * cos(angle) + centre_x, rad * sin(angle) + centre_y);
+    for (double a = 0; a <= 2 * M_PI; a += delta)
+        glVertex2d(rad * cos(a) + centre_x, rad * sin(a) + centre_y);
     glEnd();
 
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_LINES);
     glVertex2d(centre_x, centre_y);
-    glVertex2d(rad * cos(ang) + centre_x, rad * sin(ang) + centre_y);
+    glVertex2d(rad * cos(angle) + centre_x, rad * sin(angle) + centre_y);
     glEnd();
 }
 
-ColorF_RGB getRandomColor() {
+Color_RGB getRandomColor() {
     return {static_cast<float>((rand()%10 + 1)/10.0),
             static_cast<float>((rand()%10 + 1)/10.0),
             static_cast<float>((rand()%10 + 1)/10.0)};
@@ -364,7 +404,7 @@ int main(int argc, char * argv[])
     cout << "main(): Stared" << endl;
 
     // Seed for random values
-    srand ( (unsigned int)(time(NULL)) );
+    srand(static_cast<unsigned int>(time(NULL)));
 
     // SimpleSpace testing begin
     double dist = 4e7;
@@ -379,7 +419,7 @@ int main(int argc, char * argv[])
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
 	glutInitWindowSize(1024, 600);
 
-	glutCreateWindow("My test");
+	glutCreateWindow("Simple Space");
 	initRendering();
 
 	glutDisplayFunc(drawScene);

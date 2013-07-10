@@ -34,10 +34,17 @@ enum PlanetName {
     SUN
 };
 
-struct ColorF_RGB {
+struct Color_RGB {
     float R;
     float G;
     float B;
+};
+
+struct Color_RGBA {
+    float R;
+    float G;
+    float B;
+    float A;
 };
 
 class Planet : public physics::Body {
@@ -49,7 +56,7 @@ public:
            phys_vector Pos,
            phys_vector Vel,
            double Ang_Vel,
-           ColorF_RGB Color) : Body(Name, Pos, Vel, Ang_Vel),
+           Color_RGB Color) : Body(Name, Pos, Vel, Ang_Vel),
                               massKg(MassKg),
                               radM(RadM),
                               prev_pos(Pos),
@@ -63,7 +70,7 @@ public:
     phys_vector prev_pos;
     phys_vector prev_vel;
     phys_vector acc;
-    ColorF_RGB color;
+    Color_RGB color;
 
     // TODO: make private members
 };
