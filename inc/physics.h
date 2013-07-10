@@ -40,11 +40,14 @@ namespace physics {
         // Constructor
         Body(string Name,
              phys_vector Pos,
-             phys_vector Vel) : name(Name), pos(Pos), vel(Vel) {};
+             phys_vector Vel,
+             double Ang_Vel) : name(Name), pos(Pos), vel(Vel), ang_vel(Ang_Vel), angle(0) {};
 
         string name;
         phys_vector pos;
         phys_vector vel;
+        double ang_vel;
+        double angle;
     };
 
     double DegToRad(const double& Deg);

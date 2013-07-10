@@ -22,7 +22,7 @@ using std::vector;
 #include "planet.h"
 using physics::phys_vector;
 
-#define GRAVITY_ENABLED 1    // Gravity: 1-on; 0-off
+#define GRAVITY_ENABLED 0    // Gravity: 1-on; 0-off
 #define COEF_RES        0.5  // Coefficient of restitution [0..1] = [absolutely inelastic .. absolute elastic]
 
 #define BORDERS_ENABLED 1    // Borders: 1-on; 0-off
@@ -44,7 +44,7 @@ public:
     SimpleSpace(int timestep_ms = 10);
     ~SimpleSpace();
     void add_planet(const Planet& new_planet);
-    void add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel, const ColorF_RGB col);
+    void add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel, const double Ang_Vel, const ColorF_RGB col);
     void remove_all_objects();
     void move_one_step();
     vector<Planet> planets;

@@ -25,7 +25,7 @@ void SimpleSpace::move_one_step() {
     for (vector<Planet>::iterator ita = planets.begin(), ita_end = planets.end(); ita != ita_end; ++ita) {
         // Fisrt: save current parameters to previous values, except acc
         ita->prev_pos = ita->pos;
-        ita->prev_vel = ita->vel;
+        ita->prev_vel = ita->vel;  // prev_vel is currently not used
 
         // Second: calculate new positions for planets with/without gravity after movement
         phys_vector acc;
@@ -56,10 +56,10 @@ void SimpleSpace::move_one_step() {
             double dist = physics::DistFromPos(ita->pos, itb->pos);
             double rad_sum = ita->radM + itb->radM;
             if (dist < rad_sum) {
+
                 // Debug log
                 cout << "Collision between: " << ita->name << " and " << itb->name << endl;
 
-                // First move apart bodies
                 move_apart_bodies(*ita, *itb);
 
                 // Angle between bodies is also angle between XY and Normal-Tangential (NT) coordinates system
@@ -152,7 +152,12 @@ void SimpleSpace::move_apart_bodies(Planet& p1, Planet& p2) {
         p2.pos.y += pull_dist_2 * sin(angle);
 
         // Debug logs
-        cout << "pulling: dist=" << dist << " rad_sum=" << p1.radM + p2.radM << " pull_dist_abs=" << pull_dist_abs << " pull_dist_1=" << pull_dist_1 << " pull_dist_2=" << pull_dist_2 << endl;
+        cout << "pulling: dist=" << dist << " rad_sum=" << p1.radM + p2.radM << \
+        " pull_dist_abs=" << pull_dist_abs << " pull_dist_1=" << pull_dist_1 << \
+        " pull_dist_2=" << pull_dist_2 << endl;
+    } else {
+        // Debug logs
+        cout << "WARNING!!!: pulling was not needed" << endl;
     }
 }
 
@@ -168,10 +173,10 @@ void SimpleSpace::add_planet(const Planet& new_planet) {
     planets.push_back(p);
 }
 
-void SimpleSpace::add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel, const ColorF_RGB col) {
+void SimpleSpace::add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel, double ang_vel, const ColorF_RGB col) {
     std::stringstream ss;
     ss << planet_id;
-    SimpleSpace::add_planet(Planet(ss.str(), 1e29, 2e6, pos, vel, col));
+    SimpleSpace::add_planet(Planet(ss.str(), 1e29, 2e6, pos, vel, ang_vel, col));
 }
 
 void SimpleSpace::remove_all_objects() {

@@ -64,7 +64,7 @@ void handleSpecialKeys(int key, int x, int y);
 void handleMouse(int button, int state, int x, int y);
 void handleMouseMotion(int x, int y);
 
-void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y);
+void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y, GLdouble ang);
 
 ColorF_RGB getRandomColor();
 
@@ -148,7 +148,7 @@ void drawScene()
     for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
         it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
         glColor3f(it->color.R, it->color.G, it->color.B);
-        DrawFilledCircle(it->radM/double(model_scale), it->pos.x/double(model_scale), it->pos.y/double(model_scale));
+        DrawFilledCircle(it->radM/double(model_scale), it->pos.x/double(model_scale), it->pos.y/double(model_scale), it->angle);
     }
 
     if (mouse_pressed_left) {
@@ -273,19 +273,19 @@ void handleSpecialKeys(int key, int x, int y) {
     switch (key)
     {
         case GLUT_KEY_RIGHT:
-            view_offset_x += 50;
-            break;
-
-        case GLUT_KEY_UP:
-            view_offset_y -= 50;
-            break;
-
-        case GLUT_KEY_LEFT:
             view_offset_x -= 50;
             break;
 
-        case GLUT_KEY_DOWN:
+        case GLUT_KEY_UP:
             view_offset_y += 50;
+            break;
+
+        case GLUT_KEY_LEFT:
+            view_offset_x += 50;
+            break;
+
+        case GLUT_KEY_DOWN:
+            view_offset_y -= 50;
             break;
     }
 }
@@ -321,6 +321,7 @@ void handleMouse(int button, int state, int x, int y) {
 
         pSimpleSpace->add_planet_by_Pos_and_Vel(phys_vector(model_x, model_y),
                                                 phys_vector(mouse_moved_x * model_scale, mouse_moved_y * model_scale),
+                                                0,
                                                 getRandomColor());
         cout << " objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
     }
@@ -332,7 +333,7 @@ void handleMouseMotion(int x, int y) {
 }
 
 //Draw a 2D painted cicle using GL_TRIANGLE_FAN
-void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y)
+void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y, GLdouble ang)
 {
     if (rad < 1)
         rad = 1;
@@ -342,14 +343,18 @@ void DrawFilledCircle(GLdouble rad, GLdouble centre_x, GLdouble centre_y)
     for (double angle = 0; angle <= 2 * M_PI; angle += delta)
         glVertex2d(rad * cos(angle) + centre_x, rad * sin(angle) + centre_y);
     glEnd();
+
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glBegin(GL_LINES);
+    glVertex2d(centre_x, centre_y);
+    glVertex2d(rad * cos(ang) + centre_x, rad * sin(ang) + centre_y);
+    glEnd();
 }
 
 ColorF_RGB getRandomColor() {
-    ColorF_RGB ret = {static_cast<float>((rand()%10 + 1)/10.0),
-        static_cast<float>((rand()%10 + 1)/10.0),
-        static_cast<float>((rand()%10 + 1)/10.0)};
-    cout << "color: " << ret.R << " "  << ret.G << " " << ret.B << endl;
-    return ret;
+    return {static_cast<float>((rand()%10 + 1)/10.0),
+            static_cast<float>((rand()%10 + 1)/10.0),
+            static_cast<float>((rand()%10 + 1)/10.0)};
 }
 
 // default changed to make glutInit() work
@@ -363,11 +368,11 @@ int main(int argc, char * argv[])
 
     // SimpleSpace testing begin
     double dist = 4e7;
-    pSimpleSpace->add_planet(Planet("Planet-1", 1e30, 3e6, phys_vector(0, 0), phys_vector(0, 0), getRandomColor()));
-    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(dist/4,   0), phys_vector(0,  -2e6), getRandomColor()));
-    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(-dist/4,  0), phys_vector(0,   2e6), getRandomColor()));
-    pSimpleSpace->add_planet(Planet("Planet-4", 1e15, 1e6, phys_vector(0, dist/1.5), phys_vector(-1.5e6, 0), getRandomColor()));
-    pSimpleSpace->add_planet(Planet("Planet-5", 1e15, 1e6, phys_vector(0, -dist/1.5), phys_vector(1.5e6, 0), getRandomColor()));
+    pSimpleSpace->add_planet(Planet("Planet-1", 1e30, 3e6, phys_vector(0, 0), phys_vector(0, 0), 0, getRandomColor()));
+    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(dist/4,   0), phys_vector(0,  -2e6), 0, getRandomColor()));
+    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(-dist/4,  0), phys_vector(0,   2e6), 0, getRandomColor()));
+    pSimpleSpace->add_planet(Planet("Planet-4", 1e15, 1e6, phys_vector(0, dist/1.5), phys_vector(-1.5e6, 0), 0, getRandomColor()));
+    pSimpleSpace->add_planet(Planet("Planet-5", 1e15, 1e6, phys_vector(0, -dist/1.5), phys_vector(1.5e6, 0), 0, getRandomColor()));
 
     glutInit(&argc, argv);
 
