@@ -356,10 +356,6 @@ void handleMouse(int button, int state, int x, int y) {
         mouse_pressed_right = (state == GLUT_DOWN);
     }
     
-    //shift_pressed = glutGetModifiers() & GLUT_ACTIVE_SHIFT;
-    //ctrl_pressed = glutGetModifiers() & GLUT_ACTIVE_CTRL;
-    //alt_pressed = glutGetModifiers() & GLUT_ACTIVE_ALT;
-
     // Save mouse pressed down position
     if ((state == GLUT_DOWN) && (button == GLUT_LEFT_BUTTON)) {
         mouse_x_pressed = x;
@@ -387,9 +383,26 @@ void handleMouseMotion(int x, int y) {
     if (mouse_pressed_left) {
         mouse_x_current = x;
         mouse_y_current = y;
-
-        next_planet.vel.x = (x - mouse_x_pressed) * model_scale;
-        next_planet.vel.y = (y - mouse_y_pressed) * model_scale;
+        
+        // Another option to see if modifier key is pressed:
+        // if (glutGetModifiers() & GLUT_ACTIVE_SHIFT) {...}
+        switch (glutGetModifiers())
+        {
+            case GLUT_ACTIVE_SHIFT:
+                next_planet.radM = sqrt(pow((mouse_x_current - mouse_x_pressed) * model_scale, 2) + \
+                                        pow((mouse_y_current - mouse_y_pressed) * model_scale, 2));
+                break;
+            case GLUT_ACTIVE_CTRL:
+                next_planet.massKg = sqrt(pow((mouse_x_current - mouse_x_pressed), 2) + \
+                                          pow((mouse_y_current - mouse_y_pressed), 2)) * 1e30;
+                cout << "dist: " << sqrt(pow((mouse_x_current - mouse_x_pressed), 2) + pow((mouse_y_current - mouse_y_pressed), 2)) << " next mass: " << next_planet.massKg << endl;
+                break;
+            case GLUT_ACTIVE_ALT:
+                break;
+            default:
+                next_planet.vel.x = (mouse_x_current - mouse_x_pressed) * model_scale;
+                next_planet.vel.y = (mouse_y_current - mouse_y_pressed) * model_scale;
+        }
     }
 }
 
