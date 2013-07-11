@@ -49,9 +49,14 @@ bool alt_pressed = false;
 
 const double default_planet_mass = 1e29;
 const double default_planet_rad = 2e6;
-double mass_for_new_planet = default_planet_mass;
-double rad_for_new_planet = default_planet_rad;
-Color_RGB next_color = {0.0f, 0.0f, 0.0f};
+
+Planet next_planet("Next Planet",
+                   default_planet_mass,
+                   default_planet_rad,
+                   phys_vector(0, 0),
+                   phys_vector(0, 0),
+                   0,
+                   {0.0f, 0.0f, 0.0f});
 
 std::stringstream ss;
 std::string str;
@@ -82,6 +87,7 @@ void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, C
 void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RGBA color, GLdouble angle);
 
 Color_RGB getRandomColor();
+void update_planet_with_defaults(Planet& pl);
 
 //Initializes rendering
 void initRendering()
@@ -168,30 +174,41 @@ void drawScene()
     }
 
     if (mouse_pressed_left) {        
-        draw_planet(rad_for_new_planet/model_scale, mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0, \
-                    {next_color.R, next_color.G, next_color.B, 1.0f}, 0);
+        draw_planet(next_planet.radM / model_scale, mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0, \
+                    {next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f}, 0);
 
-        ss << mass_for_new_planet;
+        ss << next_planet.massKg;
         str = std::string("Mass: ") + ss.str() + std::string(" kg");
         render_bitmap_string_2d(str.c_str(),
                                 mouse_x_pressed - window_width/2.0 - 30,
-                                mouse_y_pressed - window_height/2.0 + 22,
+                                mouse_y_pressed - window_height/2.0 + 25,
                                 GLUT_BITMAP_HELVETICA_12,
                                 {1.0f, 1.0f, 1.0f, 0.5f});
         ss.clear();
         ss.str(std::string());
-        ss << rad_for_new_planet;
+
+        ss << next_planet.radM;
         str = std::string("Rad: ") + ss.str() + std::string(" m");
         render_bitmap_string_2d(str.c_str(),
                                 mouse_x_pressed - window_width/2.0 - 30,
-                                mouse_y_pressed - window_height/2.0 + 35,
+                                mouse_y_pressed - window_height/2.0 + 40,
+                                GLUT_BITMAP_HELVETICA_12,
+                                {1.0f, 1.0f, 1.0f, 0.5f});
+        ss.clear();
+        ss.str(std::string());
+
+        ss << sqrt(pow(next_planet.vel.x, 2) + pow(next_planet.vel.y, 2));
+        str = std::string("Vel: ") + ss.str() + std::string(" m/s");
+        render_bitmap_string_2d(str.c_str(),
+                                mouse_x_pressed - window_width/2.0 - 30,
+                                mouse_y_pressed - window_height/2.0 + 55,
                                 GLUT_BITMAP_HELVETICA_12,
                                 {1.0f, 1.0f, 1.0f, 0.5f});
         ss.clear();
         ss.str(std::string());
 
         glBegin(GL_LINES);
-        glColor4f(next_color.R, next_color.G, next_color.B, 1.0f);
+        glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
         glVertex2d(mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0);
         glVertex2d(mouse_x_current - window_width/2.0, mouse_y_current - window_height/2.0);
         glEnd();
@@ -348,28 +365,21 @@ void handleMouse(int button, int state, int x, int y) {
         mouse_x_pressed = x;
         mouse_y_pressed = y;
     }
-    
-    if (mouse_pressed_left)
-        next_color = getRandomColor();
+
+    int window_width = glutGet(GLUT_WINDOW_WIDTH);
+    int window_height = glutGet(GLUT_WINDOW_HEIGHT);
+
+    if (mouse_pressed_left) {
+        update_planet_with_defaults(next_planet);
+        next_planet.pos.x = next_planet.prev_pos.x = (x - window_width/2) * model_scale;
+        next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
+        next_planet.color = getRandomColor();
+    }
 
     // Add planet when left mouse button released
     if ((state == GLUT_UP) && (button == GLUT_LEFT_BUTTON)) {
-        // Calculate model coordinates
-        int window_width = glutGet(GLUT_WINDOW_WIDTH);
-        int window_height = glutGet(GLUT_WINDOW_HEIGHT);
-        int model_x = (mouse_x_pressed - window_width/2) * model_scale;
-        int model_y = (mouse_y_pressed - window_height/2) * model_scale;
-
-        // Calculate speed depending on mouse grag distance
-        int mouse_moved_x = x - mouse_x_pressed;
-        int mouse_moved_y = y - mouse_y_pressed;
-        cout << "Drag X=" << mouse_moved_x << " Y=" << mouse_moved_y << endl;
-
-        pSimpleSpace->add_planet_by_Pos_and_Vel(phys_vector(model_x, model_y),
-                                                phys_vector(mouse_moved_x * model_scale, mouse_moved_y * model_scale),
-                                                0,
-                                                next_color);
-        cout << " objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+        pSimpleSpace->add_planet(next_planet);
+        cout << "objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
     }
 }
 
@@ -377,6 +387,9 @@ void handleMouseMotion(int x, int y) {
     if (mouse_pressed_left) {
         mouse_x_current = x;
         mouse_y_current = y;
+
+        next_planet.vel.x = (x - mouse_x_pressed) * model_scale;
+        next_planet.vel.y = (y - mouse_y_pressed) * model_scale;
     }
 }
 
@@ -414,6 +427,15 @@ Color_RGB getRandomColor() {
     return {static_cast<float>((rand()%10 + 1)/10.0),
             static_cast<float>((rand()%10 + 1)/10.0),
             static_cast<float>((rand()%10 + 1)/10.0)};
+}
+
+void update_planet_with_defaults(Planet& pl) {
+    pl.name = "Next planet";
+    pl.massKg = default_planet_mass;
+    pl.radM = default_planet_rad;
+    pl.pos.x = pl.pos.y = pl.prev_pos.x = pl.prev_pos.y = 0;
+    pl.vel.x = pl.vel.y = pl.prev_vel.x = pl.prev_vel.y= 0;
+    pl.color = {0.0f, 0.0f, 0.0f};
 }
 
 // default changed to make glutInit() work

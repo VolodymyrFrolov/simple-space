@@ -98,8 +98,10 @@ namespace physics {
     // Gravity acceleration, m/s^2
     double GravAcc(const double& massKg, const double& distM)
     {
-        if (distM == 0)
+        if (distM == 0) {
+            std::cout << "Throwing exception: devision by zero attempted!" << std::endl;
             throw (DevByZero);
+        }
 
         return (double(CONST_G) * massKg) / (distM * distM);
     }

@@ -182,12 +182,6 @@ void SimpleSpace::add_planet(const Planet& new_planet) {
     planets.push_back(p);
 }
 
-void SimpleSpace::add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel, double ang_vel, const Color_RGB col) {
-    std::stringstream ss;
-    ss << planet_id;
-    SimpleSpace::add_planet(Planet(ss.str(), 1e29, 2e6, pos, vel, ang_vel, col));
-}
-
 void SimpleSpace::remove_all_objects() {
     std::lock_guard<std::mutex> guard(step_mutex);
     planet_id = 0;

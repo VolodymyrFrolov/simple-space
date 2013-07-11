@@ -32,8 +32,8 @@ using physics::phys_vector;
 #define TOP_BORDER       5e7
 #define BOTTOM_BORDER   -5e7
 
-#define GLOBAL_TOP_MASS    1e30 // put 1e32 for both to reprocuce crash whenplnets get to the corner
-#define GLOBAL_RIGHT_MASS  0 // temp, for physics check
+#define GLOBAL_TOP_MASS    1e32 // put 1e32 for both to reprocuce crash whenplnets get to the corner
+#define GLOBAL_RIGHT_MASS  0    // temp, for physics check
 
 class SimpleSpace
 {
@@ -48,7 +48,6 @@ public:
     SimpleSpace(int timestep_ms = 10);
     ~SimpleSpace();
     void add_planet(const Planet& new_planet);
-    void add_planet_by_Pos_and_Vel(const phys_vector& pos, const phys_vector& vel, const double Ang_Vel, const Color_RGB col);
     void remove_all_objects();
     void move_one_step();
     vector<Planet> planets;
