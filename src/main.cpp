@@ -49,13 +49,7 @@ bool rad_modifier_key_down = false;
 const double default_planet_mass = 1e29;
 const double default_planet_rad = 2e6;
 
-Planet next_planet("Next Planet",
-                   default_planet_mass,
-                   default_planet_rad,
-                   phys_vector(0, 0),
-                   phys_vector(0, 0),
-                   0,
-                   {0.0f, 0.0f, 0.0f});
+Planet next_planet;
 
 std::stringstream ss;
 std::string str;
@@ -83,10 +77,9 @@ void handleMouse(int button, int state, int x, int y);
 void handleMouseMotion(int x, int y);
 
 void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, Color_RGBA color);
-void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RGBA color, GLdouble angle);
+void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RGBA color);
 
 Color_RGB getRandomColor();
-void update_planet_with_defaults(Planet& pl);
 
 //Initializes rendering
 void initRendering()
@@ -169,14 +162,14 @@ void drawScene()
     
     for (std::vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
         it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
-        draw_planet(it->radM/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f}, it->angle);
+        draw_planet(it->rad_m/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f});
     }
 
     if (mouse_left_key_down) {
-        draw_planet(next_planet.radM / model_scale, mouse_left_key_down_x - window_width/2.0, mouse_left_key_down_y - window_height/2.0, \
-                    {next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f}, 0);
+        draw_planet(next_planet.rad_m / model_scale, mouse_left_key_down_x - window_width/2.0, mouse_left_key_down_y - window_height/2.0, \
+                    {next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f});
 
-        ss << next_planet.massKg;
+        ss << next_planet.mass_kg;
         str = std::string("Mass: ") + ss.str() + std::string(" kg");
         render_bitmap_string_2d(str.c_str(),
                                 mouse_left_key_down_x - window_width/2.0 - 30,
@@ -186,7 +179,7 @@ void drawScene()
         ss.clear();
         ss.str(std::string());
 
-        ss << next_planet.radM;
+        ss << next_planet.rad_m;
         str = std::string("Rad: ") + ss.str() + std::string(" m");
         render_bitmap_string_2d(str.c_str(),
                                 mouse_left_key_down_x - window_width/2.0 - 30,
@@ -389,16 +382,20 @@ void handleMouse(int button, int state, int x, int y) {
     int window_height = glutGet(GLUT_WINDOW_HEIGHT);
 
     if (mouse_left_key_down) {
-        update_planet_with_defaults(next_planet);
+        next_planet.reset_parameters();
         next_planet.pos.x = next_planet.prev_pos.x = (x - window_width/2) * model_scale;
         next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
+        next_planet.mass_kg = 1e29;
+        next_planet.rad_m = 2e6;
         next_planet.color = getRandomColor();
     }
 
     // Add planet when left mouse button released
     if ((state == GLUT_UP) && (button == GLUT_LEFT_BUTTON)) {
         pSimpleSpace->add_planet(next_planet);
-        cout << "objects: "<< pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+        cout << "objects: " << pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+        for (int i = 0; i < pSimpleSpace->planets.size(); ++i)
+            cout << "id[" << i << "]: " << pSimpleSpace->planets.at(i).id << endl;
     }
 }
 
@@ -408,10 +405,10 @@ void handleMouseMotion(int x, int y) {
         mouse_active_motion_y = y;
 
         if (mass_modifier_key_down) {
-            next_planet.massKg = sqrt(pow((mouse_active_motion_x - mouse_left_key_down_x), 2) + \
+            next_planet.mass_kg = sqrt(pow((mouse_active_motion_x - mouse_left_key_down_x), 2) + \
                                       pow((mouse_active_motion_y - mouse_left_key_down_y), 2)) * 1e30;
         } else if (rad_modifier_key_down) {
-            next_planet.radM = sqrt(pow((mouse_active_motion_x - mouse_left_key_down_x) * model_scale, 2) + \
+            next_planet.rad_m = sqrt(pow((mouse_active_motion_x - mouse_left_key_down_x) * model_scale, 2) + \
                                     pow((mouse_active_motion_y - mouse_left_key_down_y) * model_scale, 2));
         } else {
             next_planet.vel.x = (mouse_active_motion_x - mouse_left_key_down_x) * model_scale;
@@ -430,7 +427,7 @@ void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, C
 }
 
 //Draw a 2D painted cicle using GL_TRIANGLE_FAN
-void draw_planet(GLdouble rad, GLdouble centre_x, GLdouble centre_y, Color_RGBA color, GLdouble angle)
+void draw_planet(GLdouble rad, GLdouble centre_x, GLdouble centre_y, Color_RGBA color)
 {
     if (rad < 1)
         rad = 1;
@@ -442,27 +439,12 @@ void draw_planet(GLdouble rad, GLdouble centre_x, GLdouble centre_y, Color_RGBA 
     for (double a = 0; a <= 2 * M_PI; a += delta)
         glVertex2d(rad * cos(a) + centre_x, rad * sin(a) + centre_y);
     glEnd();
-
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glBegin(GL_LINES);
-    glVertex2d(centre_x, centre_y);
-    glVertex2d(rad * cos(angle) + centre_x, rad * sin(angle) + centre_y);
-    glEnd();
 }
 
 Color_RGB getRandomColor() {
     return {static_cast<float>((rand()%10 + 1)/10.0),
             static_cast<float>((rand()%10 + 1)/10.0),
             static_cast<float>((rand()%10 + 1)/10.0)};
-}
-
-void update_planet_with_defaults(Planet& pl) {
-    pl.name = "Next planet";
-    pl.massKg = default_planet_mass;
-    pl.radM = default_planet_rad;
-    pl.pos.x = pl.pos.y = pl.prev_pos.x = pl.prev_pos.y = 0;
-    pl.vel.x = pl.vel.y = pl.prev_vel.x = pl.prev_vel.y= 0;
-    pl.color = {0.0f, 0.0f, 0.0f};
 }
 
 // default changed to make glutInit() work
@@ -476,11 +458,11 @@ int main(int argc, char * argv[])
 
     // SimpleSpace testing begin
     double dist = 4e7;
-    pSimpleSpace->add_planet(Planet("Planet-1", 1e30, 3e6, phys_vector(0, 0), phys_vector(0, 0), 0, getRandomColor()));
-    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(dist/4,   0), phys_vector(0,  -2e6), 0, getRandomColor()));
-    pSimpleSpace->add_planet(Planet("Planet-2", 1e15, 1e6, phys_vector(-dist/4,  0), phys_vector(0,   2e6), 0, getRandomColor()));
-    pSimpleSpace->add_planet(Planet("Planet-4", 1e15, 1e6, phys_vector(0, dist/1.5), phys_vector(-1.5e6, 0), 0, getRandomColor()));
-    pSimpleSpace->add_planet(Planet("Planet-5", 1e15, 1e6, phys_vector(0, -dist/1.5), phys_vector(1.5e6, 0), 0, getRandomColor()));
+    pSimpleSpace->add_planet(Planet(Vector2d(0, 0), Vector2d(0, 0), 1e30, 3e6, getRandomColor()));
+    pSimpleSpace->add_planet(Planet(Vector2d( dist/4,   0), Vector2d(0,   -2e6), 1e15, 1e6, getRandomColor()));
+    pSimpleSpace->add_planet(Planet(Vector2d(-dist/4,   0), Vector2d(0,    2e6), 1e15, 1e6, getRandomColor()));
+    pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
+    pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
     glutInit(&argc, argv);
 

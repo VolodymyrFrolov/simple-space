@@ -14,7 +14,7 @@
 using std::string;
 
 #include "physics.h"
-using physics::phys_vector;
+using Physics::Vector2d;
 
 // Earth
 #define EARTH_MASS_KG 5.9722e24
@@ -27,12 +27,6 @@ using physics::phys_vector;
 // Sun
 #define SUN_MASS_KG 1.9891e30
 #define SUN_RAD_M   6.955e8
-
-enum PlanetName {
-    EARTH,
-    MOON,
-    SUN
-};
 
 struct Color_RGB {
     float R;
@@ -47,32 +41,36 @@ struct Color_RGBA {
     float A;
 };
 
-class Planet : public physics::Body {
-public:
-    // Constructor
-    Planet(string Name,
-           double MassKg,
-           double RadM,
-           phys_vector Pos,
-           phys_vector Vel,
-           double Ang_Vel,
-           Color_RGB Color) : Body(Name, Pos, Vel, Ang_Vel),
-                              massKg(MassKg),
-                              radM(RadM),
-                              prev_pos(Pos),
-                              prev_vel(Vel),
-                              color(Color) {}
+struct Planet {
+    Planet(Vector2d Pos = Vector2d(),
+           Vector2d Vel = Vector2d(),
+           double Mass_Kg = 0,
+           double Rad_M = 0,
+           Color_RGB Color = {1.0f, 1.0f, 1.0f})
+    : id(0),
+      pos(Pos),
+      vel(Vel),
+      mass_kg(Mass_Kg),
+      rad_m(Rad_M),
+      prev_pos(Pos),
+      color(Color) {}
 
-    // Mass and Radius
-    double massKg;
-    double radM;
-
-    phys_vector prev_pos;
-    phys_vector prev_vel;
-    phys_vector acc;
+    unsigned int id;
+    Vector2d pos;
+    Vector2d prev_pos;
+    Vector2d vel;
+    double mass_kg;
+    double rad_m;
     Color_RGB color;
 
-    // TODO: make private members
+    void reset_parameters() {
+        pos = Vector2d();
+        prev_pos = Vector2d();
+        vel = Vector2d();
+        mass_kg = 0;
+        rad_m = 0;
+        color = {1.0f, 1.0f, 1.0f};
+    }
 };
 
 #endif /* defined(__simple_space__planet__) */

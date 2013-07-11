@@ -8,20 +8,20 @@
 
 #include "physics.h"
 
-namespace physics {
+namespace Physics {
 
     inline double DegToRad(const double& Deg) { return (Deg * double(M_PI)) / double(180); }
     inline double RadToDeg(const double& Rad) { return (Rad * 180) / double(M_PI); }
     inline double Hypotenuse(const double& a, const double& b) { return sqrt((a*a) + (b*b)); }
 
-    void RotateVector(phys_vector& vec, const double& angle)
+    void RotateVector(Vector2d& vec, const double& angle)
     {
-        phys_vector temp(vec.x * cos(angle) - vec.y * sin(angle),    // x` = x * cos(fi) - y * sin(fi)
+        Vector2d temp(vec.x * cos(angle) - vec.y * sin(angle),    // x` = x * cos(fi) - y * sin(fi)
                          vec.x * sin(angle) + vec.y * cos(angle));   // x` = x * sin(fi) + y * cos(fi)
         vec = temp;
     }
     
-    void TranslateVector(phys_vector& vec, const double& dx, const double& dy)
+    void TranslateVector(Vector2d& vec, const double& dx, const double& dy)
     {
         vec.x += dx;
         vec.y += dy;
@@ -36,7 +36,7 @@ namespace physics {
     }
 
     // Distance by two points: pos1, pos2
-    double DistFromPos(const phys_vector& pos0, const phys_vector& pos1)
+    double DistFromPos(const Vector2d& pos0, const Vector2d& pos1)
     {
         return DistFromPos( pos0.x, pos0.y, pos1.x, pos1.y );
     }
@@ -72,7 +72,7 @@ namespace physics {
     }
 
     // Angle [0 - 2*Pi] (Rad) of line by two points: pos1, pos2
-    double AngleFromPos(const phys_vector& pos0, const phys_vector& pos1) { return AngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y ); }
+    double AngleFromPos(const Vector2d& pos0, const Vector2d& pos1) { return AngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y ); }
 
     // Input: coordinates of two points (x0,y0; x1,y1)
     // Return: Distance and Angle (returned by pair)
@@ -93,27 +93,30 @@ namespace physics {
 
     // Input: coordinates of points (pos0, pos1)
     // Return: Distance and Angle (returned by pair)
-    pair<double, double> DistAngleFromPos(const phys_vector& pos0, const phys_vector& pos1) { return DistAngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y ); }
+    pair<double, double> DistAngleFromPos(const Vector2d& pos0, const Vector2d& pos1) { return DistAngleFromPos( pos0.x, pos0.y, pos1.x, pos1.y ); }
 
     // Gravity acceleration, m/s^2
     double GravAcc(const double& massKg, const double& distM)
     {
         if (distM == 0) {
-            std::cout << "ERROR: devision by zero attempted! Throwing exception!" << std::endl;
+            std::cout << "ERROR: devision by zero attempted in GravAcc()! Throwing exception!" << std::endl;
             throw (DevByZero);
         }
-
         return (double(CONST_G) * massKg) / (distM * distM);
     }
 
     // Gravity force, N [Not currently used]
     double GravForce(const double& mass1Kg, const double& mass2Kg, const double& distM)
     {
+        if (distM == 0) {
+            std::cout << "ERROR: devision by zero attempted in GravForce()! Throwing exception!" << std::endl;
+            throw (DevByZero);
+        }
         return (double(CONST_G) * mass1Kg * mass2Kg) / (distM * distM);
     }
 
     // Movement with constant acceleration
-    void MoveWithConstAcc(phys_vector& pos, phys_vector& vel, const phys_vector& acc, const double& time)
+    void MoveWithConstAcc(Vector2d& pos, Vector2d& vel, const Vector2d& acc, const double& time)
     {
         // x = x0 + v0 * t + [(a * t^2) / 2]
         pos.x = pos.x + vel.x * time + (acc.x * time * time) / 2.0;

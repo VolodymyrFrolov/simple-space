@@ -15,12 +15,11 @@
 #include <stdlib.h> // For rand()
 using std::cout;   // temp
 using std::endl;   // temp
-using std::vector;
 #include <mutex>
 
 #include "physics.h"
 #include "planet.h"
-using physics::phys_vector;
+using Physics::Vector2d;
 
 #define GRAVITY_ENABLED  1    // Gravity: 1-on; 0-off
 #define COEF_RES         0.7  // Coefficient of restitution [0..1] = [absolutely inelastic .. absolute elastic]
@@ -32,29 +31,30 @@ using physics::phys_vector;
 #define TOP_BORDER       5e7
 #define BOTTOM_BORDER   -5e7
 
-#define GLOBAL_TOP_MASS    1e32 // put 1e32 for both to reprocuce crash whenplnets get to the corner
-#define GLOBAL_RIGHT_MASS  1e32    // temp, for physics check
+#define GLOBAL_TOP_MASS    1e30 // put 1e32 for both to reprocuce crash whenplnets get to the corner
+#define GLOBAL_RIGHT_MASS  1e29    // temp, for physics check
 
 class SimpleSpace
 {
-    int planet_id;
-    std::mutex step_mutex;
+    std::mutex movement_step_mutex;
     void move_apart_bodies(Planet& p1, Planet& p2);
     void move_apart_bodies_v2(Planet& p1, Planet& p2);
     void resolve_border_collision(Planet& p);
-    double _time_step_ms;
+    double time_step_ms;
+
+    std::vector<unsigned int> get_id_list();
 
 public:
     SimpleSpace(int timestep_ms = 10);
     ~SimpleSpace();
-    void add_planet(const Planet& new_planet);
+    void add_planet(const Planet& pl);
+    bool remove_planet(const unsigned int& id);
     void remove_all_objects();
     void move_one_step();
-    vector<Planet> planets;
+    std::vector<Planet> planets;
+    const unsigned int planets_number_max = 500; // std::numeric_limits<unsigned int>::max()
 
-    // TODO: move to private
     int  get_model_time_step_ms() const;
-    void set_model_time_step_ms(int time_step_ms);
 };
 
 #endif /* defined(__simple_space__simplespace__) */
