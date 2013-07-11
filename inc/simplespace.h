@@ -23,7 +23,7 @@ using std::vector;
 using physics::phys_vector;
 
 #define GRAVITY_ENABLED  1    // Gravity: 1-on; 0-off
-#define COEF_RES         0.5  // Coefficient of restitution [0..1] = [absolutely inelastic .. absolute elastic]
+#define COEF_RES         0.7  // Coefficient of restitution [0..1] = [absolutely inelastic .. absolute elastic]
 
 #define BORDERS_ENABLED  1    // Borders: 1-on; 0-off
 #define BORDER_FRICTION  0.7  // Friction of borders: 0..1
@@ -32,8 +32,8 @@ using physics::phys_vector;
 #define TOP_BORDER       5e7
 #define BOTTOM_BORDER   -5e7
 
-#define GLOBAL_GRAVITY_ACC_X 0
-#define GLOBAL_GRAVITY_ACC_Y 1e4
+#define GLOBAL_TOP_MASS    1e30 // put 1e32 for both to reprocuce crash whenplnets get to the corner
+#define GLOBAL_RIGHT_MASS  0 // temp, for physics check
 
 class SimpleSpace
 {

@@ -44,8 +44,8 @@ void SimpleSpace::move_one_step() {
         #endif
 
         #if (BORDERS_ENABLED > 0)
-        acc.x += GLOBAL_GRAVITY_ACC_X;
-        acc.y += GLOBAL_GRAVITY_ACC_Y;
+        acc.y += physics::GravAcc(GLOBAL_TOP_MASS, abs(ita->pos.y - TOP_BORDER));
+        acc.x += physics::GravAcc(GLOBAL_RIGHT_MASS, abs(ita->pos.x - RIGHT_BORDER));
         #endif
 
         // Third: make movement, updating position and velocity
