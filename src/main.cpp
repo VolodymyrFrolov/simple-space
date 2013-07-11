@@ -36,16 +36,15 @@ int model_scale = 200000;
 int view_offset_x = 0;
 int view_offset_y = 0;
 
-int mouse_x_pressed = 0;
-int mouse_y_pressed = 0;
-int mouse_x_current = 0;
-int mouse_y_current = 0;
-bool mouse_pressed_left = false;
-bool mouse_pressed_right = false;
+int mouse_left_key_down_x = 0;
+int mouse_left_key_down_y = 0;
+int mouse_active_motion_x = 0;
+int mouse_active_motion_y = 0;
 
-bool shift_pressed = false;
-bool ctrl_pressed = false;
-bool alt_pressed = false;
+bool mouse_left_key_down = false;
+bool mouse_right_key_down = false;
+bool mass_modifier_key_down = false;
+bool rad_modifier_key_down = false;
 
 const double default_planet_mass = 1e29;
 const double default_planet_rad = 2e6;
@@ -173,15 +172,15 @@ void drawScene()
         draw_planet(it->radM/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f}, it->angle);
     }
 
-    if (mouse_pressed_left) {        
-        draw_planet(next_planet.radM / model_scale, mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0, \
+    if (mouse_left_key_down) {
+        draw_planet(next_planet.radM / model_scale, mouse_left_key_down_x - window_width/2.0, mouse_left_key_down_y - window_height/2.0, \
                     {next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f}, 0);
 
         ss << next_planet.massKg;
         str = std::string("Mass: ") + ss.str() + std::string(" kg");
         render_bitmap_string_2d(str.c_str(),
-                                mouse_x_pressed - window_width/2.0 - 30,
-                                mouse_y_pressed - window_height/2.0 + 25,
+                                mouse_left_key_down_x - window_width/2.0 - 30,
+                                mouse_left_key_down_y - window_height/2.0 + 25,
                                 GLUT_BITMAP_HELVETICA_12,
                                 {1.0f, 1.0f, 1.0f, 0.5f});
         ss.clear();
@@ -190,8 +189,8 @@ void drawScene()
         ss << next_planet.radM;
         str = std::string("Rad: ") + ss.str() + std::string(" m");
         render_bitmap_string_2d(str.c_str(),
-                                mouse_x_pressed - window_width/2.0 - 30,
-                                mouse_y_pressed - window_height/2.0 + 40,
+                                mouse_left_key_down_x - window_width/2.0 - 30,
+                                mouse_left_key_down_y - window_height/2.0 + 40,
                                 GLUT_BITMAP_HELVETICA_12,
                                 {1.0f, 1.0f, 1.0f, 0.5f});
         ss.clear();
@@ -200,8 +199,8 @@ void drawScene()
         ss << sqrt(pow(next_planet.vel.x, 2) + pow(next_planet.vel.y, 2));
         str = std::string("Vel: ") + ss.str() + std::string(" m/s");
         render_bitmap_string_2d(str.c_str(),
-                                mouse_x_pressed - window_width/2.0 - 30,
-                                mouse_y_pressed - window_height/2.0 + 55,
+                                mouse_left_key_down_x - window_width/2.0 - 30,
+                                mouse_left_key_down_y - window_height/2.0 + 55,
                                 GLUT_BITMAP_HELVETICA_12,
                                 {1.0f, 1.0f, 1.0f, 0.5f});
         ss.clear();
@@ -209,8 +208,8 @@ void drawScene()
 
         glBegin(GL_LINES);
         glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
-        glVertex2d(mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0);
-        glVertex2d(mouse_x_current - window_width/2.0, mouse_y_current - window_height/2.0);
+        glVertex2d(mouse_left_key_down_x - window_width/2.0, mouse_left_key_down_y - window_height/2.0);
+        glVertex2d(mouse_active_motion_x - window_width/2.0, mouse_active_motion_y - window_height/2.0);
         glEnd();
     }
 
@@ -259,7 +258,9 @@ void handleResize(int w, int h)
 }
 
 //Called when a key is pressed
-void handleNormalKeys(unsigned char key, int x, int y) {
+void handleNormalKeysDown(unsigned char key, int x, int y) {
+    // To see if modifier key is pressed use:
+    // (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
 	switch (key)
     {
         // Remove objects
@@ -321,10 +322,32 @@ void handleNormalKeys(unsigned char key, int x, int y) {
                 cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
             }
             break;
+        case 'r':
+        case 'R':
+            rad_modifier_key_down = true;
+            break;
+        case 'm':
+        case 'M':
+            mass_modifier_key_down = true;
+            break;
 	}
 }
 
-void handleSpecialKeys(int key, int x, int y) {
+void handleNormalKeysUp(unsigned char key, int x, int y) {
+	switch (key)
+    {
+        case 'r':
+        case 'R':
+            rad_modifier_key_down = false;
+            break;
+        case 'm':
+        case 'M':
+            mass_modifier_key_down = false;
+            break;
+    }
+}
+
+void handleSpecialKeysDown(int key, int x, int y) {
     switch (key)
     {
         case GLUT_KEY_RIGHT:
@@ -347,25 +370,25 @@ void handleSpecialKeys(int key, int x, int y) {
 
 void handleMouse(int button, int state, int x, int y) {
 
-    mouse_x_current = x;
-    mouse_y_current = y;
+    mouse_active_motion_x = x;
+    mouse_active_motion_y = y;
 
     if (button == GLUT_LEFT_BUTTON) {
-        mouse_pressed_left = (state == GLUT_DOWN);
+        mouse_left_key_down = (state == GLUT_DOWN);
     } else if (button == GLUT_RIGHT_BUTTON) {
-        mouse_pressed_right = (state == GLUT_DOWN);
+        mouse_right_key_down = (state == GLUT_DOWN);
     }
     
     // Save mouse pressed down position
     if ((state == GLUT_DOWN) && (button == GLUT_LEFT_BUTTON)) {
-        mouse_x_pressed = x;
-        mouse_y_pressed = y;
+        mouse_left_key_down_x = x;
+        mouse_left_key_down_y = y;
     }
 
     int window_width = glutGet(GLUT_WINDOW_WIDTH);
     int window_height = glutGet(GLUT_WINDOW_HEIGHT);
 
-    if (mouse_pressed_left) {
+    if (mouse_left_key_down) {
         update_planet_with_defaults(next_planet);
         next_planet.pos.x = next_planet.prev_pos.x = (x - window_width/2) * model_scale;
         next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
@@ -380,28 +403,19 @@ void handleMouse(int button, int state, int x, int y) {
 }
 
 void handleMouseMotion(int x, int y) {
-    if (mouse_pressed_left) {
-        mouse_x_current = x;
-        mouse_y_current = y;
-        
-        // Another option to see if modifier key is pressed:
-        // if (glutGetModifiers() & GLUT_ACTIVE_SHIFT) {...}
-        switch (glutGetModifiers())
-        {
-            case GLUT_ACTIVE_SHIFT:
-                next_planet.radM = sqrt(pow((mouse_x_current - mouse_x_pressed) * model_scale, 2) + \
-                                        pow((mouse_y_current - mouse_y_pressed) * model_scale, 2));
-                break;
-            case GLUT_ACTIVE_CTRL:
-                next_planet.massKg = sqrt(pow((mouse_x_current - mouse_x_pressed), 2) + \
-                                          pow((mouse_y_current - mouse_y_pressed), 2)) * 1e30;
-                cout << "dist: " << sqrt(pow((mouse_x_current - mouse_x_pressed), 2) + pow((mouse_y_current - mouse_y_pressed), 2)) << " next mass: " << next_planet.massKg << endl;
-                break;
-            case GLUT_ACTIVE_ALT:
-                break;
-            default:
-                next_planet.vel.x = (mouse_x_current - mouse_x_pressed) * model_scale;
-                next_planet.vel.y = (mouse_y_current - mouse_y_pressed) * model_scale;
+    if (mouse_left_key_down) {
+        mouse_active_motion_x = x;
+        mouse_active_motion_y = y;
+
+        if (mass_modifier_key_down) {
+            next_planet.massKg = sqrt(pow((mouse_active_motion_x - mouse_left_key_down_x), 2) + \
+                                      pow((mouse_active_motion_y - mouse_left_key_down_y), 2)) * 1e30;
+        } else if (rad_modifier_key_down) {
+            next_planet.radM = sqrt(pow((mouse_active_motion_x - mouse_left_key_down_x) * model_scale, 2) + \
+                                    pow((mouse_active_motion_y - mouse_left_key_down_y) * model_scale, 2));
+        } else {
+            next_planet.vel.x = (mouse_active_motion_x - mouse_left_key_down_x) * model_scale;
+            next_planet.vel.y = (mouse_active_motion_y - mouse_left_key_down_y) * model_scale;
         }
     }
 }
@@ -479,10 +493,14 @@ int main(int argc, char * argv[])
 	glutDisplayFunc(drawScene);
     glutReshapeFunc(handleResize);
 
-	glutKeyboardFunc(handleNormalKeys);
-    glutSpecialFunc(handleSpecialKeys);
+	glutKeyboardFunc(handleNormalKeysDown);
+    glutKeyboardUpFunc(handleNormalKeysUp);
+    glutSpecialFunc(handleSpecialKeysDown);
     glutMouseFunc(handleMouse);
     glutMotionFunc(handleMouseMotion);
+
+    glutIgnoreKeyRepeat(1);
+    //glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF); // Disables globally - for other apps, so don't use
 
 	glutTimerFunc(1000/FRAMERATE, update, 0); //Add a timer
 

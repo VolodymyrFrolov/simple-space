@@ -99,7 +99,7 @@ namespace physics {
     double GravAcc(const double& massKg, const double& distM)
     {
         if (distM == 0) {
-            std::cout << "Throwing exception: devision by zero attempted!" << std::endl;
+            std::cout << "ERROR: devision by zero attempted! Throwing exception!" << std::endl;
             throw (DevByZero);
         }
 
