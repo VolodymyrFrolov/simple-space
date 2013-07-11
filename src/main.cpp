@@ -10,7 +10,8 @@
 using std::cout;
 using std::endl;
 #include <vector>
-using std::vector;
+#include <string>
+#include <sstream>
 
 #ifdef __APPLE__
     #include <OpenGL/OpenGL.h>
@@ -51,6 +52,9 @@ const double default_planet_rad = 2e6;
 double mass_for_new_planet = default_planet_mass;
 double rad_for_new_planet = default_planet_rad;
 Color_RGB next_color = {0.0f, 0.0f, 0.0f};
+
+std::stringstream ss;
+std::string str;
 
 enum AliasMode {
     ALIAS_MODE_ALIASED,
@@ -158,7 +162,7 @@ void drawScene()
     //glPushMatrix(); //Save the transformations performed thus far
     //glPopMatrix(); //Undo the move to the center
     
-    for (vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
+    for (std::vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
         it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
         draw_planet(it->radM/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f}, it->angle);
     }
@@ -166,11 +170,26 @@ void drawScene()
     if (mouse_pressed_left) {        
         draw_planet(rad_for_new_planet/model_scale, mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0, \
                     {next_color.R, next_color.G, next_color.B, 1.0f}, 0);
-        render_bitmap_string_2d("Rad: xxx Mass: xxx",
-                                mouse_x_pressed - window_width/2.0 - 50,
+
+        ss << mass_for_new_planet;
+        str = std::string("Mass: ") + ss.str() + std::string(" kg");
+        render_bitmap_string_2d(str.c_str(),
+                                mouse_x_pressed - window_width/2.0 - 30,
                                 mouse_y_pressed - window_height/2.0 + 22,
                                 GLUT_BITMAP_HELVETICA_12,
                                 {1.0f, 1.0f, 1.0f, 0.5f});
+        ss.clear();
+        ss.str(std::string());
+        ss << rad_for_new_planet;
+        str = std::string("Rad: ") + ss.str() + std::string(" m");
+        render_bitmap_string_2d(str.c_str(),
+                                mouse_x_pressed - window_width/2.0 - 30,
+                                mouse_y_pressed - window_height/2.0 + 35,
+                                GLUT_BITMAP_HELVETICA_12,
+                                {1.0f, 1.0f, 1.0f, 0.5f});
+        ss.clear();
+        ss.str(std::string());
+
         glBegin(GL_LINES);
         glColor4f(next_color.R, next_color.G, next_color.B, 1.0f);
         glVertex2d(mouse_x_pressed - window_width/2.0, mouse_y_pressed - window_height/2.0);
