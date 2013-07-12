@@ -186,7 +186,6 @@ void SimpleSpace::add_planet(const Planet& pl) {
     std::lock_guard<std::mutex> guard(movement_step_mutex);
 
     unsigned int new_id = 0;
-    std::vector<Planet>::iterator it;
     while (std::any_of(planets.begin(), planets.end(), [&](Planet pl) {return pl.id == new_id;}))
         ++new_id;
 
