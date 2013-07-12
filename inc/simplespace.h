@@ -36,13 +36,13 @@ using Physics::Vector2d;
 
 class SimpleSpace
 {
-    std::mutex movement_step_mutex;
     void move_apart_bodies(Planet& p1, Planet& p2);
     void move_apart_bodies_v2(Planet& p1, Planet& p2);
     void resolve_border_collision(Planet& p);
-    double time_step_ms;
-
     std::vector<unsigned int> get_id_list();
+
+    std::mutex movement_step_mutex;
+    double time_step_ms;
 
 public:
     SimpleSpace(int timestep_ms = 10);
@@ -51,10 +51,10 @@ public:
     bool remove_planet(const unsigned int& id);
     void remove_all_objects();
     void move_one_step();
-    std::vector<Planet> planets;
-    const unsigned int planets_number_max = 500; // std::numeric_limits<unsigned int>::max()
-
     int  get_model_time_step_ms() const;
+
+    std::vector<Planet> planets;
+    const unsigned int planets_number_max; // std::numeric_limits<unsigned int>::max()
 };
 
 #endif /* defined(__simple_space__simplespace__) */

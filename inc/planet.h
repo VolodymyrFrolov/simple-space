@@ -29,12 +29,21 @@ using Physics::Vector2d;
 #define SUN_RAD_M   6.955e8
 
 struct Color_RGB {
+    Color_RGB(float Red = 0.0f, float Green = 0.0f, float Blue = 0.0f)
+    : R(Red), G(Green), B(Blue) {}
+
     float R;
     float G;
     float B;
 };
 
 struct Color_RGBA {
+    Color_RGBA(float Red = 0.0f, float Green = 0.0f, float Blue = 0.0f, float Alpha = 1.0f) \
+    : R(Red), G(Green), B(Blue), A(Alpha) {}
+
+    Color_RGBA(Color_RGB Color, float Alpha = 1.0f) \
+    : R(Color.R), G(Color.G), B(Color.B), A(Alpha) {}
+
     float R;
     float G;
     float B;
@@ -46,13 +55,14 @@ struct Planet {
            Vector2d Vel = Vector2d(),
            double Mass_Kg = 0,
            double Rad_M = 0,
-           Color_RGB Color = {1.0f, 1.0f, 1.0f})
-    : id(0),
+           Color_RGB Color = Color_RGB(),
+           unsigned int Id = 0)
+    : id(Id),
       pos(Pos),
+      prev_pos(Pos),
       vel(Vel),
       mass_kg(Mass_Kg),
       rad_m(Rad_M),
-      prev_pos(Pos),
       color(Color) {}
 
     unsigned int id;
@@ -63,7 +73,7 @@ struct Planet {
     double rad_m;
     Color_RGB color;
 
-    void reset_parameters() {
+void reset_parameters() {
         pos = Vector2d();
         prev_pos = Vector2d();
         vel = Vector2d();

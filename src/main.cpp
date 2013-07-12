@@ -363,16 +363,18 @@ void handleSpecialKeysDown(int key, int x, int y) {
 
 void handleMouse(int button, int state, int x, int y) {
 
-    mouse_active_motion_x = x;
-    mouse_active_motion_y = y;
-
+    // Update mouse booleans
     if (button == GLUT_LEFT_BUTTON) {
         mouse_left_key_down = (state == GLUT_DOWN);
     } else if (button == GLUT_RIGHT_BUTTON) {
         mouse_right_key_down = (state == GLUT_DOWN);
     }
+
+    // Save initial active position of mouse
+    mouse_active_motion_x = x;
+    mouse_active_motion_y = y;
     
-    // Save mouse pressed down position
+    // Save mouse position where key was pressed down
     if ((state == GLUT_DOWN) && (button == GLUT_LEFT_BUTTON)) {
         mouse_left_key_down_x = x;
         mouse_left_key_down_y = y;
@@ -394,7 +396,7 @@ void handleMouse(int button, int state, int x, int y) {
     if ((state == GLUT_UP) && (button == GLUT_LEFT_BUTTON)) {
         pSimpleSpace->add_planet(next_planet);
         cout << "objects: " << pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
-        for (int i = 0; i < pSimpleSpace->planets.size(); ++i)
+        for (unsigned int i = 0; i < pSimpleSpace->planets.size(); ++i)
             cout << "id[" << i << "]: " << pSimpleSpace->planets.at(i).id << endl;
     }
 }

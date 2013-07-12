@@ -8,9 +8,11 @@
 
 #include "simplespace.h"
 #include <sstream>
+#include <algorithm>
+#include <vector>
 using std::vector;
 
-SimpleSpace::SimpleSpace(int Time_Step_ms) : time_step_ms(Time_Step_ms) {
+SimpleSpace::SimpleSpace(int Time_Step_ms) : time_step_ms(Time_Step_ms), planets_number_max(500) {
     cout << "SimpleSpace instance created with _timestep_ms: " << get_model_time_step_ms() << endl;
 }
 SimpleSpace::~SimpleSpace() {
@@ -180,13 +182,14 @@ void SimpleSpace::move_apart_bodies(Planet& p1, Planet& p2) {
 
 void SimpleSpace::add_planet(const Planet& pl) {
     std::lock_guard<std::mutex> guard(movement_step_mutex);
-    Planet new_planet = pl;
+
     unsigned int new_id = 0;
     vector<unsigned int> id_list = get_id_list();
     while (std::any_of(id_list.begin(), id_list.end(), [=](unsigned int id) {return id == new_id;}) && (new_id < planets_number_max))
         ++new_id;
-    new_planet.id = new_id;
 
+    Planet new_planet = pl;
+    new_planet.id = new_id;
     resolve_border_collision(new_planet);
     for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
         if (Physics::DistFromPos(new_planet.pos, it->pos) < (new_planet.rad_m + it->rad_m))
