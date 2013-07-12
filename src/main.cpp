@@ -36,13 +36,17 @@ int model_scale = 200000;
 int view_offset_x = 0;
 int view_offset_y = 0;
 
+bool mouse_left_key_is_down = false;
 int mouse_left_key_down_x = 0;
 int mouse_left_key_down_y = 0;
+
+bool mouse_right_key_is_down = false;
+int mouse_right_key_down_x = 0;
+int mouse_right_key_down_y = 0;
+
 int mouse_active_motion_x = 0;
 int mouse_active_motion_y = 0;
 
-bool mouse_left_key_down = false;
-bool mouse_right_key_down = false;
 bool mass_modifier_key_down = false;
 bool rad_modifier_key_down = false;
 
@@ -165,9 +169,11 @@ void drawScene()
         draw_planet(it->rad_m/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f});
     }
 
-    if (mouse_left_key_down) {
-        draw_planet(next_planet.rad_m / model_scale, mouse_left_key_down_x - window_width/2.0, mouse_left_key_down_y - window_height/2.0, \
-                    {next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f});
+    if (mouse_left_key_is_down) {
+        draw_planet(next_planet.rad_m / model_scale,
+                    mouse_left_key_down_x - window_width/2.0,
+                    mouse_left_key_down_y - window_height/2.0,
+                    Color_RGBA(next_planet.color, 1.0f));
 
         ss << next_planet.mass_kg;
         str = std::string("Mass: ") + ss.str() + std::string(" kg");
@@ -203,6 +209,21 @@ void drawScene()
         glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
         glVertex2d(mouse_left_key_down_x - window_width/2.0, mouse_left_key_down_y - window_height/2.0);
         glVertex2d(mouse_active_motion_x - window_width/2.0, mouse_active_motion_y - window_height/2.0);
+        glEnd();
+    }
+    
+    if (mouse_right_key_is_down) {
+        glBegin(GL_LINE_LOOP);
+        glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+        glVertex2d(mouse_right_key_down_x - window_width/2.0,
+                   mouse_right_key_down_y - window_height/2.0);
+        glVertex2d(mouse_active_motion_x - window_width/2.0,
+                   mouse_right_key_down_y - window_height/2.0);
+        glVertex2d(mouse_active_motion_x - window_width/2.0,
+                   mouse_active_motion_y - window_height/2.0);
+        glVertex2d(mouse_right_key_down_x - window_width/2.0,
+                   mouse_active_motion_y - window_height/2.0);
+
         glEnd();
     }
 
@@ -363,58 +384,94 @@ void handleSpecialKeysDown(int key, int x, int y) {
 
 void handleMouse(int button, int state, int x, int y) {
 
-    // Update mouse booleans
+    // Update global mouse buttons status booleans and positions
     if (button == GLUT_LEFT_BUTTON) {
-        mouse_left_key_down = (state == GLUT_DOWN);
+        mouse_left_key_is_down = (state == GLUT_DOWN);
+        if (mouse_left_key_is_down) {
+            mouse_left_key_down_x = x;
+            mouse_left_key_down_y = y;
+        }
     } else if (button == GLUT_RIGHT_BUTTON) {
-        mouse_right_key_down = (state == GLUT_DOWN);
+        mouse_right_key_is_down = (state == GLUT_DOWN);
+        if (mouse_right_key_is_down) {
+           mouse_right_key_down_x = x;
+           mouse_right_key_down_y = y;
+        }
     }
 
-    // Save initial active position of mouse
+    // Save global initial active start position of mouse
     mouse_active_motion_x = x;
     mouse_active_motion_y = y;
-    
-    // Save mouse position where key was pressed down
-    if ((state == GLUT_DOWN) && (button == GLUT_LEFT_BUTTON)) {
-        mouse_left_key_down_x = x;
-        mouse_left_key_down_y = y;
-    }
 
     int window_width = glutGet(GLUT_WINDOW_WIDTH);
     int window_height = glutGet(GLUT_WINDOW_HEIGHT);
 
-    if (mouse_left_key_down) {
-        next_planet.reset_parameters();
-        next_planet.pos.x = next_planet.prev_pos.x = (x - window_width/2) * model_scale;
-        next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
-        next_planet.mass_kg = 1e29;
-        next_planet.rad_m = 2e6;
-        next_planet.color = getRandomColor();
-    }
+    // Perform actions on buttons clics
+    switch (button)
+    {
+        case GLUT_LEFT_BUTTON:
+            switch (state)
+            {
+                case GLUT_DOWN: // Prepare planet to be added
+                    next_planet.reset_parameters();
+                    next_planet.pos.x = next_planet.prev_pos.x = (x - window_width/2) * model_scale;
+                    next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
+                    next_planet.mass_kg = 1e29;
+                    next_planet.rad_m = 2e6;
+                    next_planet.color = getRandomColor();
+                    break;
+                case GLUT_UP: // Add prepared planet
+                    pSimpleSpace->add_planet(next_planet);
+                    break;
+            }
+            break;
 
-    // Add planet when left mouse button released
-    if ((state == GLUT_UP) && (button == GLUT_LEFT_BUTTON)) {
-        pSimpleSpace->add_planet(next_planet);
-        cout << "objects: " << pSimpleSpace->planets.size() << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
-        for (unsigned int i = 0; i < pSimpleSpace->planets.size(); ++i)
-            cout << "id[" << i << "]: " << pSimpleSpace->planets.at(i).id << endl;
+        case GLUT_RIGHT_BUTTON:
+            switch (state)
+            {
+                case GLUT_DOWN: // Immediately remove planet(s) at pressed position
+                {
+                    Physics::Vector2d clicked_model_pos = Physics::Vector2d((x - window_width/2) * model_scale,
+                                                                            (y - window_height/2) * model_scale);
+                    pair<bool, unsigned int> ret = pSimpleSpace->find_planet_by_click(clicked_model_pos);
+                    if (ret.first) {
+                        pSimpleSpace->remove_planet(ret.second);
+                    }
+                    break;
+                }
+                case GLUT_UP:
+                {
+                    if ((x - mouse_right_key_down_x != 0 ) && (y - mouse_right_key_down_y) != 0) {
+                        Physics::Vector2d sel_start_model_pos = Physics::Vector2d((mouse_right_key_down_x - window_width/2) * model_scale,
+                                                                                  (mouse_right_key_down_y - window_height/2) * model_scale);
+                        Physics::Vector2d sel_end_model_pos   = Physics::Vector2d((x - window_width/2) * model_scale,
+                                                                                  (y - window_height/2) * model_scale);
+                        std::vector<unsigned int> id_list = pSimpleSpace->find_planets_by_selection(sel_start_model_pos, sel_end_model_pos);
+                        for (std::vector<unsigned int>::iterator it = id_list.begin(), it_end = id_list.end(); it != it_end; ++it) {
+                            pSimpleSpace->remove_planet(*it);
+                        }
+                    }
+                }
+                break;
+            }
+            break;
     }
 }
 
 void handleMouseMotion(int x, int y) {
-    if (mouse_left_key_down) {
-        mouse_active_motion_x = x;
-        mouse_active_motion_y = y;
+    mouse_active_motion_x = x;
+    mouse_active_motion_y = y;
 
+    if (mouse_left_key_is_down) {
         if (mass_modifier_key_down) {
-            next_planet.mass_kg = sqrt(pow((mouse_active_motion_x - mouse_left_key_down_x), 2) + \
-                                      pow((mouse_active_motion_y - mouse_left_key_down_y), 2)) * 1e30;
+            next_planet.mass_kg = sqrt(pow((x - mouse_left_key_down_x), 2) + \
+                                       pow((y - mouse_left_key_down_y), 2)) * 1e30;
         } else if (rad_modifier_key_down) {
-            next_planet.rad_m = sqrt(pow((mouse_active_motion_x - mouse_left_key_down_x) * model_scale, 2) + \
-                                    pow((mouse_active_motion_y - mouse_left_key_down_y) * model_scale, 2));
+            next_planet.rad_m = sqrt(pow((x - mouse_left_key_down_x) * model_scale, 2) + \
+                                     pow((y - mouse_left_key_down_y) * model_scale, 2));
         } else {
-            next_planet.vel.x = (mouse_active_motion_x - mouse_left_key_down_x) * model_scale;
-            next_planet.vel.y = (mouse_active_motion_y - mouse_left_key_down_y) * model_scale;
+            next_planet.vel.x = (x - mouse_left_key_down_x) * model_scale;
+            next_planet.vel.y = (y - mouse_left_key_down_y) * model_scale;
         }
     }
 }

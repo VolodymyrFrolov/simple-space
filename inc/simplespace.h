@@ -19,6 +19,7 @@ using std::endl;   // temp
 
 #include "physics.h"
 #include "planet.h"
+#include "physics.h"
 using Physics::Vector2d;
 
 #define GRAVITY_ENABLED  1    // Gravity: 1-on; 0-off
@@ -31,8 +32,8 @@ using Physics::Vector2d;
 #define TOP_BORDER       5e7
 #define BOTTOM_BORDER   -5e7
 
-#define GLOBAL_TOP_MASS    1e30 // put 1e32 for both to reprocuce crash whenplnets get to the corner
-#define GLOBAL_RIGHT_MASS  1e29    // temp, for physics check
+#define GLOBAL_TOP_MASS    0 //1e30 // put 1e32 for both to reprocuce crash whenplnets get to the corner
+#define GLOBAL_RIGHT_MASS  0 //1e29    // temp, for physics check
 
 class SimpleSpace
 {
@@ -51,7 +52,10 @@ public:
     void remove_planet(const unsigned int& id);
     void remove_all_objects();
     void move_one_step();
-    int  get_model_time_step_ms() const;
+    int get_model_time_step_ms() const;
+    std::pair<bool, unsigned int> find_planet_by_click(const Vector2d& click_pos);
+    std::vector<unsigned int> find_planets_by_selection(const Vector2d& sel_start_pos,
+                                                        const Vector2d& sel_end_pos);
 
     std::vector<Planet> planets;
     const unsigned int planets_number_max; // std::numeric_limits<unsigned int>::max()

@@ -210,6 +210,38 @@ void SimpleSpace::remove_planet(const unsigned int& id) {
     }
 }
 
+std::pair<bool, unsigned int> SimpleSpace::find_planet_by_click(const Vector2d& click_pos) {
+    std::lock_guard<std::mutex> guard(movement_step_mutex);
+    pair<bool, unsigned int> result;
+    result.first = false;
+    result.second = std::numeric_limits<unsigned int>::max();
+    for (vector<Planet>::const_iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
+        if (Physics::DistFromPos(click_pos, it->pos) < it->rad_m) {
+            result.first = true;
+            result.second = it->id;
+        }
+    }
+    return result;
+}
+
+std::vector<unsigned int> SimpleSpace::find_planets_by_selection(const Vector2d& sel_start_pos,
+                                                                 const Vector2d& sel_end_pos) {
+    std::lock_guard<std::mutex> guard(movement_step_mutex);
+    double border_right  = (sel_end_pos.x > sel_start_pos.x) ? sel_end_pos.x : sel_start_pos.x;
+    double border_top    = (sel_end_pos.y > sel_start_pos.y) ? sel_end_pos.y : sel_start_pos.y;
+    double border_left   = (sel_end_pos.x > sel_start_pos.x) ? sel_start_pos.x : sel_end_pos.x;
+    double border_bottom = (sel_end_pos.y > sel_start_pos.y) ? sel_start_pos.y : sel_end_pos.y;
+    std::vector<unsigned int> found_id_list;
+    for (vector<Planet>::const_iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
+        if ((it->pos.x < border_right) &&
+            (it->pos.y < border_top) &&
+            (it->pos.x > border_left) &&
+            (it->pos.y > border_bottom)) {
+            found_id_list.push_back(it->id);
+        }
+    }
+    return found_id_list;
+}
 
 void SimpleSpace::remove_all_objects() {
     std::lock_guard<std::mutex> guard(movement_step_mutex);
