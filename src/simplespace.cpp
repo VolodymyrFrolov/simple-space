@@ -19,6 +19,8 @@ SimpleSpace::~SimpleSpace() {
     cout << "SimpleSpace instance destroyed" << endl;
 }
 
+// get_id_list() is currently not used
+/*
 vector<unsigned int> SimpleSpace::get_id_list() {
     vector<unsigned int> id_list;
     id_list.reserve(planets.size());
@@ -27,7 +29,7 @@ vector<unsigned int> SimpleSpace::get_id_list() {
     }
     return id_list;
 }
-
+*/
 
 int SimpleSpace::get_model_time_step_ms() const {return time_step_ms;}
 
@@ -184,8 +186,8 @@ void SimpleSpace::add_planet(const Planet& pl) {
     std::lock_guard<std::mutex> guard(movement_step_mutex);
 
     unsigned int new_id = 0;
-    vector<unsigned int> id_list = get_id_list();
-    while (std::any_of(id_list.begin(), id_list.end(), [=](unsigned int id) {return id == new_id;}) && (new_id < planets_number_max))
+    std::vector<Planet>::iterator it;
+    while (std::any_of(planets.begin(), planets.end(), [&](Planet pl) {return pl.id == new_id;}))
         ++new_id;
 
     Planet new_planet = pl;
@@ -198,17 +200,15 @@ void SimpleSpace::add_planet(const Planet& pl) {
     planets.push_back(new_planet);
 }
 
-bool SimpleSpace::remove_planet(const unsigned int& id) {
-    bool id_found = false;
+void SimpleSpace::remove_planet(const unsigned int& id) {
     std::lock_guard<std::mutex> guard(movement_step_mutex);
-    for (vector<Planet>::iterator it = planets.begin(), it_end = planets.end(); it != it_end; ++it) {
-        if (it->id == id) {
-            id_found = true;
-            planets.erase(it);
-        }
-        continue;
+
+    std::vector<Planet>::iterator it = std::find_if(planets.begin(), planets.end(), [&](Planet pl) {return pl.id == id;});
+    if (it == planets.end()) {
+        cout << "Didn't find planet to remove with id=" << id << endl;
+    } else {
+        planets.erase(it);
     }
-    return id_found;
 }
 
 

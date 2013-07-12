@@ -39,7 +39,7 @@ class SimpleSpace
     void move_apart_bodies(Planet& p1, Planet& p2);
     void move_apart_bodies_v2(Planet& p1, Planet& p2);
     void resolve_border_collision(Planet& p);
-    std::vector<unsigned int> get_id_list();
+    //std::vector<unsigned int> get_id_list(); this method is not uesd
 
     std::mutex movement_step_mutex;
     double time_step_ms;
@@ -48,7 +48,7 @@ public:
     SimpleSpace(int timestep_ms = 10);
     ~SimpleSpace();
     void add_planet(const Planet& pl);
-    bool remove_planet(const unsigned int& id);
+    void remove_planet(const unsigned int& id);
     void remove_all_objects();
     void move_one_step();
     int  get_model_time_step_ms() const;
