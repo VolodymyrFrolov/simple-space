@@ -175,41 +175,50 @@ void drawScene()
                     mouse_left_key_down_y - window_height/2.0,
                     Color_RGBA(next_planet.color, 1.0f));
 
+        glBegin(GL_LINES);
+        glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
+        glVertex2d(mouse_left_key_down_x - window_width/2.0, mouse_left_key_down_y - window_height/2.0);
+        glVertex2d(mouse_active_motion_x - window_width/2.0, mouse_active_motion_y - window_height/2.0);
+        glEnd();
+
         ss << next_planet.mass_kg;
         str = std::string("Mass: ") + ss.str() + std::string(" kg");
+        Color_RGBA text_color = Color_RGBA(1.0f, 1.0f, 1.0f, 0.5f);
+        if (mass_modifier_key_down)
+            text_color.A = 1.0f;
         render_bitmap_string_2d(str.c_str(),
                                 mouse_left_key_down_x - window_width/2.0 - 30,
                                 mouse_left_key_down_y - window_height/2.0 + 25,
                                 GLUT_BITMAP_HELVETICA_12,
-                                {1.0f, 1.0f, 1.0f, 0.5f});
+                                text_color);
         ss.clear();
         ss.str(std::string());
 
         ss << next_planet.rad_m;
         str = std::string("Rad: ") + ss.str() + std::string(" m");
+        text_color = Color_RGBA(1.0f, 1.0f, 1.0f, 0.5f);
+        if (rad_modifier_key_down)
+            text_color.A = 1.0f;
         render_bitmap_string_2d(str.c_str(),
                                 mouse_left_key_down_x - window_width/2.0 - 30,
                                 mouse_left_key_down_y - window_height/2.0 + 40,
                                 GLUT_BITMAP_HELVETICA_12,
-                                {1.0f, 1.0f, 1.0f, 0.5f});
+                                text_color);
         ss.clear();
         ss.str(std::string());
 
+        text_color = Color_RGBA(1.0f, 1.0f, 1.0f, 0.5f);
+        if (!mass_modifier_key_down && !rad_modifier_key_down)
+            text_color.A = 1.0f;
         ss << sqrt(pow(next_planet.vel.x, 2) + pow(next_planet.vel.y, 2));
         str = std::string("Vel: ") + ss.str() + std::string(" m/s");
         render_bitmap_string_2d(str.c_str(),
                                 mouse_left_key_down_x - window_width/2.0 - 30,
                                 mouse_left_key_down_y - window_height/2.0 + 55,
                                 GLUT_BITMAP_HELVETICA_12,
-                                {1.0f, 1.0f, 1.0f, 0.5f});
+                                text_color);
         ss.clear();
         ss.str(std::string());
-
-        glBegin(GL_LINES);
-        glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
-        glVertex2d(mouse_left_key_down_x - window_width/2.0, mouse_left_key_down_y - window_height/2.0);
-        glVertex2d(mouse_active_motion_x - window_width/2.0, mouse_active_motion_y - window_height/2.0);
-        glEnd();
     }
     
     if (mouse_right_key_is_down) {
