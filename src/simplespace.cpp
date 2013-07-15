@@ -36,6 +36,9 @@ int SimpleSpace::get_model_time_step_ms() const {return time_step_ms;}
 void SimpleSpace::move_one_step() {
     std::lock_guard<std::mutex> guard(movement_step_mutex);
 
+    if (planets.size() == 0)
+        return;
+
     for (vector<Planet>::iterator ita = planets.begin(), ita_end = planets.end(); ita != ita_end; ++ita) {
         // Fisrt: save current position
         ita->prev_pos = ita->pos;
@@ -65,10 +68,8 @@ void SimpleSpace::move_one_step() {
     }
 
     // Collision detection and resolving
-    for (vector<Planet>::iterator ita = planets.begin(), ita_end = planets.end(); ita != ita_end; ++ita) {
-        for (vector<Planet>::iterator itb = ++planets.begin(), itb_end = planets.end(); itb != itb_end; ++itb) {
-            if (ita == itb)
-                continue;
+    for (vector<Planet>::iterator ita = planets.begin(), ita_end = --planets.end(); ita != ita_end; ++ita) {
+        for (vector<Planet>::iterator itb = ita + 1, itb_end = planets.end(); itb != itb_end; ++itb) {
 
             double dist = Physics::DistFromPos(ita->pos, itb->pos);
             double rad_sum = ita->rad_m + itb->rad_m;
