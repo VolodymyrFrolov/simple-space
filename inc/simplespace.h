@@ -38,9 +38,8 @@ using Physics::Vector2d;
 class SimpleSpace
 {
     void move_apart_bodies(Planet& p1, Planet& p2);
-    void move_apart_bodies_v2(Planet& p1, Planet& p2);
-    void resolve_border_collision(Planet& p);
-    //std::vector<unsigned int> get_id_list(); this method is not uesd
+    void resolve_body_collision(Planet& pla, Planet& plb);
+    void check_and_resolve_border_collision(Planet& pl);
 
     std::mutex movement_step_mutex;
     double time_step_ms;
