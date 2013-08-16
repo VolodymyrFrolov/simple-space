@@ -1,7 +1,7 @@
 CC = g++
 CFLAGS = -std=c++0x -Wall -c -Iinc
 LDFLAGS = -pthread
-SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp
+SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp controlsmanager.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 TARGET = simple-space
 
@@ -16,7 +16,7 @@ endif
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LDFLAGS) main.o physics.o simplespace.o planet.o $(LDLIBS) -o $(TARGET)
+	$(CC) $(LDFLAGS) main.o physics.o simplespace.o planet.o controlsmanager.o $(LDLIBS) -o $(TARGET)
 
 main.o: src/main.cpp
 	$(CC) $(CFLAGS) src/main.cpp
@@ -29,6 +29,9 @@ planet.o: src/planet.cpp inc/planet.h
 
 physics.o: src/physics.cpp inc/physics.h
 	$(CC) $(CFLAGS) src/physics.cpp
+
+controlsmanager.o : src/controlsmanager.cpp inc/controlsmanager.h
+	$(CC) $(CFLAGS) src/controlsmanager.cpp
 
 clean:
 	rm -rf $(TARGET) *.o

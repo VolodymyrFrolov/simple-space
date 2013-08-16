@@ -26,6 +26,7 @@ using std::endl;
 #include <stdlib.h> // For rand()
 #include <time.h>   // For time()
 
+#include "controlsmanager.h"
 #include "simplespace.h"
 #include "planet.h"
 #include "physics.h"
@@ -35,6 +36,14 @@ int model_speed = 1;
 int model_scale = 200000;
 int view_offset_x = 0;
 int view_offset_y = 0;
+
+Mouse mouse = {0,0, false,0,0, false,0,0};
+
+ControlsManager controls;
+
+void button_func() {
+    cout << "button pressed" << endl;
+}
 
 bool mouse_left_key_is_down = false;
 int mouse_left_key_down_x = 0;
@@ -77,8 +86,10 @@ void handleResize(int w, int h);
 
 void handleNormalKeys(unsigned char key, int x, int y);
 void handleSpecialKeys(int key, int x, int y);
-void handleMouse(int button, int state, int x, int y);
-void handleMouseMotion(int x, int y);
+
+void handleMouseKeypress(int button, int state, int x, int y);
+void handleMouseActiveMotion(int x, int y);
+void handleMousePassiveMotion(int x, int y);
 
 void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, Color_RGBA color);
 void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RGBA color);
@@ -130,7 +141,7 @@ void update(int value)
 //Draws the 3D scene
 void drawScene()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     switch(gMode)
     {
@@ -153,13 +164,16 @@ void drawScene()
             break;
     }
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
     
     int window_width = glutGet(GLUT_WINDOW_WIDTH);
     int window_height = glutGet(GLUT_WINDOW_HEIGHT);
+
+
+    glPushMatrix();
     glTranslated(window_width/2.0 + view_offset_x, window_height/2.0 + view_offset_y, 0.0);
-    
+
     //glRotatef(-_cameraAngle, 0.0f, 1.0f, 0.0f); //Rotate the camera
     //glPushMatrix(); //Save the transformations performed thus far
     //glPopMatrix(); //Undo the move to the center
@@ -246,6 +260,9 @@ void drawScene()
     glEnd();
     #endif
 
+    glPopMatrix();
+    controls.draw_buttons();
+
     switch(gMode)
     {
         case ALIAS_MODE_ANTIALIASED:
@@ -284,20 +301,20 @@ void handleResize(int w, int h)
 void handleNormalKeysDown(unsigned char key, int x, int y) {
     // To see if modifier key is pressed use:
     // (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
-	switch (key)
+    switch (key)
     {
         // Remove objects
         case 'c':
             pSimpleSpace->remove_all_objects();
-			break;
+            break;
 
         // Exit
-		case 27:  // Escape key
+        case 27:  // Escape key
         case 'q':
             delete pSimpleSpace;
             pSimpleSpace = NULL;
             cout << "handleKeypress(): exit(0)" << endl;
-			exit(0);
+            exit(0);
 
         // Antialiazing mode
         case 'a':
@@ -353,11 +370,11 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
         case 'M':
             mass_modifier_key_down = true;
             break;
-	}
+    }
 }
 
 void handleNormalKeysUp(unsigned char key, int x, int y) {
-	switch (key)
+    switch (key)
     {
         case 'r':
         case 'R':
@@ -391,7 +408,7 @@ void handleSpecialKeysDown(int key, int x, int y) {
     }
 }
 
-void handleMouse(int button, int state, int x, int y) {
+void handleMouseKeypress(int button, int state, int x, int y) {
 
     // Update global mouse buttons status booleans and positions
     if (button == GLUT_LEFT_BUTTON) {
@@ -467,9 +484,14 @@ void handleMouse(int button, int state, int x, int y) {
     }
 }
 
-void handleMouseMotion(int x, int y) {
+// Mouse motion while some keys are being pressed
+void handleMouseActiveMotion(int x, int y) {
     mouse_active_motion_x = x;
     mouse_active_motion_y = y;
+
+    mouse.x = x;
+    mouse.y = y;
+    controls.update_controls(mouse);
 
     if (mouse_left_key_is_down) {
         if (mass_modifier_key_down) {
@@ -483,6 +505,13 @@ void handleMouseMotion(int x, int y) {
             next_planet.vel.y = (y - mouse_left_key_down_y) * model_scale;
         }
     }
+}
+
+// Mouse motion without keys being pressed
+void handleMousePassiveMotion(int x, int y) {
+    mouse.x = x;
+    mouse.y = y;
+    controls.update_controls(mouse);
 }
 
 // Render 2D text
@@ -532,29 +561,34 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
+    controls.add_button(20, 200, 80, 30, "button 1", button_func);
+    controls.add_button(20, 250, 80, 30, "button 2", button_func);
+
     glutInit(&argc, argv);
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
-	glutInitWindowSize(1024, 600);
+    glutInitWindowSize(1024, 600);
 
-	glutCreateWindow("Simple Space");
-	initRendering();
+    glutCreateWindow("Simple Space");
+    initRendering();
 
-	glutDisplayFunc(drawScene);
+    glutDisplayFunc(drawScene);
     glutReshapeFunc(handleResize);
 
-	glutKeyboardFunc(handleNormalKeysDown);
+    glutKeyboardFunc(handleNormalKeysDown);
     glutKeyboardUpFunc(handleNormalKeysUp);
     glutSpecialFunc(handleSpecialKeysDown);
-    glutMouseFunc(handleMouse);
-    glutMotionFunc(handleMouseMotion);
+
+    glutMouseFunc(handleMouseKeypress);
+    glutMotionFunc(handleMouseActiveMotion);
+    glutPassiveMotionFunc(handleMousePassiveMotion);
 
     glutIgnoreKeyRepeat(1);
     //glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF); // Disables globally - for other apps, so don't use
 
-	glutTimerFunc(1000/FRAMERATE, update, 0); //Add a timer
+    glutTimerFunc(1000/FRAMERATE, update, 0); //Add a timer
 
-	glutMainLoop();
+    glutMainLoop();
 
     // Delete global SimpleSpace
     // TODO: find where deinit should be, as we don't get here
