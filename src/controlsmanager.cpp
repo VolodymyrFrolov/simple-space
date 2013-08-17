@@ -18,6 +18,13 @@ void ControlsManager::draw_label(std::string label, int x, int y, void* font) co
         glutBitmapCharacter(font, *ch);
 }
 
+bool ControlsManager::mouse_over_button(const Button& button, const int& mouse_x, const int& mouse_y) const {
+    return (mouse_x > button.x                 &&
+            mouse_x < button.x + button.width  &&
+            mouse_y > button.y                 &&
+            mouse_y < button.y + button.height);
+}
+
 void ControlsManager::add_button(int x, int y, int width, int height, std::string label, ButtonCallback button_callback) {
     if (buttons.size() < buttons_number_max) {
         unsigned int new_id = 0;
@@ -29,23 +36,40 @@ void ControlsManager::add_button(int x, int y, int width, int height, std::strin
     }
 }
 
-void ControlsManager::update_controls(const Mouse& mouse) {
+void ControlsManager::handle_mouse_move(const Mouse& mouse) {
     for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it) {
-        if (mouse.x > it->x             &&
-            mouse.x < it->x + it->width &&
-            mouse.y >  it->y            &&
-            mouse.y < it->y + it->height) {
+        if (mouse_over_button(*it, mouse.x, mouse.y))
             it->is_mouse_over = true;
-        } else {
+        else
             it->is_mouse_over = false;
+    }
+}
+
+void ControlsManager::handle_button_down(const Mouse& mouse) {
+    for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it) {
+        if (mouse_over_button(*it, mouse.x, mouse.y)) {
+            it->is_pressed = true;
+        }
+    }
+}
+
+void ControlsManager::handle_button_up(const Mouse& mouse) {
+    for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it) {
+        if (mouse_over_button(*it, mouse.x, mouse.y) &&
+            mouse_over_button(*it, mouse.left_key_down_x, mouse.left_key_down_y)) {
+            it->is_pressed = false;
+            if (it->button_callback != NULL)
+                it->button_callback();
+        } else if (it->is_pressed) {
+            it->is_pressed = false;
         }
     }
 }
 
 void ControlsManager::draw_buttons() const {
     for (std::vector<Button>::const_iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it) {
-        if (it->is_mouse_over) 
-            glColor3f(0.7f,0.7f,0.8f);
+        if (it->is_mouse_over)
+            glColor3f(0.7f,0.7f,0.7f);
         else
             glColor3f(0.6f,0.6f,0.6f);
 
@@ -56,7 +80,7 @@ void ControlsManager::draw_buttons() const {
             glVertex2i(it->x,             it->y + it->height );
         glEnd();
 
-        glLineWidth(3);
+        glLineWidth(2);
 
         if (it->is_pressed) 
             glColor3f(0.4f,0.4f,0.4f);
@@ -84,6 +108,11 @@ void ControlsManager::draw_buttons() const {
 
         int font_x = it->x + (it->width - glutBitmapLength(GLUT_BITMAP_HELVETICA_10, (const unsigned char*)it->label.c_str())) / 2;
         int font_y = it->y + (it->height + 10) / 2;
+        
+        if (it->is_pressed) {
+            font_x += 1;
+            font_y += 1;
+        }
 
         glColor3f(0.0f, 0.0f, 0.0f);
         draw_label(it->label, font_x, font_y, GLUT_BITMAP_HELVETICA_12);

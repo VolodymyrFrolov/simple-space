@@ -49,11 +49,6 @@ struct Button {
     bool is_mouse_over;
     std::string label;
     ButtonCallback button_callback;
-
-    // Define operator < to use Button in std::set
-    bool operator< (const Button & rhs) const {
-        return id < rhs.id;
-    }
  };
  
 class ControlsManager {
@@ -62,11 +57,14 @@ class ControlsManager {
     std::vector<Button> buttons;
 
     void draw_label(std::string label, int x, int y, void* font) const;
+    bool mouse_over_button(const Button& button, const int& mouse_x, const int& mouse_y) const;
 
     public:
     ControlsManager();
     void add_button(int x, int y, int width, int height, std::string label, ButtonCallback button_callback);
-    void update_controls(const Mouse& mouse);
+    void handle_mouse_move(const Mouse& mouse);
+    void handle_button_down(const Mouse& mouse);
+    void handle_button_up(const Mouse& mouse);
     void draw_buttons() const;
 
 };

@@ -41,20 +41,13 @@ Mouse mouse = {0,0, false,0,0, false,0,0};
 
 ControlsManager controls;
 
-void button_func() {
-    cout << "button pressed" << endl;
+void button_func_1() {
+    cout << "button pressed 1" << endl;
 }
 
-bool mouse_left_key_is_down = false;
-int mouse_left_key_down_x = 0;
-int mouse_left_key_down_y = 0;
-
-bool mouse_right_key_is_down = false;
-int mouse_right_key_down_x = 0;
-int mouse_right_key_down_y = 0;
-
-int mouse_active_motion_x = 0;
-int mouse_active_motion_y = 0;
+void button_func_2() {
+    cout << "button pressed 2" << endl;
+}
 
 bool mass_modifier_key_down = false;
 bool rad_modifier_key_down = false;
@@ -183,16 +176,16 @@ void drawScene()
         draw_planet(it->rad_m/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f});
     }
 
-    if (mouse_left_key_is_down) {
+    if (mouse.left_key_down) {
         draw_planet(next_planet.rad_m / model_scale,
-                    mouse_left_key_down_x - window_width/2.0,
-                    mouse_left_key_down_y - window_height/2.0,
+                    mouse.left_key_down_x - window_width/2.0,
+                    mouse.left_key_down_y - window_height/2.0,
                     Color_RGBA(next_planet.color, 1.0f));
 
         glBegin(GL_LINES);
         glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
-        glVertex2d(mouse_left_key_down_x - window_width/2.0, mouse_left_key_down_y - window_height/2.0);
-        glVertex2d(mouse_active_motion_x - window_width/2.0, mouse_active_motion_y - window_height/2.0);
+        glVertex2d(mouse.left_key_down_x - window_width/2.0, mouse.left_key_down_y - window_height/2.0);
+        glVertex2d(mouse.x - window_width/2.0, mouse.y - window_height/2.0);
         glEnd();
 
         ss << next_planet.mass_kg;
@@ -201,8 +194,8 @@ void drawScene()
         if (mass_modifier_key_down)
             text_color.A = 1.0f;
         render_bitmap_string_2d(str.c_str(),
-                                mouse_left_key_down_x - window_width/2.0 - 30,
-                                mouse_left_key_down_y - window_height/2.0 + 25,
+                                mouse.left_key_down_x - window_width/2.0 - 30,
+                                mouse.left_key_down_y - window_height/2.0 + 25,
                                 GLUT_BITMAP_HELVETICA_12,
                                 text_color);
         ss.clear();
@@ -214,8 +207,8 @@ void drawScene()
         if (rad_modifier_key_down)
             text_color.A = 1.0f;
         render_bitmap_string_2d(str.c_str(),
-                                mouse_left_key_down_x - window_width/2.0 - 30,
-                                mouse_left_key_down_y - window_height/2.0 + 40,
+                                mouse.left_key_down_x - window_width/2.0 - 30,
+                                mouse.left_key_down_y - window_height/2.0 + 40,
                                 GLUT_BITMAP_HELVETICA_12,
                                 text_color);
         ss.clear();
@@ -227,25 +220,25 @@ void drawScene()
         ss << sqrt(pow(next_planet.vel.x, 2) + pow(next_planet.vel.y, 2));
         str = std::string("Vel: ") + ss.str() + std::string(" m/s");
         render_bitmap_string_2d(str.c_str(),
-                                mouse_left_key_down_x - window_width/2.0 - 30,
-                                mouse_left_key_down_y - window_height/2.0 + 55,
+                                mouse.left_key_down_x - window_width/2.0 - 30,
+                                mouse.left_key_down_y - window_height/2.0 + 55,
                                 GLUT_BITMAP_HELVETICA_12,
                                 text_color);
         ss.clear();
         ss.str(std::string());
     }
     
-    if (mouse_right_key_is_down) {
+    if (mouse.right_key_down) {
         glBegin(GL_LINE_LOOP);
         glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-        glVertex2d(mouse_right_key_down_x - window_width/2.0,
-                   mouse_right_key_down_y - window_height/2.0);
-        glVertex2d(mouse_active_motion_x - window_width/2.0,
-                   mouse_right_key_down_y - window_height/2.0);
-        glVertex2d(mouse_active_motion_x - window_width/2.0,
-                   mouse_active_motion_y - window_height/2.0);
-        glVertex2d(mouse_right_key_down_x - window_width/2.0,
-                   mouse_active_motion_y - window_height/2.0);
+        glVertex2d(mouse.right_key_down_x - window_width/2.0,
+                   mouse.right_key_down_y - window_height/2.0);
+        glVertex2d(mouse.x - window_width/2.0,
+                   mouse.right_key_down_y - window_height/2.0);
+        glVertex2d(mouse.x - window_width/2.0,
+                   mouse.y - window_height/2.0);
+        glVertex2d(mouse.right_key_down_x - window_width/2.0,
+                   mouse.y - window_height/2.0);
 
         glEnd();
     }
@@ -412,22 +405,22 @@ void handleMouseKeypress(int button, int state, int x, int y) {
 
     // Update global mouse buttons status booleans and positions
     if (button == GLUT_LEFT_BUTTON) {
-        mouse_left_key_is_down = (state == GLUT_DOWN);
-        if (mouse_left_key_is_down) {
-            mouse_left_key_down_x = x;
-            mouse_left_key_down_y = y;
+        mouse.left_key_down = (state == GLUT_DOWN);
+        if (mouse.left_key_down) {
+            mouse.left_key_down_x = x;
+            mouse.left_key_down_y = y;
         }
     } else if (button == GLUT_RIGHT_BUTTON) {
-        mouse_right_key_is_down = (state == GLUT_DOWN);
-        if (mouse_right_key_is_down) {
-           mouse_right_key_down_x = x;
-           mouse_right_key_down_y = y;
+        mouse.right_key_down = (state == GLUT_DOWN);
+        if (mouse.right_key_down) {
+            mouse.right_key_down_x = x;
+            mouse.right_key_down_y = y;
         }
     }
 
     // Save global initial active start position of mouse
-    mouse_active_motion_x = x;
-    mouse_active_motion_y = y;
+    mouse.x = x;
+    mouse.y = y;
 
     int window_width = glutGet(GLUT_WINDOW_WIDTH);
     int window_height = glutGet(GLUT_WINDOW_HEIGHT);
@@ -445,9 +438,17 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                     next_planet.mass_kg = 1e29;
                     next_planet.rad_m = 2e6;
                     next_planet.color = getRandomColor();
+                    
+                    mouse.left_key_down = true;
+                    mouse.left_key_down_x = x;
+                    mouse.left_key_down_y = y;
+                    controls.handle_button_down(mouse);
                     break;
                 case GLUT_UP: // Add prepared planet
                     pSimpleSpace->add_planet(next_planet);
+                    
+                    mouse.left_key_down = false;
+                    controls.handle_button_up(mouse);
                     break;
             }
             break;
@@ -463,13 +464,18 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                     if (ret.first) {
                         pSimpleSpace->remove_planet(ret.second);
                     }
+                    
+                    mouse.right_key_down = true;
+                    mouse.right_key_down_x = x;
+                    mouse.right_key_down_y = y;
+                    //controls.handle_button_down(mouse);
                     break;
                 }
                 case GLUT_UP:
                 {
-                    if ((x - mouse_right_key_down_x != 0 ) && (y - mouse_right_key_down_y) != 0) {
-                        Physics::Vector2d sel_start_model_pos = Physics::Vector2d((mouse_right_key_down_x - window_width/2) * model_scale,
-                                                                                  (mouse_right_key_down_y - window_height/2) * model_scale);
+                    if ((x - mouse.right_key_down_x != 0 ) && (y - mouse.right_key_down_y) != 0) {
+                        Physics::Vector2d sel_start_model_pos = Physics::Vector2d((mouse.right_key_down_x - window_width/2) * model_scale,
+                                                                                  (mouse.right_key_down_y - window_height/2) * model_scale);
                         Physics::Vector2d sel_end_model_pos   = Physics::Vector2d((x - window_width/2) * model_scale,
                                                                                   (y - window_height/2) * model_scale);
                         std::vector<unsigned int> id_list = pSimpleSpace->find_planets_by_selection(sel_start_model_pos, sel_end_model_pos);
@@ -477,8 +483,11 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                             pSimpleSpace->remove_planet(*it);
                         }
                     }
+
+                    mouse.right_key_down = false;
+                    //controls.handle_button_up(mouse);
+                    break;
                 }
-                break;
             }
             break;
     }
@@ -486,23 +495,21 @@ void handleMouseKeypress(int button, int state, int x, int y) {
 
 // Mouse motion while some keys are being pressed
 void handleMouseActiveMotion(int x, int y) {
-    mouse_active_motion_x = x;
-    mouse_active_motion_y = y;
 
     mouse.x = x;
     mouse.y = y;
-    controls.update_controls(mouse);
+    controls.handle_mouse_move(mouse);
 
-    if (mouse_left_key_is_down) {
+    if (mouse.left_key_down) {
         if (mass_modifier_key_down) {
-            next_planet.mass_kg = sqrt(pow((x - mouse_left_key_down_x), 2) + \
-                                       pow((y - mouse_left_key_down_y), 2)) * 1e30;
+            next_planet.mass_kg = sqrt(pow((x - mouse.left_key_down_x), 2) + \
+                                       pow((y - mouse.left_key_down_y), 2)) * 1e30;
         } else if (rad_modifier_key_down) {
-            next_planet.rad_m = sqrt(pow((x - mouse_left_key_down_x) * model_scale, 2) + \
-                                     pow((y - mouse_left_key_down_y) * model_scale, 2));
+            next_planet.rad_m = sqrt(pow((x - mouse.left_key_down_x) * model_scale, 2) + \
+                                     pow((y - mouse.left_key_down_y) * model_scale, 2));
         } else {
-            next_planet.vel.x = (x - mouse_left_key_down_x) * model_scale;
-            next_planet.vel.y = (y - mouse_left_key_down_y) * model_scale;
+            next_planet.vel.x = (x - mouse.left_key_down_x) * model_scale;
+            next_planet.vel.y = (y - mouse.left_key_down_y) * model_scale;
         }
     }
 }
@@ -511,7 +518,7 @@ void handleMouseActiveMotion(int x, int y) {
 void handleMousePassiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
-    controls.update_controls(mouse);
+    controls.handle_mouse_move(mouse);
 }
 
 // Render 2D text
@@ -561,8 +568,8 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    controls.add_button(20, 200, 80, 30, "button 1", button_func);
-    controls.add_button(20, 250, 80, 30, "button 2", button_func);
+    controls.add_button(20, 200, 80, 30, "button 1", button_func_1);
+    controls.add_button(20, 250, 80, 30, "button 2", button_func_2);
 
     glutInit(&argc, argv);
 
