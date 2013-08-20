@@ -18,7 +18,7 @@ using std::endl;
     #include <GLUT/glut.h>
 #elif __linux__
   //#include <GL/glut.h>
-    #include <GL/freeglut.h>
+  #include <GL/freeglut.h>
 #else
     // Unsupproted platform
 #endif
@@ -31,7 +31,16 @@ using std::endl;
 #include "planet.h"
 #include "physics.h"
 
+int main_window;
+
 const int FRAMERATE = 60;
+int window_width = 0;
+int window_height = 0;
+
+const int menu_width = 200;
+const int menu_min_height = 400;
+const int scene_min_width = 100;
+
 int model_speed = 1;
 int model_scale = 200000;
 int view_offset_x = 0;
@@ -72,10 +81,11 @@ AliasMode gMode = ALIAS_MODE_MULTISAMPLE;
 SimpleSpace * pSimpleSpace = new SimpleSpace(1000/FRAMERATE);
 
 void initRendering();
-void update(int value);
+void onTimer(int value);
+void setProjection2D(int w, int h);
 
-void drawScene();
-void handleResize(int w, int h);
+void renderScene();
+void resizeWindow(int w, int h);
 
 void handleNormalKeys(unsigned char key, int x, int y);
 void handleSpecialKeys(int key, int x, int y);
@@ -89,52 +99,16 @@ void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RG
 
 Color_RGB getRandomColor();
 
-//Initializes rendering
-void initRendering()
-{
-    glEnable( GL_BLEND );
-    glDisable( GL_DEPTH_TEST );
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+void onTimer(int value) {
 
-    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
-    glHint( GL_POLYGON_SMOOTH_HINT, GL_NICEST );
-    glDisable( GL_LINE_SMOOTH );
-    glDisable( GL_POLYGON_SMOOTH );
-    glDisable( GL_MULTISAMPLE );
-    
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-
-    int window_width = glutGet(GLUT_WINDOW_WIDTH);
-    int window_height = glutGet(GLUT_WINDOW_HEIGHT);
-    glViewport(0, 0, window_width, window_height);
-    
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-    
-    glOrtho(0.0f,                // left vertical clipping plane
-            window_width,        // right vertical clipping plane
-            window_height,       // bottom horizontal clipping plane
-            0.0f,                // top horizontal clipping plane
-            1.0f,                // nearer clipping plane
-            -1.0f);              // farer clipping plane
-    
-    glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity();
-}
-
-void update(int value)
-{
     for (int i = 0; i < model_speed; ++i) {
         pSimpleSpace->move_one_step();
     }
     glutPostRedisplay(); //Tell GLUT that the display has changed
-    glutTimerFunc(1000/FRAMERATE, update, 0);
+    glutTimerFunc(1000/FRAMERATE, onTimer, 0);
 }
 
-//Draws the 3D scene
-void drawScene()
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void renderScene() {
 
     switch(gMode)
     {
@@ -157,15 +131,55 @@ void drawScene()
             break;
     }
 
+    // ---- Menu ----
+    glViewport(0, 0, menu_width, window_height);
+
+    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+    glScissor(0, 0, menu_width, window_height);
+    glEnable(GL_SCISSOR_TEST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glOrtho(0.0f,           // left vertical clipping plane
+            menu_width,     // right vertical clipping plane
+            window_height,  // bottom horizontal clipping plane
+            0.0f,           // top horizontal clipping plane
+            1.0f,           // nearer clipping plane
+            -1.0f);         // farer clipping plane
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    
-    int window_width = glutGet(GLUT_WINDOW_WIDTH);
-    int window_height = glutGet(GLUT_WINDOW_HEIGHT);
 
+    controls.draw_buttons();
+
+    glDisable(GL_SCISSOR_TEST);
+
+    // ---- Scene ----
+    int scene_width = window_width - menu_width > 1 ? window_width - menu_width : 1;
+    glViewport(menu_width, 0, scene_width, window_height);
+    
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glScissor(menu_width, 0, scene_width, window_height);
+    glEnable(GL_SCISSOR_TEST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glOrtho(menu_width,     // left vertical clipping plane
+            window_width,   // right vertical clipping plane
+            window_height,  // bottom horizontal clipping plane
+            0.0f,           // top horizontal clipping plane
+            1.0f,           // nearer clipping plane
+            -1.0f);         // farer clipping plane
+
+    glMatrixMode(GL_MODELVIEW);
+    //glLoadIdentity();
 
     glPushMatrix();
-    glTranslated(window_width/2.0 + view_offset_x, window_height/2.0 + view_offset_y, 0.0);
+    glTranslated((window_width + menu_width)/2.0 + view_offset_x, window_height/2.0 + view_offset_y, 0.0);
 
     //glRotatef(-_cameraAngle, 0.0f, 1.0f, 0.0f); //Rotate the camera
     //glPushMatrix(); //Save the transformations performed thus far
@@ -178,14 +192,14 @@ void drawScene()
 
     if (mouse.left_key_down) {
         draw_planet(next_planet.rad_m / model_scale,
-                    mouse.left_key_down_x - window_width/2.0,
+                    mouse.left_key_down_x - (window_width + menu_width)/2.0,
                     mouse.left_key_down_y - window_height/2.0,
                     Color_RGBA(next_planet.color, 1.0f));
 
         glBegin(GL_LINES);
         glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
-        glVertex2d(mouse.left_key_down_x - window_width/2.0, mouse.left_key_down_y - window_height/2.0);
-        glVertex2d(mouse.x - window_width/2.0, mouse.y - window_height/2.0);
+        glVertex2d(mouse.left_key_down_x - (window_width + menu_width)/2.0, mouse.left_key_down_y - window_height/2.0);
+        glVertex2d(mouse.x - (window_width + menu_width)/2.0, mouse.y - window_height/2.0);
         glEnd();
 
         ss << next_planet.mass_kg;
@@ -254,17 +268,16 @@ void drawScene()
     #endif
 
     glPopMatrix();
-    controls.draw_buttons();
 
     switch(gMode)
     {
         case ALIAS_MODE_ANTIALIASED:
-            glDisable( GL_LINE_SMOOTH );
-            glDisable( GL_POLYGON_SMOOTH );
+            glDisable(GL_LINE_SMOOTH);
+            glDisable(GL_POLYGON_SMOOTH);
             break;
 
         case ALIAS_MODE_MULTISAMPLE:
-            glDisable( GL_MULTISAMPLE );
+            glDisable(GL_MULTISAMPLE);
             break;
 
         case ALIAS_MODE_ALIASED:
@@ -274,20 +287,29 @@ void drawScene()
     glutSwapBuffers();
 }
 
-//Called when the window is resized
-void handleResize(int w, int h)
-{
+void setProjection2D(int w, int h) {
+
     glViewport(0, 0, w, h);
-    
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+
+    glOrtho(0.0f,    // left vertical clipping plane
+            w,       // right vertical clipping plane
+            h,       // bottom horizontal clipping plane
+            0.0f,    // top horizontal clipping plane
+            1.0f,    // nearer clipping plane
+            -1.0f);  // farer clipping plane
+
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void resizeWindow(int w, int h) {
     
-    glOrtho(0.0f,               // left vertical clipping plane
-            w,                  // right vertical clipping plane
-            h,                  // bottom horizontal clipping plane
-            0.0f,               // top horizontal clipping plane
-            1.0f,               // nearer clipping plane
-            -1.0f);             // farer clipping plane
+    window_width = w;
+    window_height = h;
+
+    setProjection2D(window_width, window_height);
 }
 
 //Called when a key is pressed
@@ -304,10 +326,12 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
         // Exit
         case 27:  // Escape key
         case 'q':
+            glutDestroyWindow(main_window);
             delete pSimpleSpace;
             pSimpleSpace = NULL;
-            cout << "handleKeypress(): exit(0)" << endl;
+            cout << "Exiting by keypress" << endl;
             exit(0);
+            break;
 
         // Antialiazing mode
         case 'a':
@@ -422,9 +446,6 @@ void handleMouseKeypress(int button, int state, int x, int y) {
     mouse.x = x;
     mouse.y = y;
 
-    int window_width = glutGet(GLUT_WINDOW_WIDTH);
-    int window_height = glutGet(GLUT_WINDOW_HEIGHT);
-
     // Perform actions on buttons clics
     switch (button)
     {
@@ -433,12 +454,12 @@ void handleMouseKeypress(int button, int state, int x, int y) {
             {
                 case GLUT_DOWN: // Prepare planet to be added
                     next_planet.reset_parameters();
-                    next_planet.pos.x = next_planet.prev_pos.x = (x - window_width/2) * model_scale;
+                    next_planet.pos.x = next_planet.prev_pos.x = (x - (window_width + menu_width)/2) * model_scale;
                     next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
                     next_planet.mass_kg = 1e29;
                     next_planet.rad_m = 2e6;
                     next_planet.color = getRandomColor();
-                    
+
                     mouse.left_key_down = true;
                     mouse.left_key_down_x = x;
                     mouse.left_key_down_y = y;
@@ -446,7 +467,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                     break;
                 case GLUT_UP: // Add prepared planet
                     pSimpleSpace->add_planet(next_planet);
-                    
+
                     mouse.left_key_down = false;
                     controls.handle_button_up(mouse);
                     break;
@@ -464,7 +485,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                     if (ret.first) {
                         pSimpleSpace->remove_planet(ret.second);
                     }
-                    
+
                     mouse.right_key_down = true;
                     mouse.right_key_down_x = x;
                     mouse.right_key_down_y = y;
@@ -519,6 +540,7 @@ void handleMousePassiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
     controls.handle_mouse_move(mouse);
+    //cout << "mainwindow x:" << x << " y:" << y << endl;
 }
 
 // Render 2D text
@@ -551,12 +573,22 @@ Color_RGB getRandomColor() {
             static_cast<float>((rand()%10 + 1)/10.0)};
 }
 
+//Initializes rendering
+void initRendering() {
+
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+}
+
+
 // default changed to make glutInit() work
 //int main(int argc, const char * argv[])
 int main(int argc, char * argv[])
 {
-    cout << "main(): Stared" << endl;
-
     // Seed for random values
     srand(static_cast<unsigned int>(time(NULL)));
 
@@ -572,36 +604,30 @@ int main(int argc, char * argv[])
     controls.add_button(20, 250, 80, 30, "button 2", button_func_2);
 
     glutInit(&argc, argv);
-
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
     glutInitWindowSize(1024, 600);
+    main_window = glutCreateWindow("Simple Space");
 
-    glutCreateWindow("Simple Space");
-    initRendering();
+    // Render & Resize
+    glutDisplayFunc(renderScene);
+    glutReshapeFunc(resizeWindow);
 
-    glutDisplayFunc(drawScene);
-    glutReshapeFunc(handleResize);
-
+    // Keyboard
+    glutIgnoreKeyRepeat(1); // Don't use glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF), it disables globally (for other apps)
     glutKeyboardFunc(handleNormalKeysDown);
     glutKeyboardUpFunc(handleNormalKeysUp);
     glutSpecialFunc(handleSpecialKeysDown);
 
+    // Mouse
     glutMouseFunc(handleMouseKeypress);
     glutMotionFunc(handleMouseActiveMotion);
     glutPassiveMotionFunc(handleMousePassiveMotion);
 
-    glutIgnoreKeyRepeat(1);
-    //glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF); // Disables globally - for other apps, so don't use
-
-    glutTimerFunc(1000/FRAMERATE, update, 0); //Add a timer
+    // Timer
+    glutTimerFunc(1000/FRAMERATE, onTimer, 0); //Add a timer
 
     glutMainLoop();
 
-    // Delete global SimpleSpace
-    // TODO: find where deinit should be, as we don't get here
-    delete pSimpleSpace;
-    pSimpleSpace = NULL;
-
-    cout << "main(): Finished" << endl;
+    // Never get here
     return 0;
 }
