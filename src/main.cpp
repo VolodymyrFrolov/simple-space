@@ -82,7 +82,6 @@ SimpleSpace * pSimpleSpace = new SimpleSpace(1000/FRAMERATE);
 
 void initRendering();
 void onTimer(int value);
-void setProjection2D(int w, int h);
 
 void renderScene();
 void resizeWindow(int w, int h);
@@ -287,29 +286,10 @@ void renderScene() {
     glutSwapBuffers();
 }
 
-void setProjection2D(int w, int h) {
-
-    glViewport(0, 0, w, h);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    glOrtho(0.0f,    // left vertical clipping plane
-            w,       // right vertical clipping plane
-            h,       // bottom horizontal clipping plane
-            0.0f,    // top horizontal clipping plane
-            1.0f,    // nearer clipping plane
-            -1.0f);  // farer clipping plane
-
-    glMatrixMode(GL_MODELVIEW);
-}
-
 void resizeWindow(int w, int h) {
     
     window_width = w;
     window_height = h;
-
-    setProjection2D(window_width, window_height);
 }
 
 //Called when a key is pressed
