@@ -46,17 +46,11 @@ int model_scale = 200000;
 int view_offset_x = 0;
 int view_offset_y = 0;
 
+bool simulation_on = true;
+
 Mouse mouse = {0,0, false,0,0, false,0,0};
 
 ControlsManager controls;
-
-void button_func_1() {
-    cout << "button pressed 1" << endl;
-}
-
-void button_func_2() {
-    cout << "button pressed 2" << endl;
-}
 
 bool mass_modifier_key_down = false;
 bool rad_modifier_key_down = false;
@@ -81,7 +75,7 @@ AliasMode gMode = ALIAS_MODE_MULTISAMPLE;
 SimpleSpace * pSimpleSpace = new SimpleSpace(1000/FRAMERATE);
 
 void initRendering();
-void onTimer(int value);
+void onTimer(int next_timer_tick);
 
 void renderScene();
 void resizeWindow(int w, int h);
@@ -98,13 +92,43 @@ void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RG
 
 Color_RGB getRandomColor();
 
-void onTimer(int value) {
+void onTimer(int next_timer_tick) {
 
-    for (int i = 0; i < model_speed; ++i) {
+    for (int i = 0; i < model_speed; ++i)
         pSimpleSpace->move_one_step();
+    glutPostRedisplay();
+
+    if (simulation_on)
+        glutTimerFunc(next_timer_tick, onTimer, next_timer_tick);
+}
+
+void start_simulation() {
+    cout << "Start pressed" << endl;
+    if (!simulation_on) {
+        simulation_on = true;
+        glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
     }
-    glutPostRedisplay(); //Tell GLUT that the display has changed
-    glutTimerFunc(1000/FRAMERATE, onTimer, 0);
+}
+
+void stop_simulation() {
+    cout << "Stop pressed" << endl;
+    simulation_on = false; // This stops timer cycling
+}
+
+void restart_simulation() {
+    cout << "Restart pressed" << endl;
+
+    pSimpleSpace->remove_all_objects();
+
+    double dist = 4e7;
+    pSimpleSpace->add_planet(Planet(Vector2d(0, 0), Vector2d(0, 0), 1e30, 3e6, getRandomColor()));
+    pSimpleSpace->add_planet(Planet(Vector2d( dist/4,   0), Vector2d(0,   -2e6), 1e15, 1e6, getRandomColor()));
+    pSimpleSpace->add_planet(Planet(Vector2d(-dist/4,   0), Vector2d(0,    2e6), 1e15, 1e6, getRandomColor()));
+    pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
+    pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
+
+    if (!simulation_on)
+        start_simulation();
 }
 
 void renderScene() {
@@ -240,7 +264,7 @@ void renderScene() {
         ss.clear();
         ss.str(std::string());
     }
-    
+
     if (mouse.right_key_down) {
         glBegin(GL_LINE_LOOP);
         glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
@@ -368,6 +392,8 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
             mass_modifier_key_down = true;
             break;
     }
+
+    if (!simulation_on) glutPostRedisplay();
 }
 
 void handleNormalKeysUp(unsigned char key, int x, int y) {
@@ -382,6 +408,8 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
             mass_modifier_key_down = false;
             break;
     }
+
+    if (!simulation_on) glutPostRedisplay();
 }
 
 void handleSpecialKeysDown(int key, int x, int y) {
@@ -403,6 +431,8 @@ void handleSpecialKeysDown(int key, int x, int y) {
             view_offset_y -= 50;
             break;
     }
+
+    if (!simulation_on) glutPostRedisplay();
 }
 
 void handleMouseKeypress(int button, int state, int x, int y) {
@@ -469,7 +499,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                     mouse.right_key_down = true;
                     mouse.right_key_down_x = x;
                     mouse.right_key_down_y = y;
-                    //controls.handle_button_down(mouse);
+                    controls.handle_button_down(mouse);
                     break;
                 }
                 case GLUT_UP:
@@ -486,12 +516,13 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                     }
 
                     mouse.right_key_down = false;
-                    //controls.handle_button_up(mouse);
+                    controls.handle_button_up(mouse);
                     break;
                 }
             }
             break;
     }
+    if (!simulation_on) glutPostRedisplay();
 }
 
 // Mouse motion while some keys are being pressed
@@ -513,6 +544,8 @@ void handleMouseActiveMotion(int x, int y) {
             next_planet.vel.y = (y - mouse.left_key_down_y) * model_scale;
         }
     }
+    
+    if (!simulation_on) glutPostRedisplay();
 }
 
 // Mouse motion without keys being pressed
@@ -520,7 +553,7 @@ void handleMousePassiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
     controls.handle_mouse_move(mouse);
-    //cout << "mainwindow x:" << x << " y:" << y << endl;
+    if (!simulation_on) glutPostRedisplay();
 }
 
 // Render 2D text
@@ -580,13 +613,15 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    controls.add_button(20, 200, 80, 30, "button 1", button_func_1);
-    controls.add_button(20, 250, 80, 30, "button 2", button_func_2);
+    controls.add_button(20, 150, 80, 30, "Restart", restart_simulation);
+    controls.add_button(20, 200, 80, 30, "Start", start_simulation);
+    controls.add_button(20, 250, 80, 30, "Stop", stop_simulation);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
     glutInitWindowSize(1024, 600);
     main_window = glutCreateWindow("Simple Space");
+    initRendering();
 
     // Render & Resize
     glutDisplayFunc(renderScene);
@@ -604,7 +639,7 @@ int main(int argc, char * argv[])
     glutPassiveMotionFunc(handleMousePassiveMotion);
 
     // Timer
-    glutTimerFunc(1000/FRAMERATE, onTimer, 0); //Add a timer
+    glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
 
     glutMainLoop();
 
