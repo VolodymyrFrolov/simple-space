@@ -84,11 +84,14 @@ class ControlsManager {
     std::vector<Button> buttons;
     bool mouse_over_button(const Button& button, const int& mouse_x, const int& mouse_y) const;
 public:
-    void add_button(int x, int y, int width, int height, std::string label, ButtonCallback button_callback);
+    int add_button(int x, int y, int width, int height, std::string label, ButtonCallback button_callback);
     void handle_mouse_move(const Mouse& mouse);
     void handle_button_down(const Mouse& mouse);
     void handle_button_up(const Mouse& mouse);
     void draw_buttons() const;
+
+    int find_id_by_label(std::string label) const;
+    void set_label_by_id(std::string label, int id);
 };
 
 #endif /* defined(__controls_manager__simplespace__) */

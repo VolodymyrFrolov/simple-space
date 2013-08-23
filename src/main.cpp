@@ -102,21 +102,34 @@ void onTimer(int next_timer_tick) {
         glutTimerFunc(next_timer_tick, onTimer, next_timer_tick);
 }
 
-void start_simulation() {
-    cout << "Start pressed" << endl;
+void start_stop_simulation() {
+
     if (!simulation_on) {
+        cout << "Start pressed" << endl;
         simulation_on = true;
         glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
-    }
-}
 
-void stop_simulation() {
-    cout << "Stop pressed" << endl;
-    simulation_on = false; // This stops timer cycling
+        // Simulation should have got started, so we change "Start" label to "Stop"
+        int button_start = controls.find_id_by_label("Start");
+        controls.set_label_by_id("Stop", button_start);
+    } else {
+        cout << "Stop pressed" << endl;
+        simulation_on = false; // This stops timer cycling
+
+        // Simulation should have got stopped, so we change "Stop" label to "Start"
+        int button_stop = controls.find_id_by_label("Stop");
+        controls.set_label_by_id("Start", button_stop);
+    }
 }
 
 void restart_simulation() {
     cout << "Restart pressed" << endl;
+
+    bool need_to_resume = false;
+    if (simulation_on) {
+        simulation_on = false;
+        need_to_resume = true;
+    }
 
     pSimpleSpace->remove_all_objects();
 
@@ -127,8 +140,10 @@ void restart_simulation() {
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    if (!simulation_on)
-        start_simulation();
+    if (need_to_resume)
+        simulation_on = true;
+    else
+        glutPostRedisplay();
 }
 
 void renderScene() {
@@ -614,8 +629,7 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
     controls.add_button(20, 150, 80, 30, "Restart", restart_simulation);
-    controls.add_button(20, 200, 80, 30, "Start", start_simulation);
-    controls.add_button(20, 250, 80, 30, "Stop", stop_simulation);
+    controls.add_button(20, 200, 80, 30, "Stop", start_stop_simulation);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);

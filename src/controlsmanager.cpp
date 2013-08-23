@@ -115,11 +115,13 @@ void Button::draw() const {
 
 // ---- ControlManager ----
 
-void ControlsManager::add_button(int x, int y, int width, int height, std::string label, ButtonCallback button_callback) {
+int ControlsManager::add_button(int x, int y, int width, int height, std::string label, ButtonCallback button_callback) {
     int new_id = 0;
     while (std::any_of(buttons.begin(), buttons.end(), [&](Button b) {return b.get_id() == new_id;}))
         ++new_id;
     buttons.push_back(Button(new_id, x, y, width, height, label, button_callback));
+    cout << "Added " << label << " with id " << new_id << endl;
+    return new_id;
 }
 
 void ControlsManager::handle_mouse_move(const Mouse& mouse) {
@@ -140,4 +142,24 @@ void ControlsManager::handle_button_up(const Mouse& mouse) {
 void ControlsManager::draw_buttons() const {
     for (std::vector<Button>::const_iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it)
         it->draw();
+}
+
+int ControlsManager::find_id_by_label(std::string label) const {
+    int ret = -1;
+    for (std::vector<Button>::const_iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it) {
+        if (it->get_label() == label) {
+            ret = it->get_id();
+            break;
+        }
+    }
+    return ret;
+}
+
+void ControlsManager::set_label_by_id(std::string label, int id) {
+    for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it) {
+        if (it->get_id() == id) {
+            it->set_label(label);
+            break;
+        }
+    }
 }
