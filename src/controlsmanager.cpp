@@ -116,7 +116,7 @@ void Button::draw() const {
 // ---- ControlManager ----
 
 void ControlsManager::add_button(int x, int y, int width, int height, std::string label, ButtonCallback button_callback) {
-    unsigned int new_id = 0;
+    int new_id = 0;
     while (std::any_of(buttons.begin(), buttons.end(), [&](Button b) {return b.get_id() == new_id;}))
         ++new_id;
     buttons.push_back(Button(new_id, x, y, width, height, label, button_callback));

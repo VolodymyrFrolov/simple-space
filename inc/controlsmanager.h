@@ -64,10 +64,10 @@ public:
             std::string label,
             ButtonCallback button_callback) :
     UIControl(id, x, y, w, h),
-    _label(label),
-    _button_callback(button_callback),
     _is_pressed(false),
-    _is_mouse_over(false) {}
+    _is_mouse_over(false),
+    _label(label),
+    _button_callback(button_callback) {}
 
     bool is_pressed() const {return _is_pressed;}
     bool is_mouse_over() const {return _is_mouse_over;}
