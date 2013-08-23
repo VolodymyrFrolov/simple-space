@@ -24,17 +24,30 @@ using std::endl;   // temp
     // Unsupproted platform
 #endif
 
+struct MouseKey {
+    bool is_down;
+    int down_x, down_y;
+    int up_x, up_y;
+
+    MouseKey(bool is_down = false,
+             int down_x = 0, int down_y = 0,
+             int up_x = 0, int up_y = 0) :
+    is_down(is_down),
+    down_x(down_x), down_y(down_y),
+    up_x(up_x), up_y(up_y) {}
+
+    void update(bool is_pressed, int x, int y);
+};
+
 struct Mouse {
     int x;
     int y;
 
-    bool left_key_down;
-    int left_key_down_x;
-    int left_key_down_y;
+    MouseKey left_key;
+    MouseKey middle_key;
+    MouseKey right_key;
 
-    bool right_key_down;
-    int right_key_down_x;
-    int right_key_down_y;
+    Mouse(int x = 0, int y = 0) : x(x), y(y) {}
 };
 
 typedef void (*ButtonCallback)();
@@ -75,8 +88,8 @@ public:
     void set_label(std::string label) {_label = label;}
 
     void handle_mouse_move(const Mouse& mouse);
-    void handle_button_down(const Mouse& mouse);
-    void handle_button_up(const Mouse& mouse);
+    void handle_mouse_button_down(const Mouse& mouse);
+    void handle_mouse_button_up(const Mouse& mouse);
     virtual void draw() const;
 };
  
@@ -86,8 +99,8 @@ class ControlsManager {
 public:
     int add_button(int x, int y, int width, int height, std::string label, ButtonCallback button_callback);
     void handle_mouse_move(const Mouse& mouse);
-    void handle_button_down(const Mouse& mouse);
-    void handle_button_up(const Mouse& mouse);
+    void handle_mouse_button_down(const Mouse& mouse);
+    void handle_mouse_button_up(const Mouse& mouse);
     void draw_buttons() const;
 
     int find_id_by_label(std::string label) const;

@@ -10,6 +10,19 @@
 #include <set>
 #include <algorithm>
 
+// ---- MouseKey ----
+
+void MouseKey::update(bool pressed, int x, int y) {
+    is_down = pressed;
+    if (pressed) {
+        down_x = x;
+        down_y = y;
+    } else {
+        up_x = x;
+        up_y = y;
+    }
+}
+
 // ---- Button ----
 
 bool Button::mouse_over_button(const int& mouse_x, const int& mouse_y) const {
@@ -29,27 +42,25 @@ void Button::handle_mouse_move(const Mouse& mouse) {
     }
 }
 
-void Button::handle_button_down(const Mouse& mouse) {
-    // Refuse to become pressed if one of mouse buttons is already pressed
+void Button::handle_mouse_button_down(const Mouse& mouse) {
     if (!_is_pressed &&
-        mouse_over_button(mouse.x, mouse.y) &&
-        !(mouse.left_key_down && mouse.right_key_down))
+        mouse.left_key.is_down &&
+        mouse_over_button(mouse.x, mouse.y))
         _is_pressed = true;
 }
 
-void Button::handle_button_up(const Mouse& mouse) {
-    // Refuse to become released if one of buttons is still pressed
-    if (!(mouse.left_key_down || mouse.right_key_down)) {
-        if (_is_pressed &&
-            mouse_over_button(mouse.x, mouse.y) &&
-            (mouse_over_button(mouse.left_key_down_x, mouse.left_key_down_y) ||
-                mouse_over_button(mouse.right_key_down_x, mouse.right_key_down_y))) {
-            _is_pressed = false;
-            if (_button_callback != NULL)
-                _button_callback();
-        } else if (_is_pressed) {
-            _is_pressed = false;
-        }
+void Button::handle_mouse_button_up(const Mouse& mouse) {
+    if (_is_pressed &&
+        mouse_over_button(mouse.x, mouse.y) &&
+        !mouse.left_key.is_down &&
+        mouse_over_button(mouse.left_key.down_x, mouse.left_key.down_y)) {
+
+        _is_pressed = false;
+        if (_button_callback != NULL)
+            _button_callback();
+
+    } else if (_is_pressed) {
+        _is_pressed = false;
     }
 }
 
@@ -120,7 +131,6 @@ int ControlsManager::add_button(int x, int y, int width, int height, std::string
     while (std::any_of(buttons.begin(), buttons.end(), [&](Button b) {return b.get_id() == new_id;}))
         ++new_id;
     buttons.push_back(Button(new_id, x, y, width, height, label, button_callback));
-    cout << "Added " << label << " with id " << new_id << endl;
     return new_id;
 }
 
@@ -129,14 +139,14 @@ void ControlsManager::handle_mouse_move(const Mouse& mouse) {
         it->handle_mouse_move(mouse);
 }
 
-void ControlsManager::handle_button_down(const Mouse& mouse) {
+void ControlsManager::handle_mouse_button_down(const Mouse& mouse) {
     for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it)
-        it->handle_button_down(mouse);
+        it->handle_mouse_button_down(mouse);
 }
 
-void ControlsManager::handle_button_up(const Mouse& mouse) {
+void ControlsManager::handle_mouse_button_up(const Mouse& mouse) {
     for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it)
-        it->handle_button_up(mouse);
+        it->handle_mouse_button_up(mouse);
 }
 
 void ControlsManager::draw_buttons() const {
