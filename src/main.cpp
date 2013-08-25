@@ -452,77 +452,92 @@ void handleSpecialKeysDown(int key, int x, int y) {
 
 void handleMouseKeypress(int button, int state, int x, int y) {
 
-    // Update global mouse
+    MOUSE_KEY current_mouse_key;
+    MOUSE_KEY_ACTION current_mouse_key_action;
+
+    // Update global mouse; current mouse-key and it's action
     switch (button)
     {
         case GLUT_LEFT_BUTTON:
             mouse.left_key.update((state == GLUT_DOWN), x, y);
+            current_mouse_key = MOUSE_LEFT_KEY;
             break;
         case GLUT_MIDDLE_BUTTON:
             mouse.middle_key.update((state == GLUT_DOWN), x, y);
+            current_mouse_key = MOUSE_MIDDLE_KEY;
             break;
         case GLUT_RIGHT_BUTTON:
             mouse.right_key.update((state == GLUT_DOWN), x, y);
+            current_mouse_key = MOUSE_RIGHT_KEY;
             break;
     }
 
-    // Perform actions on buttons clics
-    switch (button)
+    switch (state)
     {
-        case GLUT_LEFT_BUTTON:
-            switch (state)
-            {
-                case GLUT_DOWN: // Prepare planet to be added
-                    next_planet.reset_parameters();
-                    next_planet.pos.x = next_planet.prev_pos.x = (x - (window_width + menu_width)/2) * model_scale;
-                    next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
-                    next_planet.mass_kg = 1e29;
-                    next_planet.rad_m = 2e6;
-                    next_planet.color = getRandomColor();
-
-                    controls.handle_mouse_button_down(mouse);
-                    break;
-                case GLUT_UP: // Add prepared planet
-                    pSimpleSpace->add_planet(next_planet);
-
-                    controls.handle_mouse_button_up(mouse);
-                    break;
-            }
+        case GLUT_DOWN:
+            current_mouse_key_action = MOUSE_KEY_DOWN;
             break;
 
-        case GLUT_RIGHT_BUTTON:
-            switch (state)
-            {
-                case GLUT_DOWN: // Immediately remove planet(s) at pressed position
-                {
-                    Physics::Vector2d clicked_model_pos = Physics::Vector2d((x - window_width/2) * model_scale,
-                                                                            (y - window_height/2) * model_scale);
-                    pair<bool, unsigned int> ret = pSimpleSpace->find_planet_by_click(clicked_model_pos);
-                    if (ret.first) {
-                        pSimpleSpace->remove_planet(ret.second);
-                    }
+        case GLUT_UP:
+            current_mouse_key_action = MOUSE_KEY_UP;
+            break;
+    }
 
-                    controls.handle_mouse_button_down(mouse);
-                    break;
-                }
-                case GLUT_UP:
+    controls.handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
+
+    // Handle only simulation related mouse actions 
+    if (x > menu_width) {
+
+        switch (button)
+        {
+            case GLUT_LEFT_BUTTON:
+                switch (state)
                 {
-                    if ((x - mouse.right_key.down_x != 0 ) && (y - mouse.right_key.down_y) != 0) {
-                        Physics::Vector2d sel_start_model_pos = Physics::Vector2d((mouse.right_key.down_x - window_width/2) * model_scale,
-                                                                                  (mouse.right_key.down_y - window_height/2) * model_scale);
-                        Physics::Vector2d sel_end_model_pos   = Physics::Vector2d((x - window_width/2) * model_scale,
-                                                                                  (y - window_height/2) * model_scale);
-                        std::vector<unsigned int> id_list = pSimpleSpace->find_planets_by_selection(sel_start_model_pos, sel_end_model_pos);
-                        for (std::vector<unsigned int>::iterator it = id_list.begin(), it_end = id_list.end(); it != it_end; ++it) {
-                            pSimpleSpace->remove_planet(*it);
+                    case GLUT_DOWN: // Prepare planet to be added
+                        next_planet.reset_parameters();
+                        next_planet.pos.x = next_planet.prev_pos.x = (x - (window_width + menu_width)/2) * model_scale;
+                        next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
+                        next_planet.mass_kg = 1e29;
+                        next_planet.rad_m = 2e6;
+                        next_planet.color = getRandomColor();
+
+                        break;
+                    case GLUT_UP: // Add prepared planet
+                        pSimpleSpace->add_planet(next_planet);
+                        break;
+                }
+                break;
+
+            case GLUT_RIGHT_BUTTON:
+                switch (state)
+                {
+                    case GLUT_DOWN: // Immediately remove planet(s) at pressed position
+                    {
+                        Physics::Vector2d clicked_model_pos = Physics::Vector2d((x - window_width/2) * model_scale,
+                                                                                (y - window_height/2) * model_scale);
+                        pair<bool, unsigned int> ret = pSimpleSpace->find_planet_by_click(clicked_model_pos);
+                        if (ret.first) {
+                            pSimpleSpace->remove_planet(ret.second);
                         }
+                        break;
                     }
-
-                    controls.handle_mouse_button_up(mouse);
-                    break;
+                    case GLUT_UP:
+                    {
+                        if ((x - mouse.right_key.down_x != 0 ) && (y - mouse.right_key.down_y) != 0) {
+                            Physics::Vector2d sel_start_model_pos = Physics::Vector2d((mouse.right_key.down_x - window_width/2) * model_scale,
+                                                                                      (mouse.right_key.down_y - window_height/2) * model_scale);
+                            Physics::Vector2d sel_end_model_pos   = Physics::Vector2d((x - window_width/2) * model_scale,
+                                                                                      (y - window_height/2) * model_scale);
+                            std::vector<unsigned int> id_list = pSimpleSpace->find_planets_by_selection(sel_start_model_pos, sel_end_model_pos);
+                            for (std::vector<unsigned int>::iterator it = id_list.begin(), it_end = id_list.end(); it != it_end; ++it) {
+                                pSimpleSpace->remove_planet(*it);
+                            }
+                        }
+                        break;
+                    }
                 }
-            }
-            break;
+                break;
+        }
     }
     if (!simulation_on) glutPostRedisplay();
 }
@@ -546,7 +561,7 @@ void handleMouseActiveMotion(int x, int y) {
             next_planet.vel.y = (y - mouse.left_key.down_y) * model_scale;
         }
     }
-    
+
     if (!simulation_on) glutPostRedisplay();
 }
 

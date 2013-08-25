@@ -17,9 +17,6 @@ void MouseKey::update(bool pressed, int x, int y) {
     if (pressed) {
         down_x = x;
         down_y = y;
-    } else {
-        up_x = x;
-        up_y = y;
     }
 }
 
@@ -42,25 +39,27 @@ void Button::handle_mouse_move(const Mouse& mouse) {
     }
 }
 
-void Button::handle_mouse_button_down(const Mouse& mouse) {
-    if (!_is_pressed &&
-        mouse.left_key.is_down &&
-        mouse_over_button(mouse.x, mouse.y))
-        _is_pressed = true;
-}
+void Button::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
 
-void Button::handle_mouse_button_up(const Mouse& mouse) {
-    if (_is_pressed &&
-        mouse_over_button(mouse.x, mouse.y) &&
-        !mouse.left_key.is_down &&
-        mouse_over_button(mouse.left_key.down_x, mouse.left_key.down_y)) {
+    if (mouse_key == MOUSE_LEFT_KEY) {
+        switch (mouse_key_action)
+        {
+            case MOUSE_KEY_DOWN:
+                if (!_is_pressed && mouse_over_button(mouse.x, mouse.y)) {
+                    _is_pressed = true;
+                }
+                break;
 
-        _is_pressed = false;
-        if (_button_callback != NULL)
-            _button_callback();
-
-    } else if (_is_pressed) {
-        _is_pressed = false;
+            case MOUSE_KEY_UP:
+                if (_is_pressed && mouse_over_button(mouse.left_key.down_x, mouse.left_key.down_y)) {
+                    _is_pressed = false;
+                    if (_button_callback != NULL)
+                        _button_callback();
+                } else if (_is_pressed) {
+                    _is_pressed = false;
+                }
+                break;
+        }
     }
 }
 
@@ -139,14 +138,9 @@ void ControlsManager::handle_mouse_move(const Mouse& mouse) {
         it->handle_mouse_move(mouse);
 }
 
-void ControlsManager::handle_mouse_button_down(const Mouse& mouse) {
+void ControlsManager::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
     for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it)
-        it->handle_mouse_button_down(mouse);
-}
-
-void ControlsManager::handle_mouse_button_up(const Mouse& mouse) {
-    for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it)
-        it->handle_mouse_button_up(mouse);
+        it->handle_mouse_key_event(mouse, mouse_key, mouse_key_action);
 }
 
 void ControlsManager::draw_buttons() const {
