@@ -28,8 +28,8 @@ using std::endl;
     // Unsupproted platform
 #endif
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
+//#include <ft2build.h>
+//#include FT_FREETYPE_H
 
 #include <stdlib.h> // For rand()
 #include <time.h>   // For time()
@@ -38,6 +38,9 @@ using std::endl;
 #include "simplespace.h"
 #include "planet.h"
 #include "physics.h"
+
+//FT_Library  ft_library; // FreeType library handler
+//FT_Face     face;       // Face object handler
 
 int main_window;
 
@@ -51,8 +54,6 @@ const int scene_min_width = 100;
 
 int model_speed = 1;
 int model_scale = 200000;
-int view_offset_x = 0;
-int view_offset_y = 0;
 
 bool simulation_on = true;
 
@@ -98,11 +99,15 @@ void handleMousePassiveMotion(int x, int y);
 void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, Color_RGBA color);
 void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RGBA color);
 
-Physics::Vector2d screen_to_model_position(int x, int y) {
-    Physics::Vector2d ret;
-    ret.x = (x - (window_width + menu_width)/2 ) * model_scale;
-    ret.y = (y - window_height/2 ) * model_scale;
-    return ret;
+double model_x_from_screen_x(const int& x);
+double model_y_from_screen_y(const int& y);
+
+double model_x_from_screen_x(const int& x) {
+    return (x - (window_width + menu_width)/2 ) * model_scale;
+}
+
+double model_y_from_screen_y(const int& y) {
+    return (y - window_height/2 ) * model_scale;
 }
 
 Color_RGB getRandomColor();
@@ -232,7 +237,7 @@ void renderScene() {
     //glLoadIdentity();
 
     glPushMatrix();
-    glTranslated((window_width + menu_width)/2.0 + view_offset_x, window_height/2.0 + view_offset_y, 0.0);
+    glTranslated((window_width + menu_width)/2.0, window_height/2.0, 0.0);
 
     //glRotatef(-_cameraAngle, 0.0f, 1.0f, 0.0f); //Rotate the camera
     //glPushMatrix(); //Save the transformations performed thus far
@@ -243,7 +248,7 @@ void renderScene() {
         draw_planet(it->rad_m/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f});
     }
 
-    if (mouse.left_key.is_down) {
+    if (mouse.left_key.is_down && (mouse.left_key.down_x > menu_width)) {
         draw_planet(next_planet.rad_m / model_scale,
                     mouse.left_key.down_x - (window_width + menu_width)/2.0,
                     mouse.left_key.down_y - window_height/2.0,
@@ -261,7 +266,7 @@ void renderScene() {
         if (mass_modifier_key_down)
             text_color.A = 1.0f;
         render_bitmap_string_2d(str.c_str(),
-                                mouse.left_key.down_x - window_width/2.0 - 30,
+                                mouse.left_key.down_x - (window_width + menu_width)/2.0 - 30,
                                 mouse.left_key.down_y - window_height/2.0 + 25,
                                 GLUT_BITMAP_HELVETICA_12,
                                 text_color);
@@ -274,7 +279,7 @@ void renderScene() {
         if (rad_modifier_key_down)
             text_color.A = 1.0f;
         render_bitmap_string_2d(str.c_str(),
-                                mouse.left_key.down_x - window_width/2.0 - 30,
+                                mouse.left_key.down_x - (window_width + menu_width)/2.0 - 30,
                                 mouse.left_key.down_y - window_height/2.0 + 40,
                                 GLUT_BITMAP_HELVETICA_12,
                                 text_color);
@@ -287,7 +292,7 @@ void renderScene() {
         ss << sqrt(pow(next_planet.vel.x, 2) + pow(next_planet.vel.y, 2));
         str = std::string("Vel: ") + ss.str() + std::string(" m/s");
         render_bitmap_string_2d(str.c_str(),
-                                mouse.left_key.down_x - window_width/2.0 - 30,
+                                mouse.left_key.down_x - (window_width + menu_width)/2.0 - 30,
                                 mouse.left_key.down_y - window_height/2.0 + 55,
                                 GLUT_BITMAP_HELVETICA_12,
                                 text_color);
@@ -295,7 +300,7 @@ void renderScene() {
         ss.str(std::string());
     }
 
-    if (mouse.right_key.is_down) {
+    if (mouse.right_key.is_down && (mouse.right_key.down_x > menu_width)) {
         glBegin(GL_LINE_LOOP);
         glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
         glVertex2d(mouse.right_key.down_x - (window_width + menu_width)/2.0,
@@ -321,6 +326,44 @@ void renderScene() {
     #endif
 
     glPopMatrix();
+        
+    render_bitmap_string_2d("add/remove planets - mouse left/right keys",
+                            window_width - 800,
+                            window_height - 35,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+    
+    render_bitmap_string_2d("hold r/m to change radius or mass of new planet",
+                            window_width - 800,
+                            window_height - 20,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+
+    render_bitmap_string_2d("a - antialiazing mode",
+                            window_width - 400,
+                            window_height - 35,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+    render_bitmap_string_2d("c - clear all planets",
+                            window_width - 400,
+                            window_height - 20,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+    render_bitmap_string_2d("+/- zoom",
+                            window_width - 100,
+                            window_height - 35,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+    render_bitmap_string_2d(",/. speed",
+                            window_width - 100,
+                            window_height - 20,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+    render_bitmap_string_2d("q/esc - quit",
+                            window_width - 100,
+                            window_height - 5,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
 
     switch(gMode)
     {
@@ -442,27 +485,24 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
     if (!simulation_on) glutPostRedisplay();
 }
 
+// Not used
 void handleSpecialKeysDown(int key, int x, int y) {
     switch (key)
     {
         case GLUT_KEY_RIGHT:
-            view_offset_x -= 50;
             break;
 
         case GLUT_KEY_UP:
-            view_offset_y += 50;
             break;
 
         case GLUT_KEY_LEFT:
-            view_offset_x += 50;
             break;
 
         case GLUT_KEY_DOWN:
-            view_offset_y -= 50;
             break;
     }
 
-    if (!simulation_on) glutPostRedisplay();
+    //if (!simulation_on) glutPostRedisplay();
 }
 
 void handleMouseKeypress(int button, int state, int x, int y) {
@@ -501,58 +541,66 @@ void handleMouseKeypress(int button, int state, int x, int y) {
 
     controls.handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
 
-    // Handle only simulation related mouse actions 
-    if (x > menu_width) {
-
-        switch (button)
-        {
-            case GLUT_LEFT_BUTTON:
-                switch (state)
-                {
-                    case GLUT_DOWN: // Prepare planet to be added
+    switch (button)
+    {
+        case GLUT_LEFT_BUTTON:
+            switch (state)
+            {
+                case GLUT_DOWN: // Prepare planet to be added
+                    if (x > menu_width) {
                         next_planet.reset_parameters();
                         next_planet.pos.x = next_planet.prev_pos.x = (x - (window_width + menu_width)/2) * model_scale;
                         next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
                         next_planet.mass_kg = 1e29;
                         next_planet.rad_m = 2e6;
                         next_planet.color = getRandomColor();
+                    }
 
-                        break;
-                    case GLUT_UP: // Add prepared planet
-                        if (x > mouse.left_key.down_x)
-                            pSimpleSpace->add_planet(next_planet);
-                        break;
-                }
-                break;
+                    break;
+                case GLUT_UP: // Add prepared planet
+                    if (mouse.left_key.down_x > menu_width) {
+                        pSimpleSpace->add_planet(next_planet);
+                    }
+                    break;
+            }
+            break;
 
-            case GLUT_RIGHT_BUTTON:
-                switch (state)
+        case GLUT_RIGHT_BUTTON:
+            switch (state)
+            {
+                case GLUT_DOWN: // Immediately remove planet(s) at pressed position
                 {
-                    case GLUT_DOWN: // Immediately remove planet(s) at pressed position
-                    {
-                        Physics::Vector2d clicked_model_pos = screen_to_model_position(x, y);
+                    if (x > menu_width) {
+                        Physics::Vector2d clicked_model_pos(model_x_from_screen_x(mouse.x),
+                                                            model_y_from_screen_y(mouse.y));
                         pair<bool, unsigned int> ret = pSimpleSpace->find_planet_by_click(clicked_model_pos);
                         if (ret.first) {
                             pSimpleSpace->remove_planet(ret.second);
                         }
-                        break;
                     }
-                    case GLUT_UP:
-                    {
-                        if ((x - mouse.right_key.down_x != 0 ) && (y - mouse.right_key.down_y) != 0) {
-                            Physics::Vector2d sel_start_model_pos = screen_to_model_position(mouse.right_key.down_x, mouse.right_key.down_y);
-                            Physics::Vector2d sel_end_model_pos   = screen_to_model_position(x, y);
-                            std::vector<unsigned int> id_list = pSimpleSpace->find_planets_by_selection(sel_start_model_pos, sel_end_model_pos);
-                            for (std::vector<unsigned int>::iterator it = id_list.begin(), it_end = id_list.end(); it != it_end; ++it) {
-                                pSimpleSpace->remove_planet(*it);
-                            }
-                        }
-                        break;
-                    }
+                    break;
                 }
-                break;
-        }
+                case GLUT_UP:
+                {
+                    if (mouse.right_key.down_x > menu_width &&
+                        (x - mouse.right_key.down_x) != 0  &&
+                        (y - mouse.right_key.down_y) != 0) {
+
+                        Physics::Vector2d sel_start_model_pos(model_x_from_screen_x(mouse.right_key.down_x),
+                                                              model_y_from_screen_y(mouse.right_key.down_y));
+                        Physics::Vector2d sel_end_model_pos(model_x_from_screen_x(mouse.x),
+                                                            model_y_from_screen_y(mouse.y));
+                        std::vector<unsigned int> id_list = pSimpleSpace->find_planets_by_selection(sel_start_model_pos, sel_end_model_pos);
+                        for (std::vector<unsigned int>::iterator it = id_list.begin(), it_end = id_list.end(); it != it_end; ++it) {
+                            pSimpleSpace->remove_planet(*it);
+                        }
+                    }
+                    break;
+                }
+            }
+            break;
     }
+
     if (!simulation_on) glutPostRedisplay();
 }
 
@@ -661,7 +709,7 @@ int main(int argc, char * argv[])
     glutIgnoreKeyRepeat(1); // Don't use glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF), it disables globally (for other apps)
     glutKeyboardFunc(handleNormalKeysDown);
     glutKeyboardUpFunc(handleNormalKeysUp);
-    glutSpecialFunc(handleSpecialKeysDown);
+    //glutSpecialFunc(handleSpecialKeysDown);
 
     // Mouse
     glutMouseFunc(handleMouseKeypress);
@@ -670,6 +718,30 @@ int main(int argc, char * argv[])
 
     // Timer
     glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
+
+    /*
+    // FreeType library initialization
+    int ft_error = FT_Init_FreeType(&ft_library);
+    if (ft_error != 0) {
+        cout << "Error occurred during library initialization; code: " << ft_error << endl;
+    }
+
+    ft_error = FT_New_Face(ft_library,
+                         "/Library/Fonts/Microsoft/Calibri.ttf",
+                         0,
+                         &face );
+    if (ft_error == FT_Err_Unknown_File_Format) {
+        cout << "Error: the font format seems to be unsupported; code: " << ft_error << endl;
+    } else if (ft_error) {
+        cout << "Error: the font file couldn't been opened and read; code: " << ft_error << endl;
+    }
+
+    ft_error = FT_Set_Char_Size(face,    // handle to face object
+                                0,       // char_width in 1/64th of points
+                                16*64,   // char_height in 1/64th of points
+                                300,     // horizontal device resolution
+                                300 );   // vertical device resolution
+    */
 
     glutMainLoop();
 

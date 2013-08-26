@@ -64,7 +64,7 @@ void SimpleSpace::move_one_step() {
             double rad_sum = ita->rad_m + itb->rad_m;
             if (dist < rad_sum) {
                 // Debug log
-                cout << "Collision between: " << ita->id << " and " << itb->id << endl;
+                //cout << "Collision between: " << ita->id << " and " << itb->id << endl;
                 resolve_body_collision(*ita, *itb);
             }
         }
@@ -95,9 +95,9 @@ void SimpleSpace::move_apart_bodies(Planet& p1, Planet& p2) {
     p2.pos.y += pull_dist_2 * sin(angle);
 
     // Debug logs
-    cout << "pulling: dist=" << dist << " rad_sum=" << p1.rad_m + p2.rad_m << \
-    " pull_dist_abs=" << pull_dist_abs << " pull_dist_1=" << pull_dist_1 << \
-    " pull_dist_2=" << pull_dist_2 << endl;
+    //cout << "pulling: dist=" << dist << " rad_sum=" << p1.rad_m + p2.rad_m << \
+    //" pull_dist_abs=" << pull_dist_abs << " pull_dist_1=" << pull_dist_1 << \
+    //" pull_dist_2=" << pull_dist_2 << endl;
 }
 
 void SimpleSpace::resolve_body_collision(Planet& pla, Planet& plb) {
