@@ -8,9 +8,11 @@ TARGET = simple-space
 UNAME := $(firstword $(shell uname -s))
 ifeq ($(UNAME), Linux)
 LDLIBS = -lGL -lglut
+#Check these: -lglut -lGLU -lGL -L/usr/X11R6/lib/ -lXmu -lXi -lXext -lX11 -lXt
 endif
 ifeq ($(UNAME), Darwin)
 LDLIBS = -framework GLUT -framework OpenGL
+#Check these: -framework GLU
 endif
 
 all: $(TARGET)

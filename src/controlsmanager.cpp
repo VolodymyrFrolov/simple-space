@@ -51,7 +51,9 @@ void Button::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOU
                 break;
 
             case MOUSE_KEY_UP:
-                if (_is_pressed && mouse_over_button(mouse.left_key.down_x, mouse.left_key.down_y)) {
+                if (_is_pressed &&
+                    mouse_over_button(mouse.x, mouse.y) &&
+                    mouse_over_button(mouse.left_key.down_x, mouse.left_key.down_y)) {
                     _is_pressed = false;
                     if (_button_callback != NULL)
                         _button_callback();

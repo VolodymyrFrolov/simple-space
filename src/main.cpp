@@ -13,15 +13,23 @@ using std::endl;
 #include <string>
 #include <sstream>
 
+#if defined(ASD_ASD)
+#endif
+
 #ifdef __APPLE__
     #include <OpenGL/OpenGL.h>
-    #include <GLUT/glut.h>
+    //#include <OpenGL/glu.h>
+    //#include <GLUT/glut.h>
+    #include <GL/freeglut.h>
 #elif __linux__
   //#include <GL/glut.h>
   #include <GL/freeglut.h>
 #else
     // Unsupproted platform
 #endif
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 #include <stdlib.h> // For rand()
 #include <time.h>   // For time()
@@ -89,6 +97,13 @@ void handleMousePassiveMotion(int x, int y);
 
 void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, Color_RGBA color);
 void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RGBA color);
+
+Physics::Vector2d screen_to_model_position(int x, int y) {
+    Physics::Vector2d ret;
+    ret.x = (x - (window_width + menu_width)/2 ) * model_scale;
+    ret.y = (y - window_height/2 ) * model_scale;
+    return ret;
+}
 
 Color_RGB getRandomColor();
 
@@ -283,13 +298,13 @@ void renderScene() {
     if (mouse.right_key.is_down) {
         glBegin(GL_LINE_LOOP);
         glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-        glVertex2d(mouse.right_key.down_x - window_width/2.0,
+        glVertex2d(mouse.right_key.down_x - (window_width + menu_width)/2.0,
                    mouse.right_key.down_y - window_height/2.0);
-        glVertex2d(mouse.x - window_width/2.0,
+        glVertex2d(mouse.x - (window_width + menu_width)/2.0,
                    mouse.right_key.down_y - window_height/2.0);
-        glVertex2d(mouse.x - window_width/2.0,
+        glVertex2d(mouse.x - (window_width + menu_width)/2.0,
                    mouse.y - window_height/2.0);
-        glVertex2d(mouse.right_key.down_x - window_width/2.0,
+        glVertex2d(mouse.right_key.down_x - (window_width + menu_width)/2.0,
                    mouse.y - window_height/2.0);
 
         glEnd();
@@ -452,10 +467,11 @@ void handleSpecialKeysDown(int key, int x, int y) {
 
 void handleMouseKeypress(int button, int state, int x, int y) {
 
+    // Update global mouse; current mouse-key and it's action
+
     MOUSE_KEY current_mouse_key;
     MOUSE_KEY_ACTION current_mouse_key_action;
 
-    // Update global mouse; current mouse-key and it's action
     switch (button)
     {
         case GLUT_LEFT_BUTTON:
@@ -503,7 +519,8 @@ void handleMouseKeypress(int button, int state, int x, int y) {
 
                         break;
                     case GLUT_UP: // Add prepared planet
-                        pSimpleSpace->add_planet(next_planet);
+                        if (x > mouse.left_key.down_x)
+                            pSimpleSpace->add_planet(next_planet);
                         break;
                 }
                 break;
@@ -513,8 +530,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                 {
                     case GLUT_DOWN: // Immediately remove planet(s) at pressed position
                     {
-                        Physics::Vector2d clicked_model_pos = Physics::Vector2d((x - window_width/2) * model_scale,
-                                                                                (y - window_height/2) * model_scale);
+                        Physics::Vector2d clicked_model_pos = screen_to_model_position(x, y);
                         pair<bool, unsigned int> ret = pSimpleSpace->find_planet_by_click(clicked_model_pos);
                         if (ret.first) {
                             pSimpleSpace->remove_planet(ret.second);
@@ -524,10 +540,8 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                     case GLUT_UP:
                     {
                         if ((x - mouse.right_key.down_x != 0 ) && (y - mouse.right_key.down_y) != 0) {
-                            Physics::Vector2d sel_start_model_pos = Physics::Vector2d((mouse.right_key.down_x - window_width/2) * model_scale,
-                                                                                      (mouse.right_key.down_y - window_height/2) * model_scale);
-                            Physics::Vector2d sel_end_model_pos   = Physics::Vector2d((x - window_width/2) * model_scale,
-                                                                                      (y - window_height/2) * model_scale);
+                            Physics::Vector2d sel_start_model_pos = screen_to_model_position(mouse.right_key.down_x, mouse.right_key.down_y);
+                            Physics::Vector2d sel_end_model_pos   = screen_to_model_position(x, y);
                             std::vector<unsigned int> id_list = pSimpleSpace->find_planets_by_selection(sel_start_model_pos, sel_end_model_pos);
                             for (std::vector<unsigned int>::iterator it = id_list.begin(), it_end = id_list.end(); it != it_end; ++it) {
                                 pSimpleSpace->remove_planet(*it);
