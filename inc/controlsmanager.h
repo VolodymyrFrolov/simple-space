@@ -35,6 +35,9 @@ enum MOUSE_KEY_ACTION {
     MOUSE_KEY_UP
 };
 
+typedef void (*ActionCallback)();
+
+
 struct MouseKey {
     bool is_down;
     int down_x;
@@ -50,6 +53,7 @@ struct MouseKey {
     void update(bool is_pressed, int x, int y);
 };
 
+
 struct Mouse {
     int x;
     int y;
@@ -61,32 +65,35 @@ struct Mouse {
     Mouse(int x = 0, int y = 0) : x(x), y(y) {}
 };
 
-typedef void (*ButtonCallback)();
 
 class UIControl {
 protected:
     int _id, _x, _y, _w, _h;
+    bool mouse_over_button(const int& mouse_x, const int& mouse_y) const;
 public:
     UIControl(int id, int x, int y, int w, int h) :
     _id(id), _x(x), _y(y), _w(w), _h(h) {}
     int get_id() const {return _id;}
+    virtual void handle_mouse_move(const Mouse& mouse) = 0;
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) = 0;
     virtual void draw() const = 0;
 };
 
-class Button : public UIControl {
 
+class Button : public UIControl {
+protected:
     bool _is_pressed;
     bool _is_mouse_over;
     std::string _label;
-    ButtonCallback _button_callback;
-
-    bool mouse_over_button(const int& mouse_x, const int& mouse_y) const;
+    ActionCallback _button_callback;
 
 public:
 
-    Button(int id, int x, int y, int w, int h,
-            std::string label,
-            ButtonCallback button_callback) :
+    Button(int id,
+           int x, int y,
+           int w, int h,
+           std::string label,
+           ActionCallback button_callback) :
     UIControl(id, x, y, w, h),
     _is_pressed(false),
     _is_mouse_over(false),
@@ -98,16 +105,43 @@ public:
     std::string get_label() const {return _label;}
     void set_label(std::string label) {_label = label;}
 
-    void handle_mouse_move(const Mouse& mouse);
-    void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    virtual void handle_mouse_move(const Mouse& mouse);
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
     virtual void draw() const;
 };
- 
+
+
+class ButtonOnOff : public Button {
+    bool _is_on;
+    std::string _label_off;
+    ActionCallback _button_callback_off;
+
+public:
+    ButtonOnOff(int id,
+            int x, int y,
+            int w, int h,
+            bool initial_state,
+            std::string label_on,
+            std::string label_off,
+            ActionCallback action_on,
+            ActionCallback action_off) :
+
+    Button(id, x, y, w, h, label_on, action_on),
+
+    _is_on(initial_state),
+    _label_off(label_off),
+    _button_callback_off(action_off) {}
+    
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    virtual void draw() const;
+};
+
+
 class ControlsManager {
     std::vector<Button> buttons;
     bool mouse_over_button(const Button& button, const int& mouse_x, const int& mouse_y) const;
 public:
-    int add_button(int x, int y, int width, int height, std::string label, ButtonCallback button_callback);
+    int add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback);
     void handle_mouse_move(const Mouse& mouse);
     void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
     void draw_buttons() const;

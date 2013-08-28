@@ -61,6 +61,16 @@ Mouse mouse;
 
 ControlsManager controls;
 
+void func_on() {
+    cout << "func_on" << endl;
+}
+
+void func_off() {
+    cout << "func_off" << endl;
+}
+
+ButtonOnOff button_on_off(100, 20, 500, 120, 30, true, "Start", "Stop", func_on, func_off);
+
 bool mass_modifier_key_down = false;
 bool rad_modifier_key_down = false;
 
@@ -86,7 +96,7 @@ SimpleSpace * pSimpleSpace = new SimpleSpace(1000/FRAMERATE);
 void initRendering();
 void onTimer(int next_timer_tick);
 
-void renderScene();
+void drawScene();
 void resizeWindow(int w, int h);
 
 void handleNormalKeys(unsigned char key, int x, int y);
@@ -166,7 +176,7 @@ void restart_simulation() {
         glutPostRedisplay();
 }
 
-void renderScene() {
+void drawScene() {
 
     switch(gMode)
     {
@@ -211,6 +221,7 @@ void renderScene() {
     glLoadIdentity();
 
     controls.draw_buttons();
+    button_on_off.draw();
 
     glDisable(GL_SCISSOR_TEST);
 
@@ -384,7 +395,6 @@ void renderScene() {
 }
 
 void resizeWindow(int w, int h) {
-    
     window_width = w;
     window_height = h;
 }
@@ -540,6 +550,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
     }
 
     controls.handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
+    button_on_off.handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
 
     switch (button)
     {
@@ -610,6 +621,7 @@ void handleMouseActiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
     controls.handle_mouse_move(mouse);
+    button_on_off.handle_mouse_move(mouse);
 
     if (mouse.left_key.is_down) {
         if (mass_modifier_key_down) {
@@ -632,6 +644,7 @@ void handleMousePassiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
     controls.handle_mouse_move(mouse);
+    button_on_off.handle_mouse_move(mouse);
     if (!simulation_on) glutPostRedisplay();
 }
 
@@ -702,7 +715,7 @@ int main(int argc, char * argv[])
     initRendering();
 
     // Render & Resize
-    glutDisplayFunc(renderScene);
+    glutDisplayFunc(drawScene);
     glutReshapeFunc(resizeWindow);
 
     // Keyboard
