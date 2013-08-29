@@ -165,6 +165,33 @@ void restart_simulation() {
         glutPostRedisplay();
 }
 
+void zoom_in() {
+    if (model_scale / 2 >= 3125) {
+        model_scale /= 2;
+        //cout << "zoomed out to model scale: " << model_scale << endl;
+    } else {
+        cout << "Can't zoom in any more" << endl;
+    }
+}
+
+void zoom_out() {
+    if (model_scale * 2 <= 1600000) {
+        model_scale *= 2;
+        //cout << "zoomed in to model scale: " << model_scale << endl;
+    } else {
+        cout << "Can't zoom out any more" << endl;
+    }
+}
+
+void move_one_step() {
+    if (!simulation_on) {
+        pSimpleSpace->move_one_step();
+        cout << "Moved for one step" << endl;
+    } else {
+        cout << "Stop simulation to move step by step" << endl;
+    }
+}
+
 void drawScene() {
 
     switch(gMode)
@@ -348,6 +375,11 @@ void drawScene() {
                             window_height - 20,
                             GLUT_BITMAP_HELVETICA_12,
                             Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+    render_bitmap_string_2d("space - start/stop",
+                            window_width - 400,
+                            window_height - 5,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
     render_bitmap_string_2d("+/- zoom",
                             window_width - 100,
                             window_height - 35,
@@ -425,15 +457,20 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
             }
             break;
 
+        case ' ':
+            if (simulation_on)
+                stop_simulation();
+            else
+                start_simulation();
+            break;
+
         // Zoom
         case '-':
-            model_scale *= 2;
-            cout << "model scale: " << model_scale << endl;
+            zoom_out();
             break;
 
         case '=':
-            model_scale /= 2;
-            cout << "model scale: " << model_scale << endl;
+            zoom_in();
             break;
 
         // Speed
@@ -686,17 +723,32 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    pControls->add_button_on_off(40, 100,           // x, y
+    pControls->add_button_on_off(40, 80,            // x, y
                                  120, 30,           // w, h
                                  "Simulation On",   // Label
                                  true,              // Initial state
                                 start_simulation,   // Callback On
                                  stop_simulation);  // Callback Off
 
-    pControls->add_button(40, 150,              // x, y
+    pControls->add_button(40, 120,              // x, y
+                          120, 30,              // w, h
+                          "Move One Step",      // Label
+                          move_one_step);  // Callback
+
+    pControls->add_button(40, 200,              // x, y
                           120, 30,              // w, h
                           "Restart",            // Label
                           restart_simulation);  // Callback
+
+    pControls->add_button(40, 240,      // x, y
+                          55, 30,       // w, h
+                          "+",          // Label
+                          zoom_in);     // Callback
+
+    pControls->add_button(105, 240,     // x, y
+                          55, 30,       // w, h
+                          "-",          // Label
+                          zoom_out);    // Callback
 
     pControls->add_button(40, 500,              // x, y
                           120, 30,              // w, h
