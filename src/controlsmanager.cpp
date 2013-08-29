@@ -28,7 +28,7 @@ void MouseKey::update(bool pressed, int x, int y) {
 
 // ---- UIControl ----
 
-bool UIControl::mouse_over_button(const int& mouse_x, const int& mouse_y) const {
+bool UIControl::mouse_over_control(const int& mouse_x, const int& mouse_y) const {
     return (mouse_x > _x       &&
             mouse_x < _x + _w  &&
             mouse_y > _y       &&
@@ -38,7 +38,7 @@ bool UIControl::mouse_over_button(const int& mouse_x, const int& mouse_y) const 
 // ---- Button ----
 
 void Button::handle_mouse_move(const Mouse& mouse) {
-    if (mouse_over_button(mouse.x, mouse.y)) {
+    if (mouse_over_control(mouse.x, mouse.y)) {
         if (!_is_mouse_over)
         _is_mouse_over = true;
     } else {
@@ -53,15 +53,15 @@ void Button::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOU
         switch (mouse_key_action)
         {
             case MOUSE_KEY_DOWN:
-                if (!_is_pressed && mouse_over_button(mouse.x, mouse.y)) {
+                if (!_is_pressed && mouse_over_control(mouse.x, mouse.y)) {
                     _is_pressed = true;
                 }
                 break;
 
             case MOUSE_KEY_UP:
                 if (_is_pressed &&
-                    mouse_over_button(mouse.x, mouse.y) &&
-                    mouse_over_button(mouse.left_key.down_x, mouse.left_key.down_y)) {
+                    mouse_over_control(mouse.x, mouse.y) &&
+                    mouse_over_control(mouse.left_key.down_x, mouse.left_key.down_y)) {
                     _is_pressed = false;
                     if (_button_callback != NULL)
                         _button_callback();
@@ -127,7 +127,7 @@ void Button::draw() const {
         font_y += 1;
     }
 
-    glColor3f(0.1f, 0.1f, 0.1f);
+    glColor3f(0.0f, 0.0f, 0.0f);
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 }
 
@@ -138,19 +138,19 @@ void ButtonOnOff::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key
         switch (mouse_key_action)
         {
             case MOUSE_KEY_DOWN:
-                if (!_is_pressed && mouse_over_button(mouse.x, mouse.y)) {
+                if (!_is_pressed && mouse_over_control(mouse.x, mouse.y)) {
                     _is_pressed = true;
                 }
                 break;
                 
             case MOUSE_KEY_UP:
                 if (_is_pressed &&
-                    mouse_over_button(mouse.x, mouse.y) &&
-                    mouse_over_button(mouse.left_key.down_x, mouse.left_key.down_y)) {
+                    mouse_over_control(mouse.x, mouse.y) &&
+                    mouse_over_control(mouse.left_key.down_x, mouse.left_key.down_y)) {
 
                     _is_pressed = false;
-                    _is_on = !_is_on;
-                    if (_is_on) {
+                    _state_on = !_state_on;
+                    if (_state_on) {
                         if (_button_callback != NULL)
                             _button_callback();
                     } else {
@@ -222,10 +222,10 @@ void ButtonOnOff::draw() const {
         line_y += 1;
     }
 
-    if (_is_on)
+    if (_state_on)
         glColor3f(1.0f, 1.0f, 1.0f);
     else
-        glColor3f(0.3f, 0.3f, 0.3f);
+        glColor3f(0.4f, 0.4f, 0.4f);
     
     glLineWidth(2);
     glBegin(GL_LINES);
@@ -243,51 +243,47 @@ void ButtonOnOff::draw() const {
         font_y += 1;
     }
 
-    glColor3f(0.2f, 0.3f, 0.2f);
+    glColor3f(0.0f, 0.0f, 0.0f);
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 }
 
 // ---- ControlManager ----
 
+ControlsManager::~ControlsManager() {
+    if (controls.size() != 0) {
+        std::for_each(controls.begin(), controls.end(), [](UIControl* b) {delete b; b = NULL;});
+    }
+}
+
 int ControlsManager::add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback) {
     int new_id = 0;
-    while (std::any_of(buttons.begin(), buttons.end(), [&](Button b) {return b.get_id() == new_id;}))
+    while (std::any_of(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == new_id;})) {
         ++new_id;
-    buttons.push_back(Button(new_id, x, y, width, height, label, button_callback));
+    }
+    controls.push_back(new Button(new_id, x, y, width, height, label, button_callback));
+    return new_id;
+}
+
+int ControlsManager::add_button_on_off(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off) {
+    int new_id = 0;
+    while (std::any_of(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == new_id;})) {
+        ++new_id;
+    }
+    controls.push_back(new ButtonOnOff(new_id, x, y, width, height, label, start_state, button_callback_on, button_callback_off));
     return new_id;
 }
 
 void ControlsManager::handle_mouse_move(const Mouse& mouse) {
-    for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it)
-        it->handle_mouse_move(mouse);
+    for (std::vector<UIControl *>::iterator it = controls.begin(), it_end = controls.end(); it != it_end; ++it)
+        (*it)->handle_mouse_move(mouse);
 }
 
 void ControlsManager::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
-    for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it)
-        it->handle_mouse_key_event(mouse, mouse_key, mouse_key_action);
+    for (std::vector<UIControl *>::iterator it = controls.begin(), it_end = controls.end(); it != it_end; ++it)
+        (*it)->handle_mouse_key_event(mouse, mouse_key, mouse_key_action);
 }
 
-void ControlsManager::draw_buttons() const {
-    for (std::vector<Button>::const_iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it)
-        it->draw();
-}
-
-int ControlsManager::find_id_by_label(std::string label) const {
-    int ret = -1;
-    for (std::vector<Button>::const_iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it) {
-        if (it->get_label() == label) {
-            ret = it->get_id();
-            break;
-        }
-    }
-    return ret;
-}
-
-void ControlsManager::set_label_by_id(std::string label, int id) {
-    for (std::vector<Button>::iterator it = buttons.begin(), it_end = buttons.end(); it != it_end; ++it) {
-        if (it->get_id() == id) {
-            it->set_label(label);
-            break;
-        }
-    }
+void ControlsManager::draw() const {
+    for (std::vector<UIControl *>::const_iterator it = controls.begin(), it_end = controls.end(); it != it_end; ++it)
+        (*it)->draw();
 }

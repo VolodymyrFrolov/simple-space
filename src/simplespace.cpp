@@ -209,6 +209,7 @@ std::pair<bool, unsigned int> SimpleSpace::find_planet_by_click(const Vector2d& 
         if (Physics::DistFromPos(click_pos, it->pos) < it->rad_m) {
             result.first = true;
             result.second = it->id;
+            break;
         }
     }
     return result;

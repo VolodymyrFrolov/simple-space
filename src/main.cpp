@@ -12,6 +12,7 @@ using std::endl;
 #include <vector>
 #include <string>
 #include <sstream>
+#include <memory>
 
 #if defined(ASD_ASD)
 #endif
@@ -59,18 +60,6 @@ bool simulation_on = true;
 
 Mouse mouse;
 
-ControlsManager controls;
-
-void func_on() {
-    cout << "func_on" << endl;
-}
-
-void func_off() {
-    cout << "func_off" << endl;
-}
-
-ButtonOnOff button_on_off(100, 20, 500, 120, 30, true, "Start", "Stop", func_on, func_off);
-
 bool mass_modifier_key_down = false;
 bool rad_modifier_key_down = false;
 
@@ -91,7 +80,8 @@ enum AliasMode {
 AliasMode gMode = ALIAS_MODE_MULTISAMPLE;
 
 // Creating global SimpleSpace
-SimpleSpace * pSimpleSpace = new SimpleSpace(1000/FRAMERATE);
+std::unique_ptr<SimpleSpace> pSimpleSpace(new SimpleSpace(1000/FRAMERATE));
+std::unique_ptr<ControlsManager> pControls(new ControlsManager);
 
 void initRendering();
 void onTimer(int next_timer_tick);
@@ -132,24 +122,23 @@ void onTimer(int next_timer_tick) {
         glutTimerFunc(next_timer_tick, onTimer, next_timer_tick);
 }
 
-void start_stop_simulation() {
-
+void start_simulation() {
     if (!simulation_on) {
-        cout << "Start pressed" << endl;
         simulation_on = true;
         glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
-
-        // Simulation should have got started, so we change "Start" label to "Stop"
-        int button_start = controls.find_id_by_label("Start");
-        controls.set_label_by_id("Stop", button_start);
-    } else {
-        cout << "Stop pressed" << endl;
-        simulation_on = false; // This stops timer cycling
-
-        // Simulation should have got stopped, so we change "Stop" label to "Start"
-        int button_stop = controls.find_id_by_label("Stop");
-        controls.set_label_by_id("Start", button_stop);
     }
+}
+
+void stop_simulation() {
+    if (simulation_on) {
+        simulation_on = false; // This stops timer cycling
+    }
+}
+
+void exit() {
+    glutDestroyWindow(main_window);
+    cout << "Exiting by user choice" << endl;
+    exit(0);
 }
 
 void restart_simulation() {
@@ -220,8 +209,7 @@ void drawScene() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    controls.draw_buttons();
-    button_on_off.draw();
+    pControls->draw();
 
     glDisable(GL_SCISSOR_TEST);
 
@@ -413,12 +401,8 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
         // Exit
         case 27:  // Escape key
         case 'q':
-            glutDestroyWindow(main_window);
-            delete pSimpleSpace;
-            pSimpleSpace = NULL;
-            cout << "Exiting by keypress" << endl;
-            exit(0);
-            break;
+            exit();
+            break; // Never get to this line
 
         // Antialiazing mode
         case 'a':
@@ -549,8 +533,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
             break;
     }
 
-    controls.handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
-    button_on_off.handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
+    pControls->handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
 
     switch (button)
     {
@@ -620,8 +603,7 @@ void handleMouseActiveMotion(int x, int y) {
 
     mouse.x = x;
     mouse.y = y;
-    controls.handle_mouse_move(mouse);
-    button_on_off.handle_mouse_move(mouse);
+    pControls->handle_mouse_move(mouse);
 
     if (mouse.left_key.is_down) {
         if (mass_modifier_key_down) {
@@ -643,8 +625,7 @@ void handleMouseActiveMotion(int x, int y) {
 void handleMousePassiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
-    controls.handle_mouse_move(mouse);
-    button_on_off.handle_mouse_move(mouse);
+    pControls->handle_mouse_move(mouse);
     if (!simulation_on) glutPostRedisplay();
 }
 
@@ -705,8 +686,22 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    controls.add_button(20, 150, 80, 30, "Restart", restart_simulation);
-    controls.add_button(20, 200, 80, 30, "Stop", start_stop_simulation);
+    pControls->add_button_on_off(40, 100,           // x, y
+                                 120, 30,           // w, h
+                                 "Simulation On",   // Label
+                                 true,              // Initial state
+                                start_simulation,   // Callback On
+                                 stop_simulation);  // Callback Off
+
+    pControls->add_button(40, 150,              // x, y
+                          120, 30,              // w, h
+                          "Restart",            // Label
+                          restart_simulation);  // Callback
+
+    pControls->add_button(40, 500,              // x, y
+                          120, 30,              // w, h
+                          "Exit",               // Label
+                          exit);                // Callback
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
