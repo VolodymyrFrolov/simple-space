@@ -1,5 +1,4 @@
-CC = g++
-CFLAGS = -std=c++0x -Wall -c -Iinc
+CFLAGS = -std=c++0x -stdlib=libc++ -Wall -c -Iinc
 LDFLAGS = -pthread
 SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp controlsmanager.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -7,10 +6,12 @@ TARGET = simple-space
 
 UNAME := $(firstword $(shell uname -s))
 ifeq ($(UNAME), Linux)
+CC = g++
 LDLIBS = -lGL -lglut
 #Check these: -lglut -lGLU -lGL -L/usr/X11R6/lib/ -lXmu -lXi -lXext -lX11 -lXt
 endif
 ifeq ($(UNAME), Darwin)
+CC = cc
 LDLIBS = -framework GLUT -framework OpenGL
 #Check these: -framework GLU
 endif

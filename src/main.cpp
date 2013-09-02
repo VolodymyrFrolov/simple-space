@@ -12,14 +12,14 @@ using std::endl;
 #include <vector>
 #include <string>
 #include <sstream>
-#include <memory>
+//#include <memory> // FreeType
 
 #if defined(ASD_ASD)
 #endif
 
 #ifdef __APPLE__
     #include <OpenGL/OpenGL.h>
-    //#include <OpenGL/glu.h>
+    #include <OpenGL/glu.h>
     //#include <GLUT/glut.h>
     #include <GL/freeglut.h>
 #elif __linux__
@@ -32,8 +32,8 @@ using std::endl;
 //#include <ft2build.h>
 //#include FT_FREETYPE_H
 
-#include <stdlib.h> // For rand()
-#include <time.h>   // For time()
+#include <stdlib.h> // rand()
+#include <time.h>   // time()
 
 #include "controlsmanager.h"
 #include "simplespace.h"
@@ -94,6 +94,7 @@ void handleNormalKeys(unsigned char key, int x, int y);
 void handleSpecialKeys(int key, int x, int y);
 
 void handleMouseKeypress(int button, int state, int x, int y);
+void handleMouseWheel(int wheel, int direction, int x, int y);
 void handleMouseActiveMotion(int x, int y);
 void handleMousePassiveMotion(int x, int y);
 
@@ -540,6 +541,8 @@ void handleSpecialKeysDown(int key, int x, int y) {
 }
 
 void handleMouseKeypress(int button, int state, int x, int y) {
+    
+    cout << "Button: " << button << " state: " << state << endl;
 
     // Update global mouse; current mouse-key and it's action
 
@@ -636,6 +639,10 @@ void handleMouseKeypress(int button, int state, int x, int y) {
     }
 
     if (!simulation_on) glutPostRedisplay();
+}
+
+void handleMouseWheel(int wheel, int direction, int x, int y) {
+    cout << "wheel: " << wheel << " direction: " << direction << endl;
 }
 
 // Mouse motion while some keys are being pressed
@@ -783,6 +790,7 @@ int main(int argc, char * argv[])
 
     // Mouse
     glutMouseFunc(handleMouseKeypress);
+    //glutMouseWheelFunc(handleMouseWheel);
     glutMotionFunc(handleMouseActiveMotion);
     glutPassiveMotionFunc(handleMousePassiveMotion);
 
