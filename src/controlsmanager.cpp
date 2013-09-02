@@ -412,3 +412,31 @@ void ControlsManager::draw() const {
     for (std::vector<UIControl *>::const_iterator it = controls.begin(), it_end = controls.end(); it != it_end; ++it)
         (*it)->draw();
 }
+
+void ControlsManager::simulate_mouse_action(int id, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+    std::vector<UIControl *>::iterator it = std::find_if(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == id;});
+    if (it != controls.end()) {
+        std::pair<int, int> control_position = (*it)->get_position();
+        Mouse fake_mouse(control_position.first + 1, control_position.second + 1); // Add one, because [x y] is left top corner 
+        switch(mouse_key)
+        {
+            case MOUSE_LEFT_KEY:
+                fake_mouse.left_key.is_down = (mouse_key_action == MOUSE_KEY_DOWN);
+                fake_mouse.left_key.down_x = fake_mouse.x;
+                fake_mouse.left_key.down_y = fake_mouse.y;
+                break;
+            case MOUSE_MIDDLE_KEY:
+                fake_mouse.middle_key.is_down = (mouse_key_action == MOUSE_KEY_DOWN);
+                fake_mouse.middle_key.down_x = fake_mouse.x;
+                fake_mouse.middle_key.down_y = fake_mouse.y;
+                break;
+            case MOUSE_RIGHT_KEY:
+                fake_mouse.right_key.is_down = (mouse_key_action == MOUSE_KEY_DOWN);
+                fake_mouse.right_key.down_x = fake_mouse.x;
+                fake_mouse.right_key.down_y = fake_mouse.y;
+                break;
+        }
+        (*it)->handle_mouse_key_event(fake_mouse, mouse_key, mouse_key_action);
+    }
+}
+

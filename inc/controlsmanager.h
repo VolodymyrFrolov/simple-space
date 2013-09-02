@@ -76,6 +76,7 @@ public:
     virtual ~UIControl() {};
 
     int get_id() const {return _id;}
+    std::pair<int, int> get_position() const {return std::make_pair(_x, _y);}
     virtual void handle_mouse_move(const Mouse& mouse) = 0;
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) = 0;
     virtual void draw() const = 0;
@@ -168,6 +169,7 @@ public:
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
     void handle_mouse_move(const Mouse& mouse);
     void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    void simulate_mouse_action(int id, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
     void draw() const;
 };
 

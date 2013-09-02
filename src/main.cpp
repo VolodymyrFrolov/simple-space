@@ -44,6 +44,7 @@ using std::endl;
 //FT_Face     face;       // Face object handler
 
 int main_window;
+int start_stop_button = -1;
 
 const int FRAMERATE = 60;
 int window_width = 0;
@@ -460,10 +461,7 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
             break;
 
         case ' ':
-            if (simulation_on)
-                stop_simulation();
-            else
-                start_simulation();
+            pControls->simulate_mouse_action(start_stop_button, MOUSE_LEFT_KEY, MOUSE_KEY_DOWN);
             break;
 
         // Zoom
@@ -512,6 +510,9 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
         case 'm':
         case 'M':
             mass_modifier_key_down = false;
+            break;
+        case ' ':
+            pControls->simulate_mouse_action(start_stop_button, MOUSE_LEFT_KEY, MOUSE_KEY_UP);
             break;
     }
 
@@ -725,17 +726,18 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
+    start_stop_button = \
     pControls->add_button_on_off(40, 80,            // x, y
                                  120, 30,           // w, h
                                  "Simulation On",   // Label
                                  true,              // Initial state
-                                start_simulation,   // Callback On
+                                 start_simulation,  // Callback On
                                  stop_simulation);  // Callback Off
 
     pControls->add_button(40, 120,              // x, y
                           120, 30,              // w, h
                           "Move One Step",      // Label
-                          move_one_step);  // Callback
+                          move_one_step);       // Callback
 
     pControls->add_button(40, 200,              // x, y
                           120, 30,              // w, h
