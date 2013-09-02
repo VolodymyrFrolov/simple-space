@@ -134,12 +134,38 @@ public:
 };
 
 
+class Slider : public UIControl {
+    double _min;
+    double _max;
+    double _value;
+    std::string _label;
+    bool _is_pressed;
+
+public:
+    Slider(int id,
+           int x, int y,
+           int w, int h,
+           double min,
+           double max,
+           double value,
+           std::string label);
+
+    double get_value() {return _value;}
+
+    virtual void handle_mouse_move(const Mouse& mouse);
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    virtual void draw() const;
+};
+
+
 class ControlsManager {
     std::vector<UIControl *> controls;
+    int generate_unique_id() const;
 public:
     ~ControlsManager();
     int add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback);
     int add_button_on_off(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
+    int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
     void handle_mouse_move(const Mouse& mouse);
     void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
     void draw() const;

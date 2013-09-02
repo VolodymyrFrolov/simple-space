@@ -423,6 +423,8 @@ void resizeWindow(int w, int h) {
 void handleNormalKeysDown(unsigned char key, int x, int y) {
     // To see if modifier key is pressed use:
     // (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
+    
+    cout << "key:" << key << endl;
     switch (key)
     {
         // Remove objects
@@ -749,6 +751,12 @@ int main(int argc, char * argv[])
                           55, 30,       // w, h
                           "-",          // Label
                           zoom_out);    // Callback
+    
+    pControls->add_slider(40, 280,      // x, y
+                          120, 60,      // w, h
+                          0, 100,      // Min, Max
+                          50,           // Value
+                          "Slider: ");    // Label
 
     pControls->add_button(40, 500,              // x, y
                           120, 30,              // w, h
