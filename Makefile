@@ -1,8 +1,9 @@
 SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp controlsmanager.cpp
+#SOURCES_FULL_PATHS = $(addprefix src/, $(SOURCES))
 OBJECTS = $(SOURCES:.cpp=.o)
 TARGET = simple-space
 
-#Later replace with -std=c++11, when compiler will support it
+#Later replace with -std=c++11, when use compiler version that supports it
 CFLAGS = -std=c++0x -Iinc
 
 UNAME := $(firstword $(shell uname -s))
@@ -25,9 +26,9 @@ endif
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LDFLAGS) main.o physics.o simplespace.o planet.o controlsmanager.o $(LDLIBS) -o $(TARGET)
+	$(CC) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o $(TARGET)
 
-main.o: src/main.cpp
+main.o: src/main.cpp inc/simplespace.h inc/planet.h inc/physics.h inc/controlsmanager.h
 	$(CC) $(CFLAGS) src/main.cpp
 
 simplespace.o: src/simplespace.cpp inc/simplespace.h
