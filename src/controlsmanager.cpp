@@ -340,7 +340,7 @@ void Slider::draw() const {
     // Label
     
     std::string new_label(_label);
-    new_label.append((std::ostringstream() << _value).str());
+    new_label.append(static_cast<std::ostringstream&>(std::ostringstream() << _value).str());
     
     // Same (get string from value) done step by step
     //std::string value_string;

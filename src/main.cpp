@@ -12,7 +12,7 @@ using std::endl;
 #include <vector>
 #include <string>
 #include <sstream>
-//#include <memory> // FreeType
+#include <memory> // std::unique_ptr
 
 #if defined(ASD_ASD)
 #endif

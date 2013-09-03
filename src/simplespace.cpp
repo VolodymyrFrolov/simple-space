@@ -95,8 +95,8 @@ void SimpleSpace::move_apart_bodies(Planet& p1, Planet& p2) {
     p2.pos.y += pull_dist_2 * sin(angle);
 
     // Debug logs
-    //cout << "pulling: dist=" << dist << " rad_sum=" << p1.rad_m + p2.rad_m << \
-    //" pull_dist_abs=" << pull_dist_abs << " pull_dist_1=" << pull_dist_1 << \
+    //cout << "pulling: dist=" << dist << " rad_sum=" << p1.rad_m + p2.rad_m <<
+    //" pull_dist_abs=" << pull_dist_abs << " pull_dist_1=" << pull_dist_1 <<
     //" pull_dist_2=" << pull_dist_2 << endl;
 }
 
