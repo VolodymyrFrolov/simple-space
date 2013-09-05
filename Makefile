@@ -18,7 +18,7 @@ endif
 
 ifeq ($(UNAME), Darwin)
 CC = cc
-CFLAGS += -stdlib=libc++
+CFLAGS += -stdlib=libc++ -I/opt/X11/include
 LDLIBS = -framework GLUT -framework OpenGL
 #Check these: -framework GLU
 endif

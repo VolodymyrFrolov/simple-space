@@ -142,7 +142,7 @@ void ButtonOnOff::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key
                     _is_pressed = true;
                 }
                 break;
-                
+
             case MOUSE_KEY_UP:
                 if (_is_pressed &&
                     mouse_over_control(mouse.x, mouse.y) &&
@@ -169,53 +169,53 @@ void ButtonOnOff::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key
 void ButtonOnOff::draw() const {
 
     // Body
-    
+
     if (_is_mouse_over)
         glColor3f(0.7f,0.7f,0.7f);
     else
         glColor3f(0.6f,0.6f,0.6f);
-    
+
     glBegin(GL_QUADS);
     glVertex2i(_x,      _y     );
     glVertex2i(_x + _w, _y     );
     glVertex2i(_x + _w, _y + _h);
     glVertex2i(_x,      _y + _h);
     glEnd();
-    
+
     // Borders
-    
+
     glLineWidth(2);
-    
+
     if (_is_pressed)
         glColor3f(0.4f,0.4f,0.4f);
     else
         glColor3f(0.8f,0.8f,0.8f);
-    
+
     glBegin(GL_LINE_STRIP);
     glVertex2i(_x + _w, _y     );
     glVertex2i(_x,      _y     );
     glVertex2i(_x,      _y + _h);
     glEnd();
-    
+
     if (_is_pressed)
         glColor3f(0.8f,0.8f,0.8f);
     else
         glColor3f(0.4f,0.4f,0.4f);
-    
+
     glBegin(GL_LINE_STRIP);
     glVertex2i(_x,      _y + _h);
     glVertex2i(_x + _w, _y + _h);
     glVertex2i(_x + _w, _y     );
     glEnd();
-    
+
     glLineWidth(1);
-    
+
     // Indicator line
-    
+
     int line_x_start = _x + 10;
     int line_x_end = _x + _w - 10;
     int line_y = _y + _h - 5;
-    
+
     if (_is_pressed) {
         line_x_start += 1;
         line_x_end += 1;
@@ -226,7 +226,7 @@ void ButtonOnOff::draw() const {
         glColor3f(1.0f, 1.0f, 1.0f);
     else
         glColor3f(0.4f, 0.4f, 0.4f);
-    
+
     glLineWidth(2);
     glBegin(GL_LINES);
     glVertex2i(line_x_start, line_y);
@@ -234,7 +234,7 @@ void ButtonOnOff::draw() const {
     glEnd();
 
     // Label
-    
+
     int font_x = _x + (_w - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str())) / 2;
     int font_y = _y + (_h + 10) / 2;
 
@@ -257,35 +257,142 @@ Slider::Slider(int id,
                double value,
                std::string label) :
     UIControl(id, x, y, w, h),
-    _min(min), _max(max), _value(value),
-    _label(label),
-    _is_pressed(false) {
+    _is_pressed(false),
+    _margin(10),
+    _value(value), _value_min(min), _value_max(max),
+    _label(label) {
 
-    if (_min > _max) {
-        _max = _min;
-        _value = _min;
-        cout << "Error: Slider: min > max" << endl;
-    } else if (_value < _min || _value > _max) {
-        _value = (_min + _max) / 2;
-        cout << "Error: Slider: value out of range" << endl;
-    };
+    // Check range (done once)
+    if (_value_min > _value_max) {
+         cout << "Error: slider value_min > value_max" << endl;
+        _value_max = _value_min;
+    }
+
+    // Check value (will be used more)
+    correct_value_if_out_of_range(_value);
+
+    // Init borders position for drawing
+    _slider_min = _x + _margin;
+    _slider_max = _x + _w - _margin;
+
+    // Init labels for borders
+    std::ostringstream oss;
+    _str_min = static_cast<std::ostringstream&>(std::ostringstream() << _value_min).str();
+    oss.clear();
+    oss.str(std::string());
+    _str_max = static_cast<std::ostringstream&>(std::ostringstream() << _value_max).str();
+
+    // updating slider, using value and borders
+    update_slider();
+}
+
+void Slider::correct_value_if_out_of_range(double& val) {
+
+    if (val < _value_min) {
+        cout << "Warning: slider value = " << val << " < min , but has been corrected" << endl;
+        val = _value_min;
+    }
+    if (val > _value_max) {
+        cout << "Warning: slider value = " << val << " > max , but has been corrected" << endl;
+        val = _value_max;
+    }
+}
+
+void Slider::update_slider() {
+
+    int screen_diff = _slider_max - _slider_min;
+    double value_diff = _value_max - _value_min;
+    double value_relative = _value - _value_min;
+
+    _slider_pos = _x + _margin + (screen_diff * value_relative) / value_diff;
+
+    //There are two ways to get string from value:
+    // 1 - in one line
+    //_str_value = static_cast<std::ostringstream&>(std::ostringstream() << _value).str();
+
+    // 2 - step by step
+    std::ostringstream oss;
+    //oss.precision(3);
+    //oss << std::fixed
+    oss << std::scientific;
+    oss.unsetf(std::ios::scientific);
+    oss.precision(3);
+
+    oss << _value;
+    _str_value = oss.str();
+}
+
+void Slider::set_value_from_slider(int new_pos) {
+
+    int screen_diff = _slider_max - _slider_min;
+    double value_diff = _value_max - _value_min;
+    int pos_relative = new_pos - _slider_min;
+
+    _value = _value_min + (value_diff * pos_relative) / screen_diff;
+
+    update_slider();
+}
+
+bool Slider::mouse_over_slider_bar(int mouse_x, int mouse_y) {
+    return (mouse_x > _x + _margin      &&
+            mouse_x < _x + _w - _margin &&
+            mouse_y > _y + 20           &&
+            mouse_y < _y + 40);
+}
+
+void Slider::handle_mouse_move(const Mouse& mouse) {
+    if (_is_pressed && mouse_over_slider_bar(mouse.left_key.down_x, mouse.left_key.down_y)) {
+        if (mouse.x >= _slider_min && mouse.x <= _slider_max) {
+            // In range
+            set_value_from_slider(mouse.x);
+
+        } else if (mouse.x < _slider_min) {
+            // To the LEFT from range
+            if (_slider_pos != _slider_min)
+                set_value_from_slider(_slider_min);
+        } else {
+            // To the RIGHT from range
+            if (_slider_pos != _slider_max)
+                set_value_from_slider(_slider_max);
+        }
+    }
+}
+
+void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+    if (mouse_key == MOUSE_LEFT_KEY) {
+        switch (mouse_key_action)
+        {
+            case MOUSE_KEY_DOWN:
+            if (mouse_over_slider_bar(mouse.x, mouse.y)) {
+                if (!_is_pressed)
+                    _is_pressed = true;
+                set_value_from_slider(mouse.x);
+            }
+            break;
+
+            case MOUSE_KEY_UP:
+                if (_is_pressed)
+                    _is_pressed = false;
+            break;
+        }
+    }
 }
 
 void Slider::draw() const {
 
     // Body
-    
+
     glColor3f(0.6f,0.6f,0.6f);
-    
+
     glBegin(GL_QUADS);
     glVertex2i(_x,      _y     );
     glVertex2i(_x + _w, _y     );
     glVertex2i(_x + _w, _y + _h);
     glVertex2i(_x,      _y + _h);
     glEnd();
-    
+
     // Borders
-    
+    /*
     glLineWidth(1);
     
     glColor3f(0.4f,0.4f,0.4f);
@@ -302,10 +409,9 @@ void Slider::draw() const {
     glVertex2i(_x,      _y + _h/2     );
     glVertex2i(_x + _w, _y + _h/2     );
     glEnd();
-    
+    */
+
     // Slider line
-    
-    int margin = 10;
 
     if (_is_pressed)
         glColor3f(0.9f, 0.9f, 0.9f);
@@ -313,55 +419,42 @@ void Slider::draw() const {
         glColor3f(0.8f, 0.8f, 0.8f);
 
     glBegin(GL_LINES);
-    glVertex2i(_x + margin,      _y + _h / 4);
-    glVertex2i(_x + _w - margin, _y + _h / 4);
+    glVertex2i(_slider_min, _y + _h/2);
+    glVertex2i(_slider_max, _y + _h/2);
     glEnd();
-    
+
     // Slider pointer
 
     if (_is_pressed)
-        glColor3f(0.9f, 0.9f, 0.9f);
+        glColor3f(0.25f, 0.66f, 0.92f);
     else
         glColor3f(0.8f, 0.8f, 0.8f);
-    
-    int pointer_offset;
-    if ((_max - _min) == 0) {
-        pointer_offset = _w / 2; // Put slider pointer to center
-    } else {
-        pointer_offset = ((_w - margin * 2) * _value) / (_max - _min);
-    }
-    
+
     glLineWidth(10);
     glBegin(GL_LINES);
-    glVertex2i(_x + pointer_offset + margin, _y + _h/4 - 5);
-    glVertex2i(_x + pointer_offset + margin, _y + _h/4 + 5);
+    glVertex2i(_slider_pos, _y + _h/2 - 5);
+    glVertex2i(_slider_pos, _y + _h/2 + 5);
     glEnd();
-    
-    // Label
-    
+
+    // Value label
+
     std::string new_label(_label);
-    new_label.append(static_cast<std::ostringstream&>(std::ostringstream() << _value).str());
-    
-    // Same (get string from value) done step by step
-    //std::string value_string;
-    //std::ostringstream oss;
-    //oss << _value;
-    //value_string = oss.str();
-    
+    new_label.append(_str_value);
+
     int font_x = _x + (_w - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)new_label.c_str())) / 2;
-    int font_y = _y + ((_h * 3) / 4) + 5;
-    
+    int font_y = _y + _h/3;
+
     glColor3f(0.0f, 0.0f, 0.0f);
     draw_text_2d(new_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 
-}
+    // Min & Max label
 
-void Slider::handle_mouse_move(const Mouse& mouse) {
-    
-}
+    font_x = _x + _margin;
+    font_y = _y + 5 * _h/6;
+    draw_text_2d(_str_min.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 
-void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
-    
+    font_x = _x + _w - _margin - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_str_max.c_str());
+    draw_text_2d(_str_max.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 }
 
 // ---- ControlManager ----

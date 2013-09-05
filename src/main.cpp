@@ -426,7 +426,8 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
     // To see if modifier key is pressed use:
     // (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
     
-    cout << "key:" << key << endl;
+    //cout << "key:" << key << endl;
+
     switch (key)
     {
         // Remove objects
@@ -541,8 +542,7 @@ void handleSpecialKeysDown(int key, int x, int y) {
 }
 
 void handleMouseKeypress(int button, int state, int x, int y) {
-    
-    cout << "Button: " << button << " state: " << state << endl;
+    //cout << "Button: " << button << " state: " << state << endl;
 
     // Update global mouse; current mouse-key and it's action
 
@@ -761,11 +761,11 @@ int main(int argc, char * argv[])
                           "-",          // Label
                           zoom_out);    // Callback
     
-    pControls->add_slider(40, 280,      // x, y
-                          120, 60,      // w, h
-                          0, 100,      // Min, Max
-                          50,           // Value
-                          "Slider: ");    // Label
+    pControls->add_slider(20, 280,      // x, y
+                          160, 60,      // w, h
+                          1, 1e30,      // Min, Max
+                          1e29,         // Value
+                          "Radiurs: "); // Label
 
     pControls->add_button(40, 500,              // x, y
                           120, 30,              // w, h

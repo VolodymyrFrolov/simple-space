@@ -136,11 +136,26 @@ public:
 
 
 class Slider : public UIControl {
-    double _min;
-    double _max;
-    double _value;
-    std::string _label;
     bool _is_pressed;
+    const int _margin;
+
+    double _value;
+    double _value_min;
+    double _value_max;
+
+    int _slider_pos;
+    int _slider_min;
+    int _slider_max;
+
+    std::string _label;
+    std::string _str_value;
+    std::string _str_min;
+    std::string _str_max;
+
+    bool mouse_over_slider_bar(int mouse_x, int mouse_y);
+    void correct_value_if_out_of_range(double& val);
+    void update_slider();
+    void set_value_from_slider(int new_pos);
 
 public:
     Slider(int id,
