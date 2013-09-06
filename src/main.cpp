@@ -43,8 +43,10 @@ using std::endl;
 //FT_Library  ft_library; // FreeType library handler
 //FT_Face     face;       // Face object handler
 
-int main_window;
-int start_stop_button = -1;
+int main_window_id;
+int start_stop_button_id = -1;
+int radius_slider_id = -1;
+int mass_slider_id = -1;
 
 const int FRAMERATE = 60;
 int window_width = 0;
@@ -138,7 +140,7 @@ void stop_simulation() {
 }
 
 void exit() {
-    glutDestroyWindow(main_window);
+    glutDestroyWindow(main_window_id);
     cout << "Exiting by user choice" << endl;
     exit(0);
 }
@@ -463,7 +465,7 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
             break;
 
         case ' ':
-            pControls->simulate_mouse_action(start_stop_button, MOUSE_LEFT_KEY, MOUSE_KEY_DOWN);
+            pControls->simulate_mouse_action(start_stop_button_id, MOUSE_LEFT_KEY, MOUSE_KEY_DOWN);
             break;
 
         // Zoom
@@ -514,7 +516,7 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
             mass_modifier_key_down = false;
             break;
         case ' ':
-            pControls->simulate_mouse_action(start_stop_button, MOUSE_LEFT_KEY, MOUSE_KEY_UP);
+            pControls->simulate_mouse_action(start_stop_button_id, MOUSE_LEFT_KEY, MOUSE_KEY_UP);
             break;
     }
 
@@ -585,11 +587,26 @@ void handleMouseKeypress(int button, int state, int x, int y) {
             {
                 case GLUT_DOWN: // Prepare planet to be added
                     if (x > menu_width) {
+
+                        double new_mass = 1e29;
+                        Slider* mass_slider = dynamic_cast<Slider *>(pControls->find_by_id(mass_slider_id));
+                        if (mass_slider != NULL)
+                            new_mass = mass_slider->get_value();
+                        else
+                            cout << "mass slider not found" << endl;
+
+                        double new_rad = 2e6;
+                        Slider* rad_slider = dynamic_cast<Slider *>(pControls->find_by_id(radius_slider_id));
+                        if (rad_slider != NULL)
+                            new_rad = rad_slider->get_value();
+                        else
+                            cout << "rad slider not found" << endl;
+
                         next_planet.reset_parameters();
                         next_planet.pos.x = next_planet.prev_pos.x = (x - (window_width + menu_width)/2) * model_scale;
                         next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
-                        next_planet.mass_kg = 1e29;
-                        next_planet.rad_m = 2e6;
+                        next_planet.mass_kg = new_mass;
+                        next_planet.rad_m = new_rad;
                         next_planet.color = getRandomColor();
                     }
 
@@ -733,7 +750,7 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    start_stop_button = \
+    start_stop_button_id = \
     pControls->add_button_on_off(40, 80,            // x, y
                                  120, 30,           // w, h
                                  "Simulation On",   // Label
@@ -746,28 +763,35 @@ int main(int argc, char * argv[])
                           "Move One Step",      // Label
                           move_one_step);       // Callback
 
-    pControls->add_button(40, 200,              // x, y
+    pControls->add_button(40, 180,              // x, y
                           120, 30,              // w, h
                           "Restart",            // Label
                           restart_simulation);  // Callback
 
-    pControls->add_button(40, 240,      // x, y
+    pControls->add_button(40, 220,      // x, y
                           55, 30,       // w, h
                           "+",          // Label
                           zoom_in);     // Callback
 
-    pControls->add_button(105, 240,     // x, y
+    pControls->add_button(105, 220,     // x, y
                           55, 30,       // w, h
                           "-",          // Label
                           zoom_out);    // Callback
-    
+    radius_slider_id = \
     pControls->add_slider(20, 280,      // x, y
                           160, 60,      // w, h
-                          1, 1e30,      // Min, Max
-                          1e29,         // Value
+                          1e6, 3e6,     // Min, Max
+                          2e6,          // Value
                           "Radius: ");  // Label
 
-    pControls->add_button(40, 500,              // x, y
+    mass_slider_id = \
+    pControls->add_slider(20, 350,      // x, y
+                          160, 60,      // w, h
+                          5e28, 1e30,   // Min, Max
+                          1e29,         // Value
+                          "Mass: ");    // Label
+
+    pControls->add_button(40, 540,              // x, y
                           120, 30,              // w, h
                           "Exit",               // Label
                           exit);                // Callback
@@ -775,7 +799,7 @@ int main(int argc, char * argv[])
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
     glutInitWindowSize(1024, 600);
-    main_window = glutCreateWindow("Simple Space");
+    main_window_id = glutCreateWindow("Simple Space");
     initRendering();
 
     // Render & Resize

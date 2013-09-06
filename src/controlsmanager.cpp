@@ -269,7 +269,7 @@ Slider::Slider(int id,
     }
 
     // Check value (will be used more)
-    correct_value_if_out_of_range(_value);
+    check_and_correct_value(_value);
 
     // Init borders position for drawing
     _slider_min = _x + _margin;
@@ -295,7 +295,7 @@ Slider::Slider(int id,
     update_slider();
 }
 
-void Slider::correct_value_if_out_of_range(double& val) {
+void Slider::check_and_correct_value(double& val) {
 
     if (val < _value_min) {
         cout << "Warning: slider value = " << val << " < min , but has been corrected" << endl;
@@ -305,6 +305,13 @@ void Slider::correct_value_if_out_of_range(double& val) {
         cout << "Warning: slider value = " << val << " > max , but has been corrected" << endl;
         val = _value_max;
     }
+}
+
+void Slider::check_and_correct_slider(int& pos) {
+    if (pos < _slider_min)
+        pos = _slider_min;
+    else if (pos > _slider_max)
+        pos = _slider_max;
 }
 
 void Slider::update_slider() {
@@ -343,27 +350,17 @@ void Slider::set_value_from_slider(int new_pos) {
 }
 
 bool Slider::mouse_over_slider_bar(int mouse_x, int mouse_y) {
-    return (mouse_x > _x + _margin      &&
-            mouse_x < _x + _w - _margin &&
-            mouse_y > _y + 20           &&
+    return (mouse_x > _x      &&
+            mouse_x < _x + _w &&
+            mouse_y > _y + 20 &&
             mouse_y < _y + 40);
 }
 
 void Slider::handle_mouse_move(const Mouse& mouse) {
     if (_is_pressed && mouse_over_slider_bar(mouse.left_key.down_x, mouse.left_key.down_y)) {
-        if (mouse.x >= _slider_min && mouse.x <= _slider_max) {
-            // In range
-            set_value_from_slider(mouse.x);
-
-        } else if (mouse.x < _slider_min) {
-            // To the LEFT from range
-            if (_slider_pos != _slider_min)
-                set_value_from_slider(_slider_min);
-        } else {
-            // To the RIGHT from range
-            if (_slider_pos != _slider_max)
-                set_value_from_slider(_slider_max);
-        }
+        int slider_new_pos = mouse.x;
+        check_and_correct_slider(slider_new_pos);
+        set_value_from_slider(slider_new_pos);
     }
 }
 
@@ -373,9 +370,11 @@ void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOU
         {
             case MOUSE_KEY_DOWN:
             if (mouse_over_slider_bar(mouse.x, mouse.y)) {
+                int slider_new_pos = mouse.x;
+                check_and_correct_slider(slider_new_pos);
                 if (!_is_pressed)
                     _is_pressed = true;
-                set_value_from_slider(mouse.x);
+                set_value_from_slider(slider_new_pos);
             }
             break;
 
@@ -542,6 +541,14 @@ void ControlsManager::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse
 void ControlsManager::draw() const {
     for (std::vector<UIControl *>::const_iterator it = controls.begin(), it_end = controls.end(); it != it_end; ++it)
         (*it)->draw();
+}
+
+UIControl* ControlsManager::find_by_id(int id) {
+    std::vector<UIControl *>::iterator it = std::find_if(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == id;});
+    if (it != controls.end())
+        return *it;
+    else
+        return NULL;
 }
 
 void ControlsManager::simulate_mouse_action(int id, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {

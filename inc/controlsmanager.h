@@ -170,7 +170,8 @@ class Slider : public UIControl {
     std::string _str_max;
 
     bool mouse_over_slider_bar(int mouse_x, int mouse_y);
-    void correct_value_if_out_of_range(double& val);
+    void check_and_correct_value(double& val);
+    void check_and_correct_slider(int& pos);
     void update_slider();
     void set_value_from_slider(int new_pos);
 
@@ -201,6 +202,7 @@ public:
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
     void handle_mouse_move(const Mouse& mouse);
     void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    UIControl* find_by_id(int id);
     void simulate_mouse_action(int id, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
     void draw() const;
 };
