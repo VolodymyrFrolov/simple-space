@@ -280,7 +280,7 @@ Slider::Slider(int id,
 #   ifdef __APPLE__
         _str_min = (std::ostringstream() << _value_min).str();
 #   else
-        _str_min = static_casr<std::ostringdtream&>(std::ostringstream() << _value_min).str();
+        _str_min = static_cast<std::ostringstream&>(std::ostringstream() << _value_min).str();
 #   endif
 
     oss.clear();
@@ -288,7 +288,7 @@ Slider::Slider(int id,
 #   ifdef __APPLE__
         _str_max = (std::ostringstream() << _value_max).str();
 #   else
-        _str_max = static_casr<std::ostringdtream&>(std::ostringstream() << _value_max).str();
+        _str_max = static_cast<std::ostringstream&>(std::ostringstream() << _value_max).str();
 #   endif
 
     // updating slider, using value and borders
