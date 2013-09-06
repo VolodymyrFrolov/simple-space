@@ -135,6 +135,23 @@ public:
 };
 
 
+class InputBox : public UIControl {
+    bool _is_active;
+    std::string _label;
+
+public:
+    InputBox(int id,
+             int x, int y,
+             int w, int h,
+             std::string label) :
+    UIControl(id, x, y, w, h),
+    _is_active(false),
+    _label(label) {}
+
+    void input();
+};
+
+
 class Slider : public UIControl {
     bool _is_pressed;
     const int _margin;

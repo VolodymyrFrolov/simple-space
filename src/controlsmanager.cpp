@@ -277,10 +277,19 @@ Slider::Slider(int id,
 
     // Init labels for borders
     std::ostringstream oss;
-    _str_min = static_cast<std::ostringstream&>(std::ostringstream() << _value_min).str();
+#   ifdef __APPLE__
+        _str_min = (std::ostringstream() << _value_min).str();
+#   else
+        _str_min = static_casr<std::ostringdtream&>(std::ostringstream() << _value_min).str();
+#   endif
+
     oss.clear();
     oss.str(std::string());
-    _str_max = static_cast<std::ostringstream&>(std::ostringstream() << _value_max).str();
+#   ifdef __APPLE__
+        _str_max = (std::ostringstream() << _value_max).str();
+#   else
+        _str_max = static_casr<std::ostringdtream&>(std::ostringstream() << _value_max).str();
+#   endif
 
     // updating slider, using value and borders
     update_slider();
@@ -383,7 +392,6 @@ void Slider::draw() const {
     // Body
 
     glColor3f(0.6f,0.6f,0.6f);
-
     glBegin(GL_QUADS);
     glVertex2i(_x,      _y     );
     glVertex2i(_x + _w, _y     );
@@ -392,48 +400,78 @@ void Slider::draw() const {
     glEnd();
 
     // Borders
-    /*
+
     glLineWidth(1);
-    
+
     glColor3f(0.4f,0.4f,0.4f);
-    
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(_x,      _y     );
+    glBegin(GL_LINE_STRIP);
     glVertex2i(_x + _w, _y     );
     glVertex2i(_x + _w, _y + _h);
     glVertex2i(_x,      _y + _h);
     glEnd();
-    
-    glColor3f(0.1f,0.1f,0.1f);
-    glBegin(GL_LINES);
-    glVertex2i(_x,      _y + _h/2     );
-    glVertex2i(_x + _w, _y + _h/2     );
+
+    glColor3f(0.8f,0.8f,0.8f);
+    glBegin(GL_LINE_STRIP);
+    glVertex2i(_x,      _y + _h);
+    glVertex2i(_x,      _y     );
+    glVertex2i(_x + _w, _y     );
     glEnd();
-    */
 
     // Slider line
 
-    if (_is_pressed)
-        glColor3f(0.9f, 0.9f, 0.9f);
-    else
-        glColor3f(0.8f, 0.8f, 0.8f);
+    glLineWidth(1);
 
+    glColor3f(0.1f, 0.1f, 0.1f);
     glBegin(GL_LINES);
     glVertex2i(_slider_min, _y + _h/2);
     glVertex2i(_slider_max, _y + _h/2);
     glEnd();
 
-    // Slider pointer
+    glColor3f(0.8f, 0.8f, 0.8f);
+    glBegin(GL_LINE_STRIP);
+    glVertex2i(_slider_min,     _y + _h/2 + 1);
+    glVertex2i(_slider_max + 1, _y + _h/2 + 1);
+    glVertex2i(_slider_max + 1, _y + _h/2);
+    glEnd();
+
+    glColor3f(0.4f, 0.4f, 0.4f);
+    glBegin(GL_LINE_STRIP);
+    glVertex2i(_slider_min, _y + _h/2 + 1);
+    glVertex2i(_slider_min, _y + _h/2 - 1);
+    glVertex2i(_slider_max, _y + _h/2 - 1);
+    glEnd();
+
+
+    // Slider tip
 
     if (_is_pressed)
-        glColor3f(0.25f, 0.66f, 0.92f);
+        glColor3f(0.15f, 0.56f, 0.82f);
     else
-        glColor3f(0.8f, 0.8f, 0.8f);
+        glColor3f(0.23f, 0.41f, 0.73f);
+    
+    glBegin(GL_POLYGON);
+    glVertex2i(_slider_pos - 5, _y + _h/2 + 3);
+    glVertex2i(_slider_pos - 5, _y + _h/2 - 5);
+    glVertex2i(_slider_pos + 5, _y + _h/2 - 5);
+    glVertex2i(_slider_pos + 5, _y + _h/2 + 3);
+    glVertex2i(_slider_pos,     _y + _h/2 + 9);
+    glEnd();
 
-    glLineWidth(10);
-    glBegin(GL_LINES);
-    glVertex2i(_slider_pos, _y + _h/2 - 5);
-    glVertex2i(_slider_pos, _y + _h/2 + 5);
+    glLineWidth(1);
+    
+    glColor3f(0.20f, 0.33f, 0.56f);
+    glBegin(GL_LINE_STRIP);
+    glVertex2i(_slider_pos + 5, _y + _h/2 - 4);
+    glVertex2i(_slider_pos + 5, _y + _h/2 + 3);
+    glVertex2i(_slider_pos,     _y + _h/2 + 8);
+    glVertex2i(_slider_pos - 5, _y + _h/2 + 3);
+    glEnd();
+
+    glColor3f(0.37f, 0.55f, 0.87f);
+    glBegin(GL_LINE_STRIP);
+    glVertex2i(_slider_pos - 4, _y + _h/2 + 4);
+    glVertex2i(_slider_pos - 4, _y + _h/2 - 5);
+    glVertex2i(_slider_pos + 5, _y + _h/2 - 5);
     glEnd();
 
     // Value label

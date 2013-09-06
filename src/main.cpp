@@ -765,7 +765,7 @@ int main(int argc, char * argv[])
                           160, 60,      // w, h
                           1, 1e30,      // Min, Max
                           1e29,         // Value
-                          "Radiurs: "); // Label
+                          "Radius: ");  // Label
 
     pControls->add_button(40, 500,              // x, y
                           120, 30,              // w, h
