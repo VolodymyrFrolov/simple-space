@@ -332,9 +332,10 @@ void TextBox::draw() const {
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 }
 
-// ---- NumericTextBox
-/*
-void TextBox::handle_keyboard_down(char key) {
+
+// ---- NumericBox
+
+void NumericBox::handle_keyboard_down(char key) {
 
     if (_is_active) {
         switch (key)
@@ -368,7 +369,8 @@ void TextBox::handle_keyboard_down(char key) {
         }
     }
 }
-*/
+
+
 // ---- Slider ----
 
 Slider::Slider(int id,

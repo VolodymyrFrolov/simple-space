@@ -138,16 +138,17 @@ public:
 
 
 class TextBox : public UIControl {
-    volatile bool _is_active;
+protected:
+    bool _is_active;
     std::string _label;
     //std::mutex mMutex;
     //std::condition_variable mCondVar;
-
+    
 public:
     TextBox(int id,
-             int x, int y,
-             int w, int h,
-             std::string label) :
+            int x, int y,
+            int w, int h,
+            std::string label) :
     UIControl(id, x, y, w, h),
     _is_active(false),
     _label(label) {}
@@ -159,6 +160,16 @@ public:
     virtual void draw() const;
 };
 
+class NumericBox : public TextBox {
+public:
+    NumericBox(int id,
+               int x, int y,
+               int w, int h,
+               std::string label) :
+    TextBox(id, x, y, w, h, label) {}
+
+    virtual void handle_keyboard_down(char key);
+};
 
 class Slider : public UIControl {
     bool _is_pressed;
