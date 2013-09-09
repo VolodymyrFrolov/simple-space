@@ -374,19 +374,9 @@ void drawScene() {
                             window_height - 35,
                             GLUT_BITMAP_HELVETICA_12,
                             Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    render_bitmap_string_2d("c - clear all planets",
-                            window_width - 400,
-                            window_height - 20,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
     render_bitmap_string_2d("space - start/stop",
                             window_width - 400,
                             window_height - 5,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    render_bitmap_string_2d("+/- zoom",
-                            window_width - 100,
-                            window_height - 35,
                             GLUT_BITMAP_HELVETICA_12,
                             Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
     render_bitmap_string_2d(",/. speed",
@@ -423,20 +413,13 @@ void resizeWindow(int w, int h) {
     window_height = h;
 }
 
-//Called when a key is pressed
 void handleNormalKeysDown(unsigned char key, int x, int y) {
-    // To see if modifier key is pressed use:
-    // (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
-    
-    //cout << "key:" << key << endl;
+    // To see if modifier key is pressed use: (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
+
+    pControls->handle_keyboard_down(key);
 
     switch (key)
     {
-        // Remove objects
-        case 'c':
-            pSimpleSpace->remove_all_objects();
-            break;
-
         // Exit
         case 27:  // Escape key
         case 'q':
@@ -468,15 +451,6 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
             pControls->simulate_mouse_action(start_stop_button_id, MOUSE_LEFT_KEY, MOUSE_KEY_DOWN);
             break;
 
-        // Zoom
-        case '-':
-            zoom_out();
-            break;
-
-        case '=':
-            zoom_in();
-            break;
-
         // Speed
         case ',':
             if (model_speed > 1) {
@@ -505,6 +479,7 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
 }
 
 void handleNormalKeysUp(unsigned char key, int x, int y) {
+
     switch (key)
     {
         case 'r':
@@ -525,6 +500,7 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
 
 // Not used
 void handleSpecialKeysDown(int key, int x, int y) {
+
     switch (key)
     {
         case GLUT_KEY_RIGHT:
@@ -539,14 +515,9 @@ void handleSpecialKeysDown(int key, int x, int y) {
         case GLUT_KEY_DOWN:
             break;
     }
-
-    //if (!simulation_on) glutPostRedisplay();
 }
 
 void handleMouseKeypress(int button, int state, int x, int y) {
-    //cout << "Button: " << button << " state: " << state << endl;
-
-    // Update global mouse; current mouse-key and it's action
 
     MOUSE_KEY current_mouse_key;
     MOUSE_KEY_ACTION current_mouse_key_action;
@@ -658,11 +629,11 @@ void handleMouseKeypress(int button, int state, int x, int y) {
     if (!simulation_on) glutPostRedisplay();
 }
 
+// Not used, as not working on default Mac OS X GLUT
 void handleMouseWheel(int wheel, int direction, int x, int y) {
     cout << "wheel: " << wheel << " direction: " << direction << endl;
 }
 
-// Mouse motion while some keys are being pressed
 void handleMouseActiveMotion(int x, int y) {
 
     mouse.x = x;
@@ -685,7 +656,6 @@ void handleMouseActiveMotion(int x, int y) {
     if (!simulation_on) glutPostRedisplay();
 }
 
-// Mouse motion without keys being pressed
 void handleMousePassiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
@@ -790,6 +760,10 @@ int main(int argc, char * argv[])
                           5e28, 1e30,   // Min, Max
                           1e29,         // Value
                           "Mass: ");    // Label
+
+    pControls->add_inputbox(20, 430,    // x, y
+                          160, 30,      // w, h
+                          "InputBox");   // Label
 
     pControls->add_button(40, 540,              // x, y
                           120, 30,              // w, h

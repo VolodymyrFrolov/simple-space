@@ -9,6 +9,7 @@
 #include "controlsmanager.h"
 #include <sstream>
 #include <algorithm>
+#include <thread>
 
 void draw_text_2d(const char* str, int x, int y, void* font) {
     glRasterPos2i(x, y);
@@ -53,7 +54,7 @@ void Button::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOU
         switch (mouse_key_action)
         {
             case MOUSE_KEY_DOWN:
-                if (!_is_pressed && mouse_over_control(mouse.x, mouse.y)) {
+                if (mouse_over_control(mouse.x, mouse.y) && !_is_pressed) {
                     _is_pressed = true;
                 }
                 break;
@@ -134,11 +135,12 @@ void Button::draw() const {
 // ---- ButtonOnOff ----
 
 void ButtonOnOff::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+
     if (mouse_key == MOUSE_LEFT_KEY) {
         switch (mouse_key_action)
         {
             case MOUSE_KEY_DOWN:
-                if (!_is_pressed && mouse_over_control(mouse.x, mouse.y)) {
+                if (mouse_over_control(mouse.x, mouse.y) && !_is_pressed) {
                     _is_pressed = true;
                 }
                 break;
@@ -242,6 +244,103 @@ void ButtonOnOff::draw() const {
         font_x += 1;
         font_y += 1;
     }
+
+    glColor3f(0.0f, 0.0f, 0.0f);
+    draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
+}
+
+// ---- InputBox ----
+
+void InputBox::handle_mouse_move(const Mouse& mouse) {
+    // Don't handle handle mouse movement for now
+}
+
+void InputBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+
+    switch (mouse_key_action)
+    {
+        case MOUSE_KEY_DOWN:
+            if (mouse_over_control(mouse.x, mouse.y)) {
+                if (!_is_active) {
+                    _is_active = true;
+                }
+            } else {
+                if (_is_active) {
+                    _is_active = false;
+                }
+            }
+        break;
+
+        case MOUSE_KEY_UP:
+            // Don't handle mouse key up for now
+        break;
+    }
+}
+
+void InputBox::handle_keyboard_down(char key) {
+
+    if (_is_active) {
+        switch (key)
+        {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            case '-':
+            case '+':
+            case '.':
+            case 'e':
+            case 'E':
+                _label.append(1, key);
+                break;
+
+            // Backspce
+            case char(127):
+                _label.clear();
+                break;
+
+            // Delete
+            case char(8):
+                _label.clear();
+                break;
+
+            // Enter
+            case char(13):
+                _is_active = false;
+                break;
+        }
+    }
+}
+
+void InputBox::handle_keyboard_up(char key) {
+}
+
+void InputBox::draw() const {
+
+    // Body
+
+    if (_is_active)
+        glColor3f(0.9f,0.9f,0.9f);
+    else
+        glColor3f(0.6f,0.6f,0.6f);
+
+    glBegin(GL_QUADS);
+    glVertex2i(_x,      _y     );
+    glVertex2i(_x + _w, _y     );
+    glVertex2i(_x + _w, _y + _h);
+    glVertex2i(_x,      _y + _h);
+    glEnd();
+
+    // Label
+
+    int font_x = _x + (_w - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str())) - 10;
+    int font_y = _y + _h/2 + 5;
 
     glColor3f(0.0f, 0.0f, 0.0f);
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
@@ -365,6 +464,7 @@ void Slider::handle_mouse_move(const Mouse& mouse) {
 }
 
 void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+
     if (mouse_key == MOUSE_LEFT_KEY) {
         switch (mouse_key_action)
         {
@@ -504,7 +604,7 @@ ControlsManager::~ControlsManager() {
 
 int ControlsManager::generate_unique_id() const {
     int new_id = 0;
-    while (std::any_of(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == new_id;})) {
+    while (std::any_of(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == new_id;} )) {
         ++new_id;
     }
     return new_id;
@@ -522,25 +622,36 @@ int ControlsManager::add_button_on_off(int x, int y, int width, int height, std:
     return new_id;
 }
 
+int ControlsManager::add_inputbox(int x, int y, int width, int height, std::string label) {
+    int new_id = generate_unique_id();
+    controls.push_back(new InputBox(new_id, x, y, width, height, label));
+    return new_id;
+}
+
 int ControlsManager::add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label) {
     int new_id = generate_unique_id();
     controls.push_back(new Slider(new_id, x, y, width, height, min, max,value, label));
     return new_id;
 }
 
+void ControlsManager::handle_keyboard_down(char key) {
+    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_keyboard_down(key);} );
+}
+
+void ControlsManager::handle_keyboard_up(char key) {
+    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_keyboard_up(key);} );
+}
+
 void ControlsManager::handle_mouse_move(const Mouse& mouse) {
-    for (std::vector<UIControl *>::iterator it = controls.begin(), it_end = controls.end(); it != it_end; ++it)
-        (*it)->handle_mouse_move(mouse);
+    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_mouse_move(mouse);} );
 }
 
 void ControlsManager::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
-    for (std::vector<UIControl *>::iterator it = controls.begin(), it_end = controls.end(); it != it_end; ++it)
-        (*it)->handle_mouse_key_event(mouse, mouse_key, mouse_key_action);
+    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_mouse_key_event(mouse, mouse_key, mouse_key_action);} );
 }
 
 void ControlsManager::draw() const {
-    for (std::vector<UIControl *>::const_iterator it = controls.begin(), it_end = controls.end(); it != it_end; ++it)
-        (*it)->draw();
+    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->draw();} );
 }
 
 UIControl* ControlsManager::find_by_id(int id) {

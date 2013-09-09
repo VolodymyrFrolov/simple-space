@@ -77,7 +77,9 @@ public:
 
     int get_id() const {return _id;}
     std::pair<int, int> get_position() const {return std::make_pair(_x, _y);}
-    virtual void handle_mouse_move(const Mouse& mouse) = 0;
+    virtual void handle_keyboard_down(char key) {};
+    virtual void handle_keyboard_up(char key) {};
+    virtual void handle_mouse_move(const Mouse& mouse) {};
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) = 0;
     virtual void draw() const = 0;
 };
@@ -136,8 +138,10 @@ public:
 
 
 class InputBox : public UIControl {
-    bool _is_active;
+    volatile bool _is_active;
     std::string _label;
+    //std::mutex mMutex;
+    //std::condition_variable mCondVar;
 
 public:
     InputBox(int id,
@@ -148,7 +152,11 @@ public:
     _is_active(false),
     _label(label) {}
 
-    void input();
+    virtual void handle_keyboard_down(char key);
+    virtual void handle_keyboard_up(char key);
+    virtual void handle_mouse_move(const Mouse& mouse);
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    virtual void draw() const;
 };
 
 
@@ -199,7 +207,10 @@ public:
     ~ControlsManager();
     int add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback);
     int add_button_on_off(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
+    int add_inputbox(int x, int y, int width, int height, std::string label);
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
+    void handle_keyboard_down(char key);
+    void handle_keyboard_up(char key);
     void handle_mouse_move(const Mouse& mouse);
     void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
     UIControl* find_by_id(int id);
