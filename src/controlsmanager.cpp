@@ -249,13 +249,13 @@ void ButtonOnOff::draw() const {
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 }
 
-// ---- InputBox ----
+// ---- TextBox ----
 
-void InputBox::handle_mouse_move(const Mouse& mouse) {
+void TextBox::handle_mouse_move(const Mouse& mouse) {
     // Don't handle handle mouse movement for now
 }
 
-void InputBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
 
     switch (mouse_key_action)
     {
@@ -277,34 +277,14 @@ void InputBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, M
     }
 }
 
-void InputBox::handle_keyboard_down(char key) {
+void TextBox::handle_keyboard_down(char key) {
+
 
     if (_is_active) {
         switch (key)
         {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            case '-':
-            case '+':
-            case '.':
-            case 'e':
-            case 'E':
-                _label.append(1, key);
-                break;
-
             // Backspce
             case char(127):
-                _label.clear();
-                break;
-
             // Delete
             case char(8):
                 _label.clear();
@@ -314,14 +294,20 @@ void InputBox::handle_keyboard_down(char key) {
             case char(13):
                 _is_active = false;
                 break;
+
+            // Readable latin keys
+            default:
+                if (char(key) > 31 && char(key) < 127)
+                    _label.append(1, key);
+                break;
         }
     }
 }
 
-void InputBox::handle_keyboard_up(char key) {
+void TextBox::handle_keyboard_up(char key) {
 }
 
-void InputBox::draw() const {
+void TextBox::draw() const {
 
     // Body
 
@@ -346,6 +332,43 @@ void InputBox::draw() const {
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 }
 
+// ---- NumericTextBox
+/*
+void TextBox::handle_keyboard_down(char key) {
+
+    if (_is_active) {
+        switch (key)
+        {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            case '-':
+            case '+':
+            case '.':
+            case 'e':
+            case 'E':
+                _label.append(1, key);
+                break;
+
+            case char(127): // Backspce
+            case char(8):   // Delete
+                _label.clear();
+                break;
+
+            case char(13):  // Enter
+                _is_active = false;
+                break;
+        }
+    }
+}
+*/
 // ---- Slider ----
 
 Slider::Slider(int id,
@@ -622,9 +645,9 @@ int ControlsManager::add_button_on_off(int x, int y, int width, int height, std:
     return new_id;
 }
 
-int ControlsManager::add_inputbox(int x, int y, int width, int height, std::string label) {
+int ControlsManager::add_textbox(int x, int y, int width, int height, std::string label) {
     int new_id = generate_unique_id();
-    controls.push_back(new InputBox(new_id, x, y, width, height, label));
+    controls.push_back(new TextBox(new_id, x, y, width, height, label));
     return new_id;
 }
 

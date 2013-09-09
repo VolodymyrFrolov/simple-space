@@ -761,9 +761,9 @@ int main(int argc, char * argv[])
                           1e29,         // Value
                           "Mass: ");    // Label
 
-    pControls->add_inputbox(20, 430,    // x, y
+    pControls->add_textbox(20, 430,    // x, y
                           160, 30,      // w, h
-                          "InputBox");   // Label
+                          "TextBox");   // Label
 
     pControls->add_button(40, 540,              // x, y
                           120, 30,              // w, h
