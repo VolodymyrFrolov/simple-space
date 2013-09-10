@@ -761,14 +761,14 @@ int main(int argc, char * argv[])
                           1e29,         // Value
                           "Mass: ");    // Label
 
-    pControls->add_textbox(20, 430,    // x, y
-                          160, 30,      // w, h
-                          "TextBox");   // Label
+    pControls->add_numericbox(20, 430,      // x, y
+                              160, 30,      // w, h
+                              "012345");    // Label
 
-    pControls->add_button(40, 540,              // x, y
-                          120, 30,              // w, h
-                          "Exit",               // Label
-                          exit);                // Callback
+    pControls->add_button(40, 540,          // x, y
+                          120, 30,          // w, h
+                          "Exit",           // Label
+                          exit);            // Callback
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);

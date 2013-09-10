@@ -219,6 +219,7 @@ public:
     int add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback);
     int add_button_on_off(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
     int add_textbox(int x, int y, int width, int height, std::string label);
+    int add_numericbox(int x, int y, int width, int height, std::string label);
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
     void handle_keyboard_down(char key);
     void handle_keyboard_up(char key);

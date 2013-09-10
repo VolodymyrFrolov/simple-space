@@ -653,6 +653,12 @@ int ControlsManager::add_textbox(int x, int y, int width, int height, std::strin
     return new_id;
 }
 
+int ControlsManager::add_numericbox(int x, int y, int width, int height, std::string label) {
+    int new_id = generate_unique_id();
+    controls.push_back(new NumericBox(new_id, x, y, width, height, label));
+    return new_id;
+}
+
 int ControlsManager::add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label) {
     int new_id = generate_unique_id();
     controls.push_back(new Slider(new_id, x, y, width, height, min, max,value, label));
