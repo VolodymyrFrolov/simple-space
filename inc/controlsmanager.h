@@ -13,6 +13,7 @@
 #include <vector>
 using std::cout;   // temp
 using std::endl;   // temp
+#include "timer.h"
 
 #ifdef __APPLE__
     #include <OpenGL/OpenGL.h>
