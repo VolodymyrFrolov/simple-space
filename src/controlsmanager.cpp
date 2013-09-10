@@ -10,6 +10,7 @@
 #include <sstream>
 #include <algorithm>
 #include <thread>
+#include <time.h>
 
 void draw_text_2d(const char* str, int x, int y, void* font) {
     glRasterPos2i(x, y);

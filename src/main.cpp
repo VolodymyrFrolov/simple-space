@@ -33,7 +33,7 @@ using std::endl;
 //#include FT_FREETYPE_H
 
 #include <stdlib.h> // rand()
-#include <time.h>   // time()
+#include <time.h>
 
 #include "controlsmanager.h"
 #include "simplespace.h"
@@ -146,7 +146,6 @@ void exit() {
 }
 
 void restart_simulation() {
-    cout << "Restart pressed" << endl;
 
     bool need_to_resume = false;
     if (simulation_on) {
@@ -167,6 +166,10 @@ void restart_simulation() {
         simulation_on = true;
     else
         glutPostRedisplay();
+}
+
+void remove_all_objects() {
+    pSimpleSpace->remove_all_objects();
 }
 
 void zoom_in() {
@@ -721,29 +724,34 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
     start_stop_button_id = \
-    pControls->add_button_on_off(40, 80,            // x, y
-                                 120, 30,           // w, h
+    pControls->add_button_on_off(20, 20,            // x, y
+                                 160, 30,           // w, h
                                  "Simulation On",   // Label
                                  true,              // Initial state
                                  start_simulation,  // Callback On
                                  stop_simulation);  // Callback Off
 
-    pControls->add_button(40, 120,              // x, y
-                          120, 30,              // w, h
+    pControls->add_button(20, 60,               // x, y
+                          160, 30,              // w, h
                           "Move One Step",      // Label
                           move_one_step);       // Callback
 
-    pControls->add_button(40, 180,              // x, y
-                          120, 30,              // w, h
+    pControls->add_button(20, 100,              // x, y
+                          75, 30,               // w, h
                           "Restart",            // Label
                           restart_simulation);  // Callback
 
-    pControls->add_button(40, 220,      // x, y
+    pControls->add_button(105, 100,             // x, y
+                          75, 30,               // w, h
+                          "Clear All",          // Label
+                          remove_all_objects);  // Callback
+
+    pControls->add_button(40, 140,      // x, y
                           55, 30,       // w, h
                           "+",          // Label
                           zoom_in);     // Callback
 
-    pControls->add_button(105, 220,     // x, y
+    pControls->add_button(105, 140,     // x, y
                           55, 30,       // w, h
                           "-",          // Label
                           zoom_out);    // Callback
