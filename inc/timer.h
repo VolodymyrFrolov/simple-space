@@ -6,19 +6,20 @@
 //  Copyright (c) 2013 Vladimir Frolov. All rights reserved.
 //
 
-#ifndef __controls_manager__simplespace__
-#define __controls_manager__simplespace__
+#ifndef __timer__simplespace__
+#define __timer__simplespace__
 
 #include <iostream>
 #include <thread>
 #include <sys/time.h> // gettimeofday()
 //#include <time.h>
 
-typedef void (*TimerCallback)();
+typedef void (*TimerCallback)(void* param);
 
 class Timer {
     long int _interval_millisec;
     TimerCallback _timer_callback;
+    void* _cb_param;
     volatile bool _running;
     bool _repeating;
 
@@ -33,13 +34,13 @@ class Timer {
 public:
     Timer(int interval_millisec,
           TimerCallback timer_callback,
-          bool started,
-          bool repeating);
+          void* callback_param,
+          bool started = true,
+          bool repeating = true);
     ~Timer();
 
     void start();
     void stop();
-    void change_time_interval(long int interval_millisec);
 };
 
-#endif /* defined(__controls_manager__simplespace__) */
+#endif /* defined(__timer__simplespace__) */

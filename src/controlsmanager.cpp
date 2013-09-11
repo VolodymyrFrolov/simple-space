@@ -263,10 +263,14 @@ void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MO
             if (mouse_over_control(mouse.x, mouse.y)) {
                 if (!_is_active) {
                     _is_active = true;
+                    _cursor_visible = true;
+                    _cursor_timer.start();
                 }
             } else {
                 if (_is_active) {
                     _is_active = false;
+                    _cursor_visible = false;
+                    _cursor_timer.stop();
                 }
             }
         break;
@@ -278,7 +282,6 @@ void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MO
 }
 
 void TextBox::handle_keyboard_down(char key) {
-
 
     if (_is_active) {
         switch (key)
@@ -330,6 +333,14 @@ void TextBox::draw() const {
 
     glColor3f(0.0f, 0.0f, 0.0f);
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
+
+    // Cursor
+    if (_cursor_visible) {
+        glBegin(GL_LINES);
+        glVertex2i(_x + _w - 10, _y + _h/2 - 8);
+        glVertex2i(_x + _w - 10, _y + _h/2 + 8);
+        glEnd();
+    }
 }
 
 

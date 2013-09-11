@@ -13,6 +13,7 @@
 #include <vector>
 using std::cout;   // temp
 using std::endl;   // temp
+
 #include "timer.h"
 
 #ifdef __APPLE__
@@ -37,7 +38,6 @@ enum MOUSE_KEY_ACTION {
 };
 
 typedef void (*ActionCallback)();
-
 
 struct MouseKey {
     bool is_down;
@@ -142,9 +142,16 @@ class TextBox : public UIControl {
 protected:
     bool _is_active;
     std::string _label;
-    //std::mutex mMutex;
-    //std::condition_variable mCondVar;
-    
+
+    Timer _cursor_timer;
+    bool _cursor_visible;
+
+    void cursor_toggle() { _cursor_visible = !_cursor_visible; };
+    static void static_wrapper_cursor_toggle(void* param) {
+        TextBox* pTextBox = (TextBox*)param;
+        pTextBox->cursor_toggle();
+    }
+
 public:
     TextBox(int id,
             int x, int y,
@@ -152,7 +159,9 @@ public:
             std::string label) :
     UIControl(id, x, y, w, h),
     _is_active(false),
-    _label(label) {}
+    _label(label),
+    _cursor_timer(800, &TextBox::static_wrapper_cursor_toggle, this, false),
+    _cursor_visible(false) {}
 
     virtual void handle_keyboard_down(char key);
     virtual void handle_keyboard_up(char key);

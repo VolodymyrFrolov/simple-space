@@ -12,10 +12,12 @@ using std::endl;
 
 Timer::Timer(int interval_millisec,
              TimerCallback callback,
-             bool started = true,
-             bool repeating = true) :
+             void* callback_param,
+             bool started,
+             bool repeating) :
     _interval_millisec(interval_millisec),
     _timer_callback(callback),
+    _cb_param(callback_param),
     _running(started),
     _repeating(repeating),
     _callback_running(false) {
@@ -73,7 +75,7 @@ void Timer::wait_func() {
         gettimeofday(&_start_time, NULL);
         if (_running) {
             _callback_running = true;
-            this->_timer_callback();
+            _timer_callback(_cb_param);
             _callback_running = false;
         }
         gettimeofday(&_current_time, NULL);
