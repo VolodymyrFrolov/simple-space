@@ -20,18 +20,19 @@ Timer::Timer(int interval_millisec,
     _repeating(repeating),
     _callback_running(false) {
 
-    if (_interval_millisec <= 0)
-        _running = false;
+    if (_interval_millisec <= 0) {
+        cout << "Error: [Timer] interval in constructor " << _interval_millisec << "<= 0" << endl;
+        if (_running)
+            _running = false;
+    }
 
     if (_running)
-        start();
+        std::thread(&Timer::wait_func, this).detach();
 }
 
 Timer::~Timer() {
-    // Show warning if timer is destroyed when callback is still running
-    // Although callback is running in detached thread, so it should be finished
     if (_callback_running)
-        cout << "Timer was destroyed while callback is still in progress" << endl;
+        cout << "Warning: [Timer] instance was destroyed while callback is still in progress" << endl;
 }
 
 long int Timer::timeval_diff(const timeval& t1, const timeval& t2) const {
@@ -39,17 +40,25 @@ long int Timer::timeval_diff(const timeval& t1, const timeval& t2) const {
 }
 
 void Timer::start() {
-    std::thread(&Timer::wait_func, this).detach();
+    std::lock_guard<std::mutex> guard(start_stop_mutex);
+    if (!_running) {
+        _running = true;
+        std::thread(&Timer::wait_func, this).detach();
+    }
 }
 
 void Timer::stop() {
-    cout << "timer stop()" << endl;
-    _running = false;
+    std::lock_guard<std::mutex> guard(start_stop_mutex);
+    if (_running)
+        _running = false;
 }
 
 void Timer::wait_func() {
 
-    cout << "timer wait_func started" << endl;
+    if (_timer_callback == NULL) {
+        cout << "ERROR: [Timer] callback is NULL" << endl;
+        return;
+    }
 
     gettimeofday(&_start_time, NULL);
     _current_time = _start_time;
@@ -62,7 +71,7 @@ void Timer::wait_func() {
 
         // Trigger callback
         gettimeofday(&_start_time, NULL);
-        if (_timer_callback != NULL && _running == true) {
+        if (_running) {
             _callback_running = true;
             this->_timer_callback();
             _callback_running = false;
@@ -71,14 +80,47 @@ void Timer::wait_func() {
 
         // Warn if callback took more time then interval
         if (timeval_diff(_start_time, _current_time) > (_interval_millisec * 1000))
-            cout << "Warining! timer callback takes more time ("
+            cout << "Warning: [Timer] callback took more time ("
                  << (_current_time.tv_sec - _start_time.tv_sec) * 1000000 + \
                      (_current_time.tv_usec - _start_time.tv_usec)
                  << " microseconds) than interval ("
                  << (_interval_millisec * 1000)
                  << " microseconds)" << endl;
 
-    } while (_repeating && _running);
-
-    cout << "timer wait_func finished" << endl;
+    } while (_running && _repeating);
 }
+
+// Code example to add For Windows support:
+/*
+#ifdef WIN32
+    LARGE_INTEGER frequency;                    // ticks per second
+    LARGE_INTEGER startCount;                   //
+    LARGE_INTEGER endCount;                     //
+#else
+    ...
+#endif
+
+#ifdef WIN32
+    QueryPerformanceFrequency(&frequency);
+    startCount.QuadPart = 0;
+    endCount.QuadPart = 0;
+#else
+    ...
+#endif
+
+#ifdef WIN32
+    QueryPerformanceCounter(&endCount);
+#else
+    ...
+#endif
+
+#ifdef WIN32
+    if(!stopped)
+        QueryPerformanceCounter(&endCount);
+
+    startTimeInMicroSec = startCount.QuadPart * (1000000.0 / frequency.QuadPart);
+    endTimeInMicroSec = endCount.QuadPart * (1000000.0 / frequency.QuadPart);
+#else
+    ...
+#endif
+*/

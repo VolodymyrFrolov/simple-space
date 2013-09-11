@@ -11,18 +11,19 @@
 
 #include <iostream>
 #include <thread>
-//#include <time.h>
 #include <sys/time.h> // gettimeofday()
+//#include <time.h>
 
 typedef void (*TimerCallback)();
 
 class Timer {
-    int _interval_millisec;
+    long int _interval_millisec;
     TimerCallback _timer_callback;
     volatile bool _running;
     bool _repeating;
 
-    bool _callback_running;
+    std::mutex start_stop_mutex;
+    volatile bool _callback_running;
     timeval _start_time;
     timeval _current_time;
 
@@ -38,6 +39,7 @@ public:
 
     void start();
     void stop();
+    void change_time_interval(long int interval_millisec);
 };
 
 #endif /* defined(__controls_manager__simplespace__) */
