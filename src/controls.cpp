@@ -132,9 +132,9 @@ void Button::draw() const {
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 }
 
-// ---- ButtonOnOff ----
+// ---- ButtonBoolean ----
 
-void ButtonOnOff::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+void ButtonBoolean::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
 
     if (mouse_key == MOUSE_LEFT_KEY) {
         switch (mouse_key_action)
@@ -168,7 +168,7 @@ void ButtonOnOff::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key
     }
 }
 
-void ButtonOnOff::draw() const {
+void ButtonBoolean::draw() const {
 
     // Body
 
@@ -683,9 +683,9 @@ int ControlsManager::add_button(int x, int y, int width, int height, std::string
     return new_id;
 }
 
-int ControlsManager::add_button_on_off(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off) {
+int ControlsManager::add_button_boolean(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off) {
     int new_id = generate_unique_id();
-    controls.push_back(new ButtonOnOff(new_id, x, y, width, height, label, start_state, button_callback_on, button_callback_off));
+    controls.push_back(new ButtonBoolean(new_id, x, y, width, height, label, start_state, button_callback_on, button_callback_off));
     return new_id;
 }
 

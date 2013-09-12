@@ -724,7 +724,7 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
     start_stop_button_id = \
-    pControls->add_button_on_off(20, 20,            // x, y
+    pControls->add_button_boolean(20, 20,            // x, y
                                  160, 30,           // w, h
                                  "Simulation On",   // Label
                                  true,              // Initial state

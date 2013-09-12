@@ -117,12 +117,12 @@ public:
 };
 
 
-class ButtonOnOff : public Button {
+class ButtonBoolean : public Button {
     bool _state_on;
     ActionCallback _button_callback_off;
 
 public:
-    ButtonOnOff(int id,
+    ButtonBoolean(int id,
                 int x, int y,
                 int w, int h,
                 std::string label,
@@ -227,7 +227,7 @@ class ControlsManager {
 public:
     ~ControlsManager();
     int add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback);
-    int add_button_on_off(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
+    int add_button_boolean(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
     int add_textbox(int x, int y, int width, int height, std::string label);
     int add_numericbox(int x, int y, int width, int height, std::string label);
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
