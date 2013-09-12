@@ -1,13 +1,13 @@
 //
-//  controlsmanager.h
+//  controls.h
 //  simple-space
 //
 //  Created by Vladimir Frolov on 16.08.13.
 //  Copyright (c) 2013 Vladimir Frolov. All rights reserved.
 //
 
-#ifndef __controls_manager__simplespace__
-#define __controls_manager__simplespace__
+#ifndef __controls__simplespace__
+#define __controls__simplespace__
 
 #include <iostream>
 #include <vector>
@@ -240,5 +240,5 @@ public:
     void draw() const;
 };
 
-#endif /* defined(__controls_manager__simplespace__) */
+#endif /* defined(__controls__simplespace__) */
 

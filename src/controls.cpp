@@ -1,12 +1,12 @@
 //
-//  controlsmanager.cpp
+//  controls.cpp
 //  simple-space
 //
 //  Created by Vladimir Frolov on 16.08.13.
 //  Copyright (c) 2013 Vladimir Frolov. All rights reserved.
 //
 
-#include "controlsmanager.h"
+#include "controls.h"
 #include <sstream>
 #include <algorithm>
 #include <thread>
@@ -761,4 +761,3 @@ void ControlsManager::simulate_mouse_action(int id, MOUSE_KEY mouse_key, MOUSE_K
         (*it)->handle_mouse_key_event(fake_mouse, mouse_key, mouse_key_action);
     }
 }
-

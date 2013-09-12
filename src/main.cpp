@@ -35,7 +35,7 @@ using std::endl;
 #include <stdlib.h> // rand()
 #include <time.h>
 
-#include "controlsmanager.h"
+#include "controls.h"
 #include "simplespace.h"
 #include "planet.h"
 #include "physics.h"

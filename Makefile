@@ -1,4 +1,4 @@
-SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp timer.cpp controlsmanager.cpp
+SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp timer.cpp controls.cpp
 #SOURCES_FULL_PATHS = $(addprefix src/, $(SOURCES))
 OBJECTS = $(SOURCES:.cpp=.o)
 TARGET = simple-space
@@ -28,7 +28,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o $(TARGET)
 
-main.o: src/main.cpp inc/simplespace.h inc/planet.h inc/physics.h inc/timer.h inc/controlsmanager.h
+main.o: src/main.cpp inc/simplespace.h inc/planet.h inc/physics.h inc/timer.h inc/controls.h
 	$(CC) $(CFLAGS) src/main.cpp
 
 simplespace.o: src/simplespace.cpp inc/simplespace.h
@@ -43,8 +43,8 @@ physics.o: src/physics.cpp inc/physics.h
 timer.o: src/timer.cpp inc/timer.h
 	$(CC) $(CFLAGS) src/timer.cpp
 
-controlsmanager.o : src/controlsmanager.cpp inc/controlsmanager.h
-	$(CC) $(CFLAGS) src/controlsmanager.cpp
+controls.o : src/controls.cpp inc/controls.h
+	$(CC) $(CFLAGS) src/controls.cpp
 
 clean:
 	rm -rf $(TARGET) *.o
