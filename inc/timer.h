@@ -27,7 +27,7 @@ class Timer {
     timeval _start_time;
     timeval _current_time;
 
-    std::thread wait_loop_thread;
+    std::thread _wait_loop_thread;
     void wait_loop();
     long int timeval_diff(const timeval& t1, const timeval& t2) const;
 

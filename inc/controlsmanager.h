@@ -160,7 +160,7 @@ public:
     UIControl(id, x, y, w, h),
     _is_active(false),
     _label(label),
-    _cursor_timer(800, &TextBox::static_wrapper_cursor_toggle, this, false),
+    _cursor_timer(650, &TextBox::static_wrapper_cursor_toggle, this, false),
     _cursor_visible(false) {}
 
     virtual void handle_keyboard_down(char key);

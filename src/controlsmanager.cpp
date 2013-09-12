@@ -296,6 +296,8 @@ void TextBox::handle_keyboard_down(char key) {
             // Enter
             case char(13):
                 _is_active = false;
+                _cursor_visible = false;
+                _cursor_timer.stop();
                 break;
 
             // Readable latin keys
@@ -315,12 +317,38 @@ void TextBox::draw() const {
     // Body
 
     if (_is_active)
-        glColor3f(0.9f,0.9f,0.9f);
+        glColor3f(0.8f, 0.8f, 0.8f);
     else
-        glColor3f(0.6f,0.6f,0.6f);
+        glColor3f(0.6f, 0.6f, 0.6f);
 
     glBegin(GL_QUADS);
     glVertex2i(_x,      _y     );
+    glVertex2i(_x + _w, _y     );
+    glVertex2i(_x + _w, _y + _h);
+    glVertex2i(_x,      _y + _h);
+    glEnd();
+
+    // Borders
+
+    glLineWidth(1);
+
+    if (_is_active)
+        glColor3f(0.6f, 0.6f, 0.6f);
+    else
+        glColor3f(0.8f, 0.8f, 0.8f);
+
+    glBegin(GL_LINE_STRIP);
+    glVertex2i(_x,      _y + _h);
+    glVertex2i(_x     , _y     );
+    glVertex2i(_x + _w, _y     );
+    glEnd();
+
+    if (_is_active)
+        glColor3f(1.0f, 1.0f, 1.0f);
+    else
+        glColor3f(0.4f, 0.4f, 0.4f);
+
+    glBegin(GL_LINE_STRIP);
     glVertex2i(_x + _w, _y     );
     glVertex2i(_x + _w, _y + _h);
     glVertex2i(_x,      _y + _h);
@@ -335,6 +363,7 @@ void TextBox::draw() const {
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 
     // Cursor
+
     if (_cursor_visible) {
         glBegin(GL_LINES);
         glVertex2i(_x + _w - 10, _y + _h/2 - 8);
@@ -376,6 +405,8 @@ void NumericBox::handle_keyboard_down(char key) {
 
             case char(13):  // Enter
                 _is_active = false;
+                _cursor_visible = false;
+                _cursor_timer.stop();
                 break;
         }
     }

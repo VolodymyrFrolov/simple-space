@@ -27,13 +27,12 @@ Timer::Timer(int interval_millisec,
         if (_running)
             _running = false;
     } else if (_running) {
-        wait_loop_thread = std::thread(&Timer::wait_loop, this);
+        _wait_loop_thread = std::thread(&Timer::wait_loop, this);
     }
 }
 
 Timer::~Timer() {
     stop();
-    wait_loop_thread.join();
 }
 
 long int Timer::timeval_diff(const timeval& t1, const timeval& t2) const {
@@ -44,14 +43,16 @@ void Timer::start() {
     std::lock_guard<std::mutex> guard(start_stop_mutex);
     if (!_running && (_interval_millisec > 0)) {
         _running = true;
-        wait_loop_thread = std::thread(&Timer::wait_loop, this);
+        _wait_loop_thread = std::thread(&Timer::wait_loop, this);
     }
 }
 
 void Timer::stop() {
     std::lock_guard<std::mutex> guard(start_stop_mutex);
-    if (_running)
+    if (_running) {
         _running = false;
+        _wait_loop_thread.join();
+    }
 }
 
 void Timer::change_interval(long int interval_millisec) {
