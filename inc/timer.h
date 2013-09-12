@@ -24,12 +24,12 @@ class Timer {
     bool _repeating;
 
     std::mutex start_stop_mutex;
-    volatile bool _callback_running;
     timeval _start_time;
     timeval _current_time;
 
+    std::thread wait_loop_thread;
+    void wait_loop();
     long int timeval_diff(const timeval& t1, const timeval& t2) const;
-    void wait_func();
 
 public:
     Timer(int interval_millisec,
@@ -41,6 +41,7 @@ public:
 
     void start();
     void stop();
+    void change_interval(long int interval_millisec);
 };
 
 #endif /* defined(__timer__simplespace__) */

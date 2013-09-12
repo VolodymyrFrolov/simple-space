@@ -19,22 +19,21 @@ Timer::Timer(int interval_millisec,
     _timer_callback(callback),
     _cb_param(callback_param),
     _running(started),
-    _repeating(repeating),
-    _callback_running(false) {
+    _repeating(repeating) {
 
+    std::lock_guard<std::mutex> guard(start_stop_mutex);
     if (_interval_millisec <= 0) {
         cout << "Error: [Timer] interval in constructor " << _interval_millisec << "<= 0" << endl;
         if (_running)
             _running = false;
+    } else if (_running) {
+        wait_loop_thread = std::thread(&Timer::wait_loop, this);
     }
-
-    if (_running)
-        std::thread(&Timer::wait_func, this).detach();
 }
 
 Timer::~Timer() {
-    if (_callback_running)
-        cout << "Warning: [Timer] instance was destroyed while callback is still in progress" << endl;
+    stop();
+    wait_loop_thread.join();
 }
 
 long int Timer::timeval_diff(const timeval& t1, const timeval& t2) const {
@@ -43,9 +42,9 @@ long int Timer::timeval_diff(const timeval& t1, const timeval& t2) const {
 
 void Timer::start() {
     std::lock_guard<std::mutex> guard(start_stop_mutex);
-    if (!_running) {
+    if (!_running && (_interval_millisec > 0)) {
         _running = true;
-        std::thread(&Timer::wait_func, this).detach();
+        wait_loop_thread = std::thread(&Timer::wait_loop, this);
     }
 }
 
@@ -55,7 +54,15 @@ void Timer::stop() {
         _running = false;
 }
 
-void Timer::wait_func() {
+void Timer::change_interval(long int interval_millisec) {
+    std::lock_guard<std::mutex> guard(start_stop_mutex);
+    if (interval_millisec > 0)
+        _interval_millisec = interval_millisec;
+    else
+        cout << "Warning: [Timer] attempt to set interval to " << _interval_millisec << " was ignored" << endl;
+}
+
+void Timer::wait_loop() {
 
     if (_timer_callback == NULL) {
         cout << "ERROR: [Timer] callback is NULL" << endl;
@@ -74,9 +81,7 @@ void Timer::wait_func() {
         // Trigger callback
         gettimeofday(&_start_time, NULL);
         if (_running) {
-            _callback_running = true;
             _timer_callback(_cb_param);
-            _callback_running = false;
         }
         gettimeofday(&_current_time, NULL);
 
