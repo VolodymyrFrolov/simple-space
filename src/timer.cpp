@@ -21,12 +21,15 @@ Timer::Timer(int interval_millisec,
     _running(started),
     _repeating(repeating) {
 
+    // Actually mutex is not needed here, but in case of imaginable wiered situation,
+    // where start() is called before constructor is executed
     std::lock_guard<std::mutex> guard(start_stop_mutex);
+
     if (_interval_millisec <= 0) {
         cout << "Error: [Timer] interval in constructor " << _interval_millisec << "<= 0" << endl;
         if (_running)
             _running = false;
-    } else if (_running) {
+    } else if (_running && !_wait_loop_thread.joinable()) {
         _wait_loop_thread = std::thread(&Timer::wait_loop, this);
     }
 }
@@ -41,7 +44,12 @@ long int Timer::timeval_diff(const timeval& t1, const timeval& t2) const {
 
 void Timer::start() {
     std::lock_guard<std::mutex> guard(start_stop_mutex);
+
     if (!_running && (_interval_millisec > 0)) {
+
+        if (_wait_loop_thread.joinable())
+            _wait_loop_thread.join();
+
         _running = true;
         _wait_loop_thread = std::thread(&Timer::wait_loop, this);
     }
@@ -49,14 +57,17 @@ void Timer::start() {
 
 void Timer::stop() {
     std::lock_guard<std::mutex> guard(start_stop_mutex);
-    if (_running) {
+
+    if (_running)
         _running = false;
-        _wait_loop_thread.join();
-    }
+
+    if (_wait_loop_thread.joinable())
+       _wait_loop_thread.join();
 }
 
 void Timer::change_interval(long int interval_millisec) {
     std::lock_guard<std::mutex> guard(start_stop_mutex);
+
     if (interval_millisec > 0)
         _interval_millisec = interval_millisec;
     else
@@ -65,8 +76,11 @@ void Timer::change_interval(long int interval_millisec) {
 
 void Timer::wait_loop() {
 
+    // Check here, not constructor,
+    // as currently no exception implemented in constructor
     if (_timer_callback == NULL) {
         cout << "ERROR: [Timer] callback is NULL" << endl;
+        _running = false;
         return;
     }
 
@@ -96,6 +110,10 @@ void Timer::wait_loop() {
                  << " microseconds)" << endl;
 
     } while (_running && _repeating);
+
+    // In case of non-repeating timer, update status
+    // Don't put mutex to prevent deadlock. Race won't cause problem
+    _running = false;
 }
 
 // Code example to add For Windows support:
