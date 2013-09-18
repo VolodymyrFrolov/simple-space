@@ -400,6 +400,11 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
             if (_is_active) {
                 switch (key)
                 {
+                    case '+':
+                    case '-':
+                    case '.':
+                    case 'e':
+                    case 'E':
                     case '0':
                     case '1':
                     case '2':
@@ -410,11 +415,6 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                     case '7':
                     case '8':
                     case '9':
-                    case '-':
-                    case '+':
-                    case '.':
-                    case 'e':
-                    case 'E':
                         _label.append(1, key);
                         break;
 
@@ -427,6 +427,13 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                         _is_active = false;
                         _cursor_visible = false;
                         _cursor_timer.stop();
+
+                        char * p_end;
+                        strtod(_label.c_str(), &p_end); // FROLOV
+                        if (*p_end != '\0') {
+                            _label.clear();
+                            _label = "Input error";
+                        }
                         break;
                 }
             }

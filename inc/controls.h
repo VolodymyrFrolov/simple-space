@@ -107,7 +107,7 @@ public:
     bool is_pressed() const {return _is_pressed;}
     bool is_mouse_over() const {return _is_mouse_over;}
     std::string get_label() const {return _label;}
-    void set_label(std::string label) {_label = label;}
+    void set_label(std::string& label) {_label = label;} // check that copy, but not move is performed
 
     virtual void handle_mouse_move(const Mouse& mouse);
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
@@ -161,6 +161,8 @@ public:
     _label(label),
     _cursor_timer(650, &TextBox::static_wrapper_cursor_toggle, this, false),
     _cursor_visible(false) {}
+
+    void set_label(std::string& label) {_label = label;} // check that copy, but not move is performed
 
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
     virtual void handle_keyboard_key_event(char key, KEY_ACTION action);
