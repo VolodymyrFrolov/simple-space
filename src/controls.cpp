@@ -334,9 +334,9 @@ void TextBox::draw() const {
     // Body
 
     if (_is_active)
-        glColor3f(0.8f, 0.8f, 0.8f);
+        glColor3f(0.9f, 0.9f, 0.9f);
     else
-        glColor3f(0.6f, 0.6f, 0.6f);
+        glColor3f(0.8f, 0.8f, 0.8f);
 
     glBegin(GL_QUADS);
     glVertex2i(_x,      _y     );
@@ -350,9 +350,9 @@ void TextBox::draw() const {
     glLineWidth(1);
 
     if (_is_active)
-        glColor3f(0.6f, 0.6f, 0.6f);
-    else
         glColor3f(0.8f, 0.8f, 0.8f);
+    else
+        glColor3f(0.7f, 0.7f, 0.7f);
 
     glBegin(GL_LINE_STRIP);
     glVertex2i(_x,      _y + _h);
@@ -363,7 +363,7 @@ void TextBox::draw() const {
     if (_is_active)
         glColor3f(1.0f, 1.0f, 1.0f);
     else
-        glColor3f(0.4f, 0.4f, 0.4f);
+        glColor3f(0.9f, 0.9f, 0.9f);
 
     glBegin(GL_LINE_STRIP);
     glVertex2i(_x + _w, _y     );
