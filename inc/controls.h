@@ -76,7 +76,6 @@ public:
     virtual ~UIControl() {};
 
     int get_id() const {return _id;}
-    std::pair<int, int> get_position() const {return std::make_pair(_x, _y);}
 
     virtual void handle_mouse_move(const Mouse& mouse) {};
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {};
@@ -133,6 +132,7 @@ public:
     _button_callback_off(action_off) {}
     
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
+    virtual void handle_keyboard_key_event(char key, KEY_ACTION action);
     virtual void draw() const;
 };
 
@@ -224,6 +224,8 @@ class ControlsManager {
 public:
     ~ControlsManager();
 
+    UIControl* find_by_id(int id);
+
     int add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback);
     int add_button_boolean(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
     int add_textbox(int x, int y, int width, int height, std::string label);
@@ -234,9 +236,6 @@ public:
     void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
     void handle_keyboard_key_event(char key, KEY_ACTION action);
     void draw() const;
-
-    UIControl* find_by_id(int id);
-    void simulate_mouse_action(int id, MOUSE_KEY key, KEY_ACTION action);
 };
 
 #endif /* defined(__controls__simplespace__) */

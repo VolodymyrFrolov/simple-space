@@ -418,7 +418,6 @@ void resizeWindow(int w, int h) {
 
 void handleNormalKeysDown(unsigned char key, int x, int y) {
     // To see if modifier key is pressed use: (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
-
     pControls->handle_keyboard_key_event(key, KEY_DOWN);
 
     switch (key)
@@ -448,10 +447,6 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
                     gMode = ALIAS_MODE_ALIASED;
                     break;
             }
-            break;
-
-        case ' ':
-            pControls->simulate_mouse_action(start_stop_button_id, MOUSE_LEFT_KEY, KEY_DOWN);
             break;
 
         // Speed
@@ -494,9 +489,6 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
         case 'm':
         case 'M':
             mass_modifier_key_down = false;
-            break;
-        case ' ':
-            pControls->simulate_mouse_action(start_stop_button_id, MOUSE_LEFT_KEY, KEY_UP);
             break;
     }
 

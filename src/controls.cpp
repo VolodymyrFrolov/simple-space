@@ -168,6 +168,21 @@ void ButtonBoolean::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KE
     }
 }
 
+// Handle space button as trigger
+void ButtonBoolean::handle_keyboard_key_event(char key, KEY_ACTION action) {
+
+    if ((key == ' ') && (action == KEY_DOWN)) {
+        _state_on = !_state_on;
+        if (_state_on) {
+            if (_button_callback != NULL)
+                _button_callback();
+        } else {
+            if (_button_callback_off != NULL)
+                _button_callback_off();
+        }
+    }
+}
+
 void ButtonBoolean::draw() const {
 
     // Body
@@ -688,6 +703,14 @@ int ControlsManager::generate_unique_id() const {
     return new_id;
 }
 
+UIControl* ControlsManager::find_by_id(int id) {
+    std::vector<UIControl *>::iterator it = std::find_if(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == id;});
+    if (it != controls.end())
+        return *it;
+    else
+        return NULL;
+}
+
 int ControlsManager::add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback) {
     int new_id = generate_unique_id();
     controls.push_back(new Button(new_id, x, y, width, height, label, button_callback));
@@ -732,39 +755,4 @@ void ControlsManager::handle_keyboard_key_event(char key, KEY_ACTION action) {
 
 void ControlsManager::draw() const {
     std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->draw();} );
-}
-
-UIControl* ControlsManager::find_by_id(int id) {
-    std::vector<UIControl *>::iterator it = std::find_if(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == id;});
-    if (it != controls.end())
-        return *it;
-    else
-        return NULL;
-}
-
-void ControlsManager::simulate_mouse_action(int id, MOUSE_KEY key, KEY_ACTION action) {
-    std::vector<UIControl *>::iterator it = std::find_if(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == id;});
-    if (it != controls.end()) {
-        std::pair<int, int> control_position = (*it)->get_position();
-        Mouse fake_mouse(control_position.first + 1, control_position.second + 1); // Add one, because [x y] is left top corner 
-        switch(key)
-        {
-            case MOUSE_LEFT_KEY:
-                fake_mouse.left_key.is_down = (action == KEY_DOWN);
-                fake_mouse.left_key.down_x = fake_mouse.x;
-                fake_mouse.left_key.down_y = fake_mouse.y;
-                break;
-            case MOUSE_MIDDLE_KEY:
-                fake_mouse.middle_key.is_down = (action == KEY_DOWN);
-                fake_mouse.middle_key.down_x = fake_mouse.x;
-                fake_mouse.middle_key.down_y = fake_mouse.y;
-                break;
-            case MOUSE_RIGHT_KEY:
-                fake_mouse.right_key.is_down = (action == KEY_DOWN);
-                fake_mouse.right_key.down_x = fake_mouse.x;
-                fake_mouse.right_key.down_y = fake_mouse.y;
-                break;
-        }
-        (*it)->handle_mouse_key_event(fake_mouse, key, action);
-    }
 }
