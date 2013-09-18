@@ -48,18 +48,18 @@ void Button::handle_mouse_move(const Mouse& mouse) {
     }
 }
 
-void Button::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+void Button::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
 
-    if (mouse_key == MOUSE_LEFT_KEY) {
-        switch (mouse_key_action)
+    if (key == MOUSE_LEFT_KEY) {
+        switch (action)
         {
-            case MOUSE_KEY_DOWN:
+            case KEY_DOWN:
                 if (mouse_over_control(mouse.x, mouse.y) && !_is_pressed) {
                     _is_pressed = true;
                 }
                 break;
 
-            case MOUSE_KEY_UP:
+            case KEY_UP:
                 if (_is_pressed &&
                     mouse_over_control(mouse.x, mouse.y) &&
                     mouse_over_control(mouse.left_key.down_x, mouse.left_key.down_y)) {
@@ -134,18 +134,18 @@ void Button::draw() const {
 
 // ---- ButtonBoolean ----
 
-void ButtonBoolean::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+void ButtonBoolean::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
 
-    if (mouse_key == MOUSE_LEFT_KEY) {
-        switch (mouse_key_action)
+    if (key == MOUSE_LEFT_KEY) {
+        switch (action)
         {
-            case MOUSE_KEY_DOWN:
+            case KEY_DOWN:
                 if (mouse_over_control(mouse.x, mouse.y) && !_is_pressed) {
                     _is_pressed = true;
                 }
                 break;
 
-            case MOUSE_KEY_UP:
+            case KEY_UP:
                 if (_is_pressed &&
                     mouse_over_control(mouse.x, mouse.y) &&
                     mouse_over_control(mouse.left_key.down_x, mouse.left_key.down_y)) {
@@ -251,15 +251,11 @@ void ButtonBoolean::draw() const {
 
 // ---- TextBox ----
 
-void TextBox::handle_mouse_move(const Mouse& mouse) {
-    // Don't handle handle mouse movement for now
-}
+void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
 
-void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
-
-    switch (mouse_key_action)
+    switch (action)
     {
-        case MOUSE_KEY_DOWN:
+        case KEY_DOWN:
             if (mouse_over_control(mouse.x, mouse.y)) {
                 if (!_is_active) {
                     _is_active = true;
@@ -275,41 +271,47 @@ void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MO
             }
         break;
 
-        case MOUSE_KEY_UP:
-            // Don't handle mouse key up for now
+        case KEY_UP:
+            // Currently not handling
         break;
     }
 }
 
-void TextBox::handle_keyboard_down(char key) {
+void TextBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
 
-    if (_is_active) {
-        switch (key)
-        {
-            // Backspce
-            case char(127):
-            // Delete
-            case char(8):
-                _label.clear();
-                break;
+    switch (action)
+    {
+        case KEY_DOWN:
+            if (_is_active) {
+                switch (key)
+                {
+                    // Backspce
+                    case char(127):
+                    // Delete
+                    case char(8):
+                        _label.clear();
+                        break;
 
-            // Enter
-            case char(13):
-                _is_active = false;
-                _cursor_visible = false;
-                _cursor_timer.stop();
-                break;
+                    // Enter
+                    case char(13):
+                        _is_active = false;
+                        _cursor_visible = false;
+                        _cursor_timer.stop();
+                        break;
 
-            // Readable latin keys
-            default:
-                if (char(key) > 31 && char(key) < 127)
-                    _label.append(1, key);
-                break;
-        }
+                    // Readable latin keys
+                    default:
+                        if (char(key) > 31 && char(key) < 127)
+                            _label.append(1, key);
+                        break;
+                }
+            }
+            break;
+
+        case KEY_UP:
+            // Currently not handling
+            break;
     }
-}
-
-void TextBox::handle_keyboard_up(char key) {
 }
 
 void TextBox::draw() const {
@@ -375,40 +377,49 @@ void TextBox::draw() const {
 
 // ---- NumericBox
 
-void NumericBox::handle_keyboard_down(char key) {
+void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
 
-    if (_is_active) {
-        switch (key)
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            case '-':
-            case '+':
-            case '.':
-            case 'e':
-            case 'E':
-                _label.append(1, key);
-                break;
+    switch (action)
+    {
+        case KEY_DOWN:
+            if (_is_active) {
+                switch (key)
+                {
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                    case '-':
+                    case '+':
+                    case '.':
+                    case 'e':
+                    case 'E':
+                        _label.append(1, key);
+                        break;
 
-            case char(127): // Backspce
-            case char(8):   // Delete
-                _label.clear();
-                break;
+                    case char(127): // Backspce
+                    case char(8):   // Delete
+                        _label.clear();
+                        break;
 
-            case char(13):  // Enter
-                _is_active = false;
-                _cursor_visible = false;
-                _cursor_timer.stop();
-                break;
-        }
+                    case char(13):  // Enter
+                        _is_active = false;
+                        _cursor_visible = false;
+                        _cursor_timer.stop();
+                        break;
+                }
+            }
+            break;
+
+        case KEY_UP:
+            // Currently not handling
+            break;
     }
 }
 
@@ -530,12 +541,12 @@ void Slider::handle_mouse_move(const Mouse& mouse) {
     }
 }
 
-void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
 
-    if (mouse_key == MOUSE_LEFT_KEY) {
-        switch (mouse_key_action)
+    if (key == MOUSE_LEFT_KEY) {
+        switch (action)
         {
-            case MOUSE_KEY_DOWN:
+            case KEY_DOWN:
             if (mouse_over_slider_bar(mouse.x, mouse.y)) {
                 int slider_new_pos = mouse.x;
                 check_and_correct_slider(slider_new_pos);
@@ -545,7 +556,7 @@ void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOU
             }
             break;
 
-            case MOUSE_KEY_UP:
+            case KEY_UP:
                 if (_is_pressed)
                     _is_pressed = false;
             break;
@@ -707,20 +718,16 @@ int ControlsManager::add_slider(int x, int y, int width, int height, double min,
     return new_id;
 }
 
-void ControlsManager::handle_keyboard_down(char key) {
-    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_keyboard_down(key);} );
-}
-
-void ControlsManager::handle_keyboard_up(char key) {
-    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_keyboard_up(key);} );
-}
-
 void ControlsManager::handle_mouse_move(const Mouse& mouse) {
     std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_mouse_move(mouse);} );
 }
 
-void ControlsManager::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
-    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_mouse_key_event(mouse, mouse_key, mouse_key_action);} );
+void ControlsManager::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
+    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_mouse_key_event(mouse, key, action);} );
+}
+
+void ControlsManager::handle_keyboard_key_event(char key, KEY_ACTION action) {
+    std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->handle_keyboard_key_event(key, action);} );
 }
 
 void ControlsManager::draw() const {
@@ -735,29 +742,29 @@ UIControl* ControlsManager::find_by_id(int id) {
         return NULL;
 }
 
-void ControlsManager::simulate_mouse_action(int id, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) {
+void ControlsManager::simulate_mouse_action(int id, MOUSE_KEY key, KEY_ACTION action) {
     std::vector<UIControl *>::iterator it = std::find_if(controls.begin(), controls.end(), [&](UIControl* b) {return b->get_id() == id;});
     if (it != controls.end()) {
         std::pair<int, int> control_position = (*it)->get_position();
         Mouse fake_mouse(control_position.first + 1, control_position.second + 1); // Add one, because [x y] is left top corner 
-        switch(mouse_key)
+        switch(key)
         {
             case MOUSE_LEFT_KEY:
-                fake_mouse.left_key.is_down = (mouse_key_action == MOUSE_KEY_DOWN);
+                fake_mouse.left_key.is_down = (action == KEY_DOWN);
                 fake_mouse.left_key.down_x = fake_mouse.x;
                 fake_mouse.left_key.down_y = fake_mouse.y;
                 break;
             case MOUSE_MIDDLE_KEY:
-                fake_mouse.middle_key.is_down = (mouse_key_action == MOUSE_KEY_DOWN);
+                fake_mouse.middle_key.is_down = (action == KEY_DOWN);
                 fake_mouse.middle_key.down_x = fake_mouse.x;
                 fake_mouse.middle_key.down_y = fake_mouse.y;
                 break;
             case MOUSE_RIGHT_KEY:
-                fake_mouse.right_key.is_down = (mouse_key_action == MOUSE_KEY_DOWN);
+                fake_mouse.right_key.is_down = (action == KEY_DOWN);
                 fake_mouse.right_key.down_x = fake_mouse.x;
                 fake_mouse.right_key.down_y = fake_mouse.y;
                 break;
         }
-        (*it)->handle_mouse_key_event(fake_mouse, mouse_key, mouse_key_action);
+        (*it)->handle_mouse_key_event(fake_mouse, key, action);
     }
 }

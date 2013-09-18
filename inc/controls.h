@@ -26,18 +26,16 @@ using std::endl;   // temp
     // Unsupproted platform
 #endif
 
+enum KEY_ACTION {
+    KEY_DOWN,
+    KEY_UP
+};
+
 enum MOUSE_KEY {
     MOUSE_LEFT_KEY,
     MOUSE_MIDDLE_KEY,
     MOUSE_RIGHT_KEY
 };
-
-enum MOUSE_KEY_ACTION {
-    MOUSE_KEY_DOWN,
-    MOUSE_KEY_UP
-};
-
-typedef void (*ActionCallback)();
 
 struct MouseKey {
     bool is_down;
@@ -54,7 +52,6 @@ struct MouseKey {
     void update(bool is_pressed, int x, int y);
 };
 
-
 struct Mouse {
     int x;
     int y;
@@ -66,6 +63,8 @@ struct Mouse {
     Mouse(int x = 0, int y = 0) : x(x), y(y) {}
 };
 
+typedef void (*ActionCallback)();
+
 
 class UIControl {
 protected:
@@ -73,15 +72,15 @@ protected:
     bool mouse_over_control(const int& mouse_x, const int& mouse_y) const;
 public:
     UIControl(int id, int x, int y, int w, int h) :
-    _id(id), _x(x), _y(y), _w(w), _h(h) {}
+        _id(id), _x(x), _y(y), _w(w), _h(h) {}
     virtual ~UIControl() {};
 
     int get_id() const {return _id;}
     std::pair<int, int> get_position() const {return std::make_pair(_x, _y);}
-    virtual void handle_keyboard_down(char key) {};
-    virtual void handle_keyboard_up(char key) {};
+
     virtual void handle_mouse_move(const Mouse& mouse) {};
-    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action) = 0;
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {};
+    virtual void handle_keyboard_key_event(char key, KEY_ACTION action) {};
     virtual void draw() const = 0;
 };
 
@@ -112,7 +111,7 @@ public:
     void set_label(std::string label) {_label = label;}
 
     virtual void handle_mouse_move(const Mouse& mouse);
-    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
     virtual void draw() const;
 };
 
@@ -133,7 +132,7 @@ public:
     _state_on(initial_state),
     _button_callback_off(action_off) {}
     
-    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
     virtual void draw() const;
 };
 
@@ -163,10 +162,8 @@ public:
     _cursor_timer(650, &TextBox::static_wrapper_cursor_toggle, this, false),
     _cursor_visible(false) {}
 
-    virtual void handle_keyboard_down(char key);
-    virtual void handle_keyboard_up(char key);
-    virtual void handle_mouse_move(const Mouse& mouse);
-    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
+    virtual void handle_keyboard_key_event(char key, KEY_ACTION action);
     virtual void draw() const;
 };
 
@@ -178,7 +175,7 @@ public:
                std::string label) :
     TextBox(id, x, y, w, h, label) {}
 
-    virtual void handle_keyboard_down(char key);
+    virtual void handle_keyboard_key_event(char key, KEY_ACTION action);
 };
 
 class Slider : public UIControl {
@@ -216,7 +213,7 @@ public:
     double get_value() {return _value;}
 
     virtual void handle_mouse_move(const Mouse& mouse);
-    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
     virtual void draw() const;
 };
 
@@ -226,18 +223,20 @@ class ControlsManager {
     int generate_unique_id() const;
 public:
     ~ControlsManager();
+
     int add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback);
     int add_button_boolean(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
     int add_textbox(int x, int y, int width, int height, std::string label);
     int add_numericbox(int x, int y, int width, int height, std::string label);
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
-    void handle_keyboard_down(char key);
-    void handle_keyboard_up(char key);
+
     void handle_mouse_move(const Mouse& mouse);
-    void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
-    UIControl* find_by_id(int id);
-    void simulate_mouse_action(int id, MOUSE_KEY mouse_key, MOUSE_KEY_ACTION mouse_key_action);
+    void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
+    void handle_keyboard_key_event(char key, KEY_ACTION action);
     void draw() const;
+
+    UIControl* find_by_id(int id);
+    void simulate_mouse_action(int id, MOUSE_KEY key, KEY_ACTION action);
 };
 
 #endif /* defined(__controls__simplespace__) */

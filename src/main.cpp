@@ -419,7 +419,7 @@ void resizeWindow(int w, int h) {
 void handleNormalKeysDown(unsigned char key, int x, int y) {
     // To see if modifier key is pressed use: (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
 
-    pControls->handle_keyboard_down(key);
+    pControls->handle_keyboard_key_event(key, KEY_DOWN);
 
     switch (key)
     {
@@ -451,7 +451,7 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
             break;
 
         case ' ':
-            pControls->simulate_mouse_action(start_stop_button_id, MOUSE_LEFT_KEY, MOUSE_KEY_DOWN);
+            pControls->simulate_mouse_action(start_stop_button_id, MOUSE_LEFT_KEY, KEY_DOWN);
             break;
 
         // Speed
@@ -483,6 +483,8 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
 
 void handleNormalKeysUp(unsigned char key, int x, int y) {
 
+    pControls->handle_keyboard_key_event(key, KEY_UP);
+
     switch (key)
     {
         case 'r':
@@ -494,7 +496,7 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
             mass_modifier_key_down = false;
             break;
         case ' ':
-            pControls->simulate_mouse_action(start_stop_button_id, MOUSE_LEFT_KEY, MOUSE_KEY_UP);
+            pControls->simulate_mouse_action(start_stop_button_id, MOUSE_LEFT_KEY, KEY_UP);
             break;
     }
 
@@ -523,7 +525,7 @@ void handleSpecialKeysDown(int key, int x, int y) {
 void handleMouseKeypress(int button, int state, int x, int y) {
 
     MOUSE_KEY current_mouse_key;
-    MOUSE_KEY_ACTION current_mouse_key_action;
+    KEY_ACTION current_mouse_key_action;
 
     switch (button)
     {
@@ -544,11 +546,11 @@ void handleMouseKeypress(int button, int state, int x, int y) {
     switch (state)
     {
         case GLUT_DOWN:
-            current_mouse_key_action = MOUSE_KEY_DOWN;
+            current_mouse_key_action = KEY_DOWN;
             break;
 
         case GLUT_UP:
-            current_mouse_key_action = MOUSE_KEY_UP;
+            current_mouse_key_action = KEY_UP;
             break;
     }
 
