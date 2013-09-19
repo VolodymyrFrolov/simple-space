@@ -107,7 +107,7 @@ public:
     bool is_pressed() const {return _is_pressed;}
     bool is_mouse_over() const {return _is_mouse_over;}
     std::string get_label() const {return _label;}
-    void set_label(std::string& label) {_label = label;} // check that copy, but not move is performed
+    void set_label(const std::string& label) {_label = label;}
 
     virtual void handle_mouse_move(const Mouse& mouse);
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
@@ -138,47 +138,37 @@ public:
 
 
 class TextBox : public UIControl {
-protected:
     bool _is_active;
     std::string _label;
 
-    Timer _cursor_timer;
-    bool _cursor_visible;
+    bool _is_numeric;
+    double _value;
+    bool _label_is_value;
 
-    void cursor_toggle() { _cursor_visible = !_cursor_visible; };
-    static void static_wrapper_cursor_toggle(void* param) {
-        TextBox* pTextBox = (TextBox*)param;
-        pTextBox->cursor_toggle();
-    }
+    bool _cursor_visible;
+    Timer _cursor_timer;
+
+    bool check_label_is_numeric_and_update_value(const std::string& label, double& value);
+    void cursor_toggle() {_cursor_visible = !_cursor_visible;};
+    static void static_wrapper_cursor_toggle(void* param) {((TextBox*)param)->cursor_toggle();}
 
 public:
     TextBox(int id,
             int x, int y,
             int w, int h,
-            std::string label) :
-    UIControl(id, x, y, w, h),
-    _is_active(false),
-    _label(label),
-    _cursor_timer(650, &TextBox::static_wrapper_cursor_toggle, this, false),
-    _cursor_visible(false) {}
+            std::string label,
+            bool is_numeric);
 
-    void set_label(std::string& label) {_label = label;} // check that copy, but not move is performed
+    void set_label(const std::string& label); 
+    void set_label(const double& value);
+
+    double get_value() {return _value;}
 
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
     virtual void handle_keyboard_key_event(char key, KEY_ACTION action);
     virtual void draw() const;
 };
 
-class NumericBox : public TextBox {
-public:
-    NumericBox(int id,
-               int x, int y,
-               int w, int h,
-               std::string label) :
-    TextBox(id, x, y, w, h, label) {}
-
-    virtual void handle_keyboard_key_event(char key, KEY_ACTION action);
-};
 
 class Slider : public UIControl {
     bool _is_pressed;
@@ -230,8 +220,7 @@ public:
 
     int add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback);
     int add_button_boolean(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
-    int add_textbox(int x, int y, int width, int height, std::string label);
-    int add_numericbox(int x, int y, int width, int height, std::string label);
+    int add_textbox(int x, int y, int width, int height, std::string label, bool is_numeric);
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
 
     void handle_mouse_move(const Mouse& mouse);
