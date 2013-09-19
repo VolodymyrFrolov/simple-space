@@ -187,6 +187,8 @@ class Slider : public UIControl {
     std::string _str_min;
     std::string _str_max;
 
+    TextBox value_textbox;
+
     bool mouse_over_slider_bar(int mouse_x, int mouse_y);
     void check_and_correct_value(double& val);
     void check_and_correct_slider(int& pos);
@@ -206,6 +208,7 @@ public:
 
     virtual void handle_mouse_move(const Mouse& mouse);
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
+    virtual void handle_keyboard_key_event(char key, KEY_ACTION action);
     virtual void draw() const;
 };
 

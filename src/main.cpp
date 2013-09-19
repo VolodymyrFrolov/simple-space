@@ -44,7 +44,6 @@ using std::endl;
 //FT_Face     face;       // Face object handler
 
 int main_window_id;
-int start_stop_button_id = -1;
 int radius_slider_id = -1;
 int mass_slider_id = -1;
 
@@ -717,7 +716,6 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    start_stop_button_id = \
     pControls->add_button_boolean(20, 20,            // x, y
                                  160, 30,           // w, h
                                  "Simulation On",   // Label
@@ -763,10 +761,16 @@ int main(int argc, char * argv[])
                           1e29,         // Value
                           "Mass: ");    // Label
 
-    pControls->add_textbox(20, 430,     // x, y
-                              160, 30,  // w, h
-                              "012345", // Label
-                              true);    // Numeric
+    pControls->add_slider(20, 420,      // x, y
+                          160, 60,      // w, h
+                          -100, 450,    // Min, Max
+                          30,           // Value
+                          "Test: ");    // Label
+
+    pControls->add_textbox(30, 490,     // x, y
+                           140, 20,     // w, h
+                           "012345",    // Label
+                           true);       // Numeric
 
     pControls->add_button(40, 540,      // x, y
                           120, 30,      // w, h

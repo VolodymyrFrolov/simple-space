@@ -284,7 +284,7 @@ TextBox::TextBox(int id,
 
     if (_is_numeric) {
         if (_label.size() == 0)
-            _label = '0';
+            set_label(_value);
         _label_is_value = check_label_is_numeric_and_update_value(_label, _value);
     }
 }
@@ -311,14 +311,18 @@ void TextBox::set_label(const std::string& label) {
     _label = label;
     if (_is_numeric) {
         if (_label.size() == 0)
-            _label = '0';
+            set_label(_value);
         _label_is_value = check_label_is_numeric_and_update_value(_label, _value);
     }
 }
 
 void TextBox::set_label(const double& value) {
     _value = value;
-    _label = std::to_string(value);
+
+    std::ostringstream oss;
+    oss.precision(3);
+    oss << _value;
+    _label = oss.str();
     if (_is_numeric)
         _label_is_value = true;
 }
@@ -340,9 +344,7 @@ void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTI
                     _cursor_visible = false;
                     _cursor_timer.stop();
                     if (_is_numeric) {
-                        if (_label.size() == 0)
-                            _label = '0';
-                        _label_is_value = check_label_is_numeric_and_update_value(_label, _value);
+                        set_label(_value);
                     }
                 }
             }
@@ -374,7 +376,7 @@ void TextBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
 
                         if (_is_numeric) {
                             if (_label.size() == 0)
-                                _label = '0';
+                                set_label(_value);
                             _label_is_value = check_label_is_numeric_and_update_value(_label, _value);
                         }
                         break;
@@ -498,7 +500,8 @@ Slider::Slider(int id,
     _is_pressed(false),
     _margin(10),
     _value(value), _value_min(min), _value_max(max),
-    _label(label) {
+    _label(label),
+    value_textbox(0, _x + _w - 55, _y + 5, 50, 15, "123", true) {
 
     // Check range (done once)
     if (_value_min > _value_max) {
@@ -506,7 +509,7 @@ Slider::Slider(int id,
         _value_max = _value_min;
     }
 
-    // Check value (will be used more)
+    // Check value
     check_and_correct_value(_value);
 
     // Init borders position for drawing
@@ -531,6 +534,7 @@ Slider::Slider(int id,
 
     // updating slider, using value and borders
     update_slider();
+    value_textbox.set_label(_value);
 }
 
 void Slider::check_and_correct_value(double& val) {
@@ -566,10 +570,9 @@ void Slider::update_slider() {
 
     // 2 - step by step
     std::ostringstream oss;
-    //oss.precision(3);
     //oss << std::fixed
-    oss << std::scientific;
-    oss.unsetf(std::ios::scientific);
+    //oss << std::scientific;
+    //oss.unsetf(std::ios::scientific);
     oss.precision(3);
 
     oss << _value;
@@ -599,7 +602,11 @@ void Slider::handle_mouse_move(const Mouse& mouse) {
         int slider_new_pos = mouse.x;
         check_and_correct_slider(slider_new_pos);
         set_value_from_slider(slider_new_pos);
+
+        value_textbox.set_label(_value);
     }
+
+    value_textbox.handle_mouse_move(mouse);
 }
 
 void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
@@ -614,6 +621,8 @@ void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTIO
                 if (!_is_pressed)
                     _is_pressed = true;
                 set_value_from_slider(slider_new_pos);
+
+                value_textbox.set_label(_value);
             }
             break;
 
@@ -623,7 +632,35 @@ void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTIO
             break;
         }
     }
+
+    value_textbox.handle_mouse_key_event(mouse, key, action);
+
+    if (value_textbox.get_value() != this->get_value()) {
+        _value = value_textbox.get_value();
+
+        // Prevent value from out of range
+        check_and_correct_value(_value);
+        value_textbox.set_label(_value);
+
+        update_slider();
+    }
 }
+
+void Slider::handle_keyboard_key_event(char key, KEY_ACTION action) {
+
+    value_textbox.handle_keyboard_key_event(key, action);
+
+    if (value_textbox.get_value() != this->get_value()) {
+        _value = value_textbox.get_value();
+
+        // Prevent value out of range
+        check_and_correct_value(_value);
+        value_textbox.set_label(_value);
+
+        update_slider();
+    }
+}
+
 
 void Slider::draw() const {
 
@@ -722,6 +759,8 @@ void Slider::draw() const {
 
     glColor3f(0.0f, 0.0f, 0.0f);
     draw_text_2d(new_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
+
+    value_textbox.draw();
 
     // Min & Max label
 
