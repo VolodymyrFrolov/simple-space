@@ -137,32 +137,34 @@ public:
 };
 
 
-class TextBox : public UIControl {
-    bool _is_active;
-    std::string _label;
-
-    bool _is_numeric;
+class NumericBox : public UIControl {
     double _value;
-    bool _label_is_value;
+    std::string _label;
+    bool _label_is_numeric;
+
+    bool _is_active;
 
     bool _cursor_visible;
     Timer _cursor_timer;
 
-    bool check_label_is_numeric_and_update_value(const std::string& label, double& value);
+    bool check_label_is_numeric(const std::string& label);
+    double label_to_value(const std::string& label) const;
+
     void cursor_toggle() {_cursor_visible = !_cursor_visible;};
-    static void static_wrapper_cursor_toggle(void* param) {((TextBox*)param)->cursor_toggle();}
+    static void static_wrapper_cursor_toggle(void* param) {((NumericBox*)param)->cursor_toggle();}
 
 public:
-    TextBox(int id,
-            int x, int y,
-            int w, int h,
-            std::string label,
-            bool is_numeric);
+    NumericBox(int id,
+               int x, int y,
+               int w, int h,
+               double value = 0);
 
-    void set_label(const std::string& label); 
-    void set_label(const double& value);
+    void set_label(const std::string& label); // Does not update _value
+    void set_label(const double& value);     // Does not update _value
+    void apply_label();
 
-    double get_value() {return _value;}
+    void set_value(const double& value);     // Updates _label
+    double get_value() const {return _value;}
 
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
     virtual void handle_keyboard_key_event(char key, KEY_ACTION action);
@@ -187,7 +189,7 @@ class Slider : public UIControl {
     std::string _str_min;
     std::string _str_max;
 
-    TextBox value_textbox;
+    NumericBox _value_box;
 
     bool mouse_over_slider_bar(int mouse_x, int mouse_y);
     void check_and_correct_value(double& val);
@@ -223,7 +225,7 @@ public:
 
     int add_button(int x, int y, int width, int height, std::string label, ActionCallback button_callback);
     int add_button_boolean(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
-    int add_textbox(int x, int y, int width, int height, std::string label, bool is_numeric);
+    int add_numeric_box(int x, int y, int width, int height, double value);
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
 
     void handle_mouse_move(const Mouse& mouse);

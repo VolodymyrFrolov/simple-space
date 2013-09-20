@@ -264,70 +264,82 @@ void ButtonBoolean::draw() const {
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 }
 
-// ---- TextBox ----
+// ---- NumericBox ----
 
-TextBox::TextBox(int id,
-                 int x, int y,
-                 int w, int h,
-                 std::string label,
-                 bool is_numeric) :
+NumericBox::NumericBox(int id,
+                       int x, int y,
+                       int w, int h,
+                       double value) :
     UIControl(id, x, y, w, h),
-    _is_active(false),
-    _label(label),
+    _value(value),
+    _label_is_numeric(true),
 
-    _is_numeric(is_numeric),
-    _value(0),
-    _label_is_value(false),
+    _is_active(false),
 
     _cursor_visible(false),
-    _cursor_timer(650, &TextBox::static_wrapper_cursor_toggle, this, false) {
+    _cursor_timer(650, &NumericBox::static_wrapper_cursor_toggle, this, false) {
 
-    if (_is_numeric) {
-        if (_label.size() == 0)
-            set_label(_value);
-        _label_is_value = check_label_is_numeric_and_update_value(_label, _value);
-    }
+    set_value(_value);
 }
 
-bool TextBox::check_label_is_numeric_and_update_value(const std::string& label, double& value) {
+bool NumericBox::check_label_is_numeric(const std::string& label) {
 
-    bool ret = false;
-    double temp_val;
-    char * p_end;
+    char* p_end;
+    strtod(_label.c_str(), &p_end);
 
-    temp_val = strtod(_label.c_str(), &p_end);
-
-    if ((*p_end) == '\0') {
-        value = temp_val;
-        ret = true;
+    if (((*p_end) == '\0') && (label.size() != 0)) {
+        if (!_label_is_numeric)
+            _label_is_numeric = true;
     } else {
-        ret = false;
+        if (_label_is_numeric)
+            _label_is_numeric = false;
     }
+
+    return _label_is_numeric;
+}
+
+double NumericBox::label_to_value(const std::string& label) const {
+
+    double ret;
+    char* p_end;
+
+    ret = strtod(_label.c_str(), &p_end);
+
+    if (((*p_end) != '\0') && (label.size() != 0))
+        cout << "Warning: [NumericBox] at getting value - parsing failed at:" << *p_end << " or label was empty" << endl;
 
     return ret;
 }
 
-void TextBox::set_label(const std::string& label) {
+void NumericBox::set_label(const std::string& label) {
+
     _label = label;
-    if (_is_numeric) {
-        if (_label.size() == 0)
-            set_label(_value);
-        _label_is_value = check_label_is_numeric_and_update_value(_label, _value);
-    }
+    check_label_is_numeric(_label);
 }
 
-void TextBox::set_label(const double& value) {
-    _value = value;
+void NumericBox::set_label(const double& value) {
 
     std::ostringstream oss;
     oss.precision(3);
-    oss << _value;
+    oss << value;
     _label = oss.str();
-    if (_is_numeric)
-        _label_is_value = true;
+
+    if (!_label_is_numeric)
+        _label_is_numeric = true;
 }
 
-void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
+void NumericBox::apply_label() {
+
+    if (_label_is_numeric)
+        _value = label_to_value(_label);
+}
+
+void NumericBox::set_value(const double& value) {
+    _value = value;
+    set_label(_value);
+}
+
+void NumericBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
 
     switch (action)
     {
@@ -343,10 +355,12 @@ void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTI
                     _is_active = false;
                     _cursor_visible = false;
                     _cursor_timer.stop();
-                    if (_is_numeric) {
+
+                    if (_label_is_numeric)
+                        apply_label();
+                    else
                         set_label(_value);
                     }
-                }
             }
         break;
 
@@ -356,7 +370,7 @@ void TextBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTI
     }
 }
 
-void TextBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
+void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
 
     switch (action)
     {
@@ -364,9 +378,23 @@ void TextBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
             if (_is_active) {
                 switch (key)
                 {
-                    case char(8):   // Delete
-                    case char(127): // Backspce
+                    case char(8):   // Backspce
+                        if(_label.size() > 0) {
+                            _label.erase(_label.end()-1);
+
+                            if (_label.size() > 0) {
+                                check_label_is_numeric(_label);
+                            } else {
+                                // Force "true" for empty label
+                                _label_is_numeric = true;
+                            }
+                        }
+                        break;
+
+                    case char(127): // Delete
                         _label.clear();
+                        // Force "true" for empty label
+                        _label_is_numeric = true;
                         break;
 
                     case char(13):  // Enter
@@ -374,43 +402,17 @@ void TextBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                         _cursor_visible = false;
                         _cursor_timer.stop();
 
-                        if (_is_numeric) {
-                            if (_label.size() == 0)
-                                set_label(_value);
-                            _label_is_value = check_label_is_numeric_and_update_value(_label, _value);
-                        }
+                        if (!_label_is_numeric || _label.size() == 0)
+                            set_label(_value); // Reset label
+                        _value = label_to_value(_label);
                         break;
 
-                    default:
-                        if (char(key) > 31 && char(key) < 127) { // Latin keys
-                            if (_is_numeric) {
-                                switch (key)
-                                {
-                                    case '0': // Numeric keys
-                                    case '1':
-                                    case '2':
-                                    case '3':
-                                    case '4':
-                                    case '5':
-                                    case '6':
-                                    case '7':
-                                    case '8':
-                                    case '9':
-                                    case '+':
-                                    case '-':
-                                    case '.':
-                                    case 'e':
-                                    case 'E':
-                                    case 'x':
-                                    case 'X':
-                                        _label.append(1, key);
-                                        break;
-                                }
-                            } else {
-                                _label.append(1, key);
-                            }
+                    default: // Latin keys (32-126), except space (32)
+                        if (char(key) > 32 && char(key) < 127 && _label.size() < 8) {
+                            _label.append(1, key);
+                            check_label_is_numeric(_label);
                         }
-                        break; // default case
+                        break;
                 }
             }
             break; // case KEY_DOWN
@@ -421,17 +423,15 @@ void TextBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
     }
 }
 
-void TextBox::draw() const {
+void NumericBox::draw() const {
 
     // Body
 
-    if (_is_numeric && !_label_is_value) {
-        if (_is_active)
-            glColor3f(1.0f, 0.5f, 0.5f);
+    if (_is_active) {
+        if (_label_is_numeric)
+            glColor3f(0.9f, 0.9f, 0.9f);
         else
-            glColor3f(0.9f, 0.4f, 0.4f);
-    } else if (_is_active) {
-        glColor3f(0.9f, 0.9f, 0.9f);
+            glColor3f(1.0f, 0.6f, 0.6f);
     } else {
         glColor3f(0.8f, 0.8f, 0.8f);
     }
@@ -501,7 +501,7 @@ Slider::Slider(int id,
     _margin(10),
     _value(value), _value_min(min), _value_max(max),
     _label(label),
-    value_textbox(0, _x + _w - 55, _y + 5, 50, 15, "123", true) {
+    _value_box(0, _x + _w - 55, _y + 5, 50, 15) {
 
     // Check range (done once)
     if (_value_min > _value_max) {
@@ -534,7 +534,7 @@ Slider::Slider(int id,
 
     // updating slider, using value and borders
     update_slider();
-    value_textbox.set_label(_value);
+    _value_box.set_value(_value);
 }
 
 void Slider::check_and_correct_value(double& val) {
@@ -603,10 +603,10 @@ void Slider::handle_mouse_move(const Mouse& mouse) {
         check_and_correct_slider(slider_new_pos);
         set_value_from_slider(slider_new_pos);
 
-        value_textbox.set_label(_value);
+        _value_box.set_value(_value);
     }
 
-    value_textbox.handle_mouse_move(mouse);
+    _value_box.handle_mouse_move(mouse);
 }
 
 void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
@@ -622,7 +622,7 @@ void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTIO
                     _is_pressed = true;
                 set_value_from_slider(slider_new_pos);
 
-                value_textbox.set_label(_value);
+                _value_box.set_value(_value);
             }
             break;
 
@@ -633,14 +633,14 @@ void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTIO
         }
     }
 
-    value_textbox.handle_mouse_key_event(mouse, key, action);
+    _value_box.handle_mouse_key_event(mouse, key, action);
 
-    if (value_textbox.get_value() != this->get_value()) {
-        _value = value_textbox.get_value();
+    if (_value_box.get_value() != this->get_value()) {
 
-        // Prevent value from out of range
-        check_and_correct_value(_value);
-        value_textbox.set_label(_value);
+        // Prevent value from out of range //FROLOV
+        double temp = _value_box.get_value();
+        check_and_correct_value(temp);
+        _value_box.set_value(_value);
 
         update_slider();
     }
@@ -648,14 +648,16 @@ void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTIO
 
 void Slider::handle_keyboard_key_event(char key, KEY_ACTION action) {
 
-    value_textbox.handle_keyboard_key_event(key, action);
+    _value_box.handle_keyboard_key_event(key, action);
 
-    if (value_textbox.get_value() != this->get_value()) {
-        _value = value_textbox.get_value();
+    if (_value_box.get_value() != this->get_value()) {
 
-        // Prevent value out of range
-        check_and_correct_value(_value);
-        value_textbox.set_label(_value);
+        // Prevent value from out of range
+        double temp = _value_box.get_value();
+        check_and_correct_value(temp);
+        _value = temp;
+        if (_value_box.get_value() != temp)
+            _value_box.set_value(temp);
 
         update_slider();
     }
@@ -760,7 +762,7 @@ void Slider::draw() const {
     glColor3f(0.0f, 0.0f, 0.0f);
     draw_text_2d(new_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 
-    value_textbox.draw();
+    _value_box.draw();
 
     // Min & Max label
 
@@ -808,9 +810,9 @@ int ControlsManager::add_button_boolean(int x, int y, int width, int height, std
     return new_id;
 }
 
-int ControlsManager::add_textbox(int x, int y, int width, int height, std::string label, bool is_numeric) {
+int ControlsManager::add_numeric_box(int x, int y, int width, int height, double value) {
     int new_id = generate_unique_id();
-    controls.push_back(new TextBox(new_id, x, y, width, height, label, is_numeric));
+    controls.push_back(new NumericBox(new_id, x, y, width, height, value));
     return new_id;
 }
 

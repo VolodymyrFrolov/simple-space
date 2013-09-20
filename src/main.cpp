@@ -767,10 +767,9 @@ int main(int argc, char * argv[])
                           30,           // Value
                           "Test: ");    // Label
 
-    pControls->add_textbox(30, 490,     // x, y
+    pControls->add_numeric_box(30, 490, // x, y
                            140, 20,     // w, h
-                           "012345",    // Label
-                           true);       // Numeric
+                           123);         // Value
 
     pControls->add_button(40, 540,      // x, y
                           120, 30,      // w, h
