@@ -200,27 +200,6 @@ void move_one_step() {
 
 void drawScene() {
 
-    switch(gMode)
-    {
-        case ALIAS_MODE_ALIASED:
-            glDisable(GL_LINE_SMOOTH);
-            glDisable(GL_POLYGON_SMOOTH);
-            glDisable(GL_MULTISAMPLE);
-            break;
-
-        case ALIAS_MODE_ANTIALIASED:
-            glEnable(GL_LINE_SMOOTH);
-            glEnable(GL_POLYGON_SMOOTH);
-            glDisable(GL_MULTISAMPLE);
-            break;
-
-        case ALIAS_MODE_MULTISAMPLE:
-            glDisable(GL_LINE_SMOOTH);
-            glDisable(GL_POLYGON_SMOOTH);
-            glEnable(GL_MULTISAMPLE);
-            break;
-    }
-
     // ---- Menu ----
     glViewport(0, 0, menu_width, window_height);
 
@@ -245,6 +224,27 @@ void drawScene() {
     pControls->draw();
 
     glDisable(GL_SCISSOR_TEST);
+
+    switch(gMode)
+    {
+        case ALIAS_MODE_ALIASED:
+            glDisable(GL_LINE_SMOOTH);
+            glDisable(GL_POLYGON_SMOOTH);
+            glDisable(GL_MULTISAMPLE);
+            break;
+
+        case ALIAS_MODE_ANTIALIASED:
+            glEnable(GL_LINE_SMOOTH);
+            glEnable(GL_POLYGON_SMOOTH);
+            glDisable(GL_MULTISAMPLE);
+            break;
+
+        case ALIAS_MODE_MULTISAMPLE:
+            glDisable(GL_LINE_SMOOTH);
+            glDisable(GL_POLYGON_SMOOTH);
+            glEnable(GL_MULTISAMPLE);
+            break;
+    }
 
     // ---- Scene ----
     int scene_width = window_width - menu_width > 1 ? window_width - menu_width : 1;
@@ -394,6 +394,9 @@ void drawScene() {
 
     switch(gMode)
     {
+        case ALIAS_MODE_ALIASED:
+            break;
+
         case ALIAS_MODE_ANTIALIASED:
             glDisable(GL_LINE_SMOOTH);
             glDisable(GL_POLYGON_SMOOTH);
@@ -401,9 +404,6 @@ void drawScene() {
 
         case ALIAS_MODE_MULTISAMPLE:
             glDisable(GL_MULTISAMPLE);
-            break;
-
-        case ALIAS_MODE_ALIASED:
             break;
     }
 
