@@ -471,7 +471,7 @@ void NumericBox::draw() const {
 
     // Label
 
-    int font_x = _x + (_w - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str())) - 10;
+    int font_x = _x + (_w - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str()))/2;
     int font_y = _y + _h/2 + 5;
 
     glColor3f(0.0f, 0.0f, 0.0f);
@@ -501,7 +501,7 @@ Slider::Slider(int id,
     _margin(10),
     _value(value), _value_min(min), _value_max(max),
     _label(label),
-    _value_box(0, _x + _w - 55, _y + 5, 50, 15) {
+    _value_box(0, _x + (_w - 50)/2, _y + 4*_h/6, 50, 15) {
 
     // Check range (done once)
     if (_value_min > _value_max) {
@@ -591,10 +591,10 @@ void Slider::set_value_from_slider(int new_pos) {
 }
 
 bool Slider::mouse_over_slider_bar(int mouse_x, int mouse_y) {
-    return (mouse_x > _x      &&
-            mouse_x < _x + _w &&
-            mouse_y > _y + 20 &&
-            mouse_y < _y + 40);
+    return (mouse_x > _x                   &&
+             mouse_x < _x + _w              &&
+             mouse_y > _y + 3*_h/6 - 10     &&
+             mouse_y < _y + 3*_h/6 + 10);
 }
 
 void Slider::handle_mouse_move(const Mouse& mouse) {
@@ -696,26 +696,28 @@ void Slider::draw() const {
 
     // Slider line
 
+    int slider_y = _y + 3*_h/6;
+
     glLineWidth(1);
 
     glColor3f(0.1f, 0.1f, 0.1f);
     glBegin(GL_LINES);
-    glVertex2i(_slider_min, _y + _h/2);
-    glVertex2i(_slider_max, _y + _h/2);
+    glVertex2i(_slider_min, slider_y);
+    glVertex2i(_slider_max, slider_y);
     glEnd();
 
     glColor3f(0.8f, 0.8f, 0.8f);
     glBegin(GL_LINE_STRIP);
-    glVertex2i(_slider_min,     _y + _h/2 + 1);
-    glVertex2i(_slider_max + 1, _y + _h/2 + 1);
-    glVertex2i(_slider_max + 1, _y + _h/2);
+    glVertex2i(_slider_min,     slider_y + 1);
+    glVertex2i(_slider_max + 1, slider_y + 1);
+    glVertex2i(_slider_max + 1, slider_y);
     glEnd();
 
     glColor3f(0.4f, 0.4f, 0.4f);
     glBegin(GL_LINE_STRIP);
-    glVertex2i(_slider_min, _y + _h/2 + 1);
-    glVertex2i(_slider_min, _y + _h/2 - 1);
-    glVertex2i(_slider_max, _y + _h/2 - 1);
+    glVertex2i(_slider_min, slider_y + 1);
+    glVertex2i(_slider_min, slider_y - 1);
+    glVertex2i(_slider_max, slider_y - 1);
     glEnd();
 
 
@@ -727,47 +729,44 @@ void Slider::draw() const {
         glColor3f(0.23f, 0.41f, 0.73f);
     
     glBegin(GL_POLYGON);
-    glVertex2i(_slider_pos - 5, _y + _h/2 + 3);
-    glVertex2i(_slider_pos - 5, _y + _h/2 - 5);
-    glVertex2i(_slider_pos + 5, _y + _h/2 - 5);
-    glVertex2i(_slider_pos + 5, _y + _h/2 + 3);
-    glVertex2i(_slider_pos,     _y + _h/2 + 9);
+    glVertex2i(_slider_pos - 5, slider_y + 3);
+    glVertex2i(_slider_pos - 5, slider_y - 5);
+    glVertex2i(_slider_pos + 5, slider_y - 5);
+    glVertex2i(_slider_pos + 5, slider_y + 3);
+    glVertex2i(_slider_pos,     slider_y + 9);
     glEnd();
 
     glLineWidth(1);
     
     glColor3f(0.20f, 0.33f, 0.56f);
     glBegin(GL_LINE_STRIP);
-    glVertex2i(_slider_pos + 5, _y + _h/2 - 4);
-    glVertex2i(_slider_pos + 5, _y + _h/2 + 3);
-    glVertex2i(_slider_pos,     _y + _h/2 + 8);
-    glVertex2i(_slider_pos - 5, _y + _h/2 + 3);
+    glVertex2i(_slider_pos + 5, slider_y - 4);
+    glVertex2i(_slider_pos + 5, slider_y + 3);
+    glVertex2i(_slider_pos,     slider_y + 8);
+    glVertex2i(_slider_pos - 5, slider_y + 3);
     glEnd();
 
     glColor3f(0.37f, 0.55f, 0.87f);
     glBegin(GL_LINE_STRIP);
-    glVertex2i(_slider_pos - 4, _y + _h/2 + 4);
-    glVertex2i(_slider_pos - 4, _y + _h/2 - 5);
-    glVertex2i(_slider_pos + 5, _y + _h/2 - 5);
+    glVertex2i(_slider_pos - 4, slider_y + 4);
+    glVertex2i(_slider_pos - 4, slider_y - 5);
+    glVertex2i(_slider_pos + 5, slider_y - 5);
     glEnd();
 
     // Value label
 
-    std::string new_label(_label);
-    new_label.append(_str_value);
-
-    int font_x = _x + (_w - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)new_label.c_str())) / 2;
-    int font_y = _y + _h/3;
+    int font_x = _x + (_w - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str())) / 2;
+    int font_y = _y + _h/4;
 
     glColor3f(0.0f, 0.0f, 0.0f);
-    draw_text_2d(new_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
+    draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 
     _value_box.draw();
 
     // Min & Max label
 
     font_x = _x + _margin;
-    font_y = _y + 5 * _h/6;
+    font_y = _y + 7*_h/8;
     draw_text_2d(_str_min.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 
     font_x = _x + _w - _margin - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_str_max.c_str());

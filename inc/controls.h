@@ -77,6 +77,15 @@ public:
 
     int get_id() const {return _id;}
 
+    int get_x() const {return _x;}
+    int get_y() const {return _y;}
+    int get_width() const {return _w;}
+    int get_height() const {return _h;}
+    void set_x(int& x) {_x = x;}
+    void set_y(int& y) {_y = y;}
+    void set_width(int& w) {_w = w;}
+    void set_height(int& h) {_h = h;}
+
     virtual void handle_mouse_move(const Mouse& mouse) {};
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {};
     virtual void handle_keyboard_key_event(char key, KEY_ACTION action) {};

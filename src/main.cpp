@@ -14,9 +14,6 @@ using std::endl;
 #include <sstream>
 #include <memory> // std::unique_ptr
 
-#if defined(ASD_ASD)
-#endif
-
 #ifdef __APPLE__
     #include <OpenGL/OpenGL.h>
     #include <OpenGL/glu.h>
@@ -752,24 +749,24 @@ int main(int argc, char * argv[])
                           160, 60,      // w, h
                           1e6, 3e6,     // Min, Max
                           2e6,          // Value
-                          "Radius: ");  // Label
+                          "Radius");    // Label
 
     mass_slider_id = \
     pControls->add_slider(20, 350,      // x, y
                           160, 60,      // w, h
                           5e28, 1e30,   // Min, Max
                           1e29,         // Value
-                          "Mass: ");    // Label
+                          "Mass");      // Label
 
     pControls->add_slider(20, 420,      // x, y
                           160, 60,      // w, h
                           -100, 450,    // Min, Max
                           30,           // Value
-                          "Test: ");    // Label
+                          "Test");      // Label
 
     pControls->add_numeric_box(30, 490, // x, y
                            140, 20,     // w, h
-                           123);         // Value
+                           123);        // Value
 
     pControls->add_button(40, 540,      // x, y
                           120, 30,      // w, h
