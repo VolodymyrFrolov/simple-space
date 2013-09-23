@@ -773,6 +773,33 @@ void Slider::draw() const {
     draw_text_2d(_str_max.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 }
 
+// ---- TestBox ----
+
+void TestBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
+    if (mouse_over_control(mouse.x, mouse.y) && action == KEY_DOWN)
+        active = !active;
+}
+
+void TestBox::draw() const {
+
+    if (active) {
+        R += 0.1;
+        G += 0.2;
+        B += 0.3;
+        if (R > 1) R = 0;
+        if (G > 1) G = 0;
+        if (B > 1) B = 0;
+    }
+
+    glColor3f(R, G, B);
+    glBegin(GL_QUADS);
+    glVertex2i(_x,      _y     );
+    glVertex2i(_x + _w, _y     );
+    glVertex2i(_x + _w, _y + _h);
+    glVertex2i(_x,      _y + _h);
+    glEnd();
+}
+
 // ---- ControlManager ----
 
 ControlsManager::~ControlsManager() {
@@ -818,6 +845,12 @@ int ControlsManager::add_numeric_box(int x, int y, int width, int height, double
 int ControlsManager::add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label) {
     int new_id = generate_unique_id();
     controls.push_back(new Slider(new_id, x, y, width, height, min, max,value, label));
+    return new_id;
+}
+
+int ControlsManager::add_test_box(int x, int y, int width, int height) {
+    int new_id = generate_unique_id();
+    controls.push_back(new TestBox(new_id, x, y, width, height));
     return new_id;
 }
 

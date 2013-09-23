@@ -773,6 +773,9 @@ int main(int argc, char * argv[])
                           "Exit",       // Label
                           exit);        // Callback
 
+    pControls->add_test_box(10, 580,    // x, y
+                            10, 10);    // w, h
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
     glutInitWindowSize(1024, 600);

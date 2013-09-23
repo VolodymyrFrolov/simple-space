@@ -224,6 +224,22 @@ public:
 };
 
 
+class TestBox : public UIControl {
+    bool active;
+    mutable float R;
+    mutable float G;
+    mutable float B;
+public:
+    TestBox(int id, int x, int y, int w, int h) :
+        UIControl(id, x, y, w, h),
+        active(false),
+        R(0), G(0), B(0) {};
+
+    virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
+    virtual void draw() const;
+};
+
+
 class ControlsManager {
     std::vector<UIControl *> controls;
     int generate_unique_id() const;
@@ -236,6 +252,7 @@ public:
     int add_button_boolean(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
     int add_numeric_box(int x, int y, int width, int height, double value);
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
+    int add_test_box(int x, int y, int width, int height);
 
     void handle_mouse_move(const Mouse& mouse);
     void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
