@@ -56,6 +56,7 @@ int model_speed = 1;
 int model_scale = 200000;
 
 bool simulation_on = true;
+bool skip_menu_rendering = false;
 
 Mouse mouse;
 
@@ -116,6 +117,8 @@ void onTimer(int next_timer_tick) {
 
     for (int i = 0; i < model_speed; ++i)
         pSimpleSpace->move_one_step();
+
+    skip_menu_rendering = true;
     glutPostRedisplay();
 
     if (simulation_on)
@@ -198,29 +201,36 @@ void move_one_step() {
 void drawScene() {
 
     // ---- Menu ----
-    glViewport(0, 0, menu_width, window_height);
 
-    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-    glScissor(0, 0, menu_width, window_height);
-    glEnable(GL_SCISSOR_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (!skip_menu_rendering) {
+        glViewport(0, 0, menu_width, window_height);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+        glScissor(0, 0, menu_width, window_height);
+        glEnable(GL_SCISSOR_TEST);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glOrtho(0.0f,           // left vertical clipping plane
-            menu_width,     // right vertical clipping plane
-            window_height,  // bottom horizontal clipping plane
-            0.0f,           // top horizontal clipping plane
-            1.0f,           // nearer clipping plane
-            -1.0f);         // farer clipping plane
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+        glOrtho(0.0f,           // left vertical clipping plane
+                menu_width,     // right vertical clipping plane
+                window_height,  // bottom horizontal clipping plane
+                0.0f,           // top horizontal clipping plane
+                1.0f,           // nearer clipping plane
+                -1.0f);         // farer clipping plane
 
-    pControls->draw();
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
-    glDisable(GL_SCISSOR_TEST);
+        pControls->draw();
+
+        glDisable(GL_SCISSOR_TEST);
+    }
+
+    skip_menu_rendering = false;
+
+    // ---- Scene ----
 
     switch(gMode)
     {
@@ -243,7 +253,6 @@ void drawScene() {
             break;
     }
 
-    // ---- Scene ----
     int scene_width = window_width - menu_width > 1 ? window_width - menu_width : 1;
     glViewport(menu_width, 0, scene_width, window_height);
     
@@ -653,6 +662,7 @@ void handleMousePassiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
     pControls->handle_mouse_move(mouse);
+
     if (!simulation_on) glutPostRedisplay();
 }
 
@@ -713,10 +723,10 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    pControls->add_button_boolean(20, 20,            // x, y
+    pControls->add_button_boolean(20, 20,           // x, y
                                  160, 30,           // w, h
                                  "Simulation On",   // Label
-                                 true,              // Initial state
+                                 simulation_on,     // Initial state
                                  start_simulation,  // Callback On
                                  stop_simulation);  // Callback Off
 
@@ -799,7 +809,8 @@ int main(int argc, char * argv[])
     glutPassiveMotionFunc(handleMousePassiveMotion);
 
     // Timer
-    glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
+    if (simulation_on)
+        glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
 
     /*
     // FreeType library initialization
