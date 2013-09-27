@@ -20,8 +20,8 @@ using std::endl;
     //#include <GLUT/glut.h>
     #include <GL/freeglut.h>
 #elif __linux__
-  //#include <GL/glut.h>
-  #include <GL/freeglut.h>
+    //#include <GL/glut.h>
+    #include <GL/freeglut.h>
 #else
     // Unsupproted platform
 #endif
@@ -91,6 +91,7 @@ void initRendering();
 void onTimer(int next_timer_tick);
 
 void render_window();
+void handle_window_visibility(int state);
 void resize_window(int w, int h);
 
 void handleNormalKeys(unsigned char key, int x, int y);
@@ -452,6 +453,11 @@ void render_window() {
     glutSwapBuffers();
 }
 
+void handle_window_visibility(int state) {
+    need_to_render_menu = true;
+    glutPostRedisplay();
+}
+
 void resize_window(int w, int h) {
 
     window_width = w;
@@ -469,6 +475,7 @@ void resize_window(int w, int h) {
 }
 
 void handleNormalKeysDown(unsigned char key, int x, int y) {
+
     // To see if modifier key is pressed use: (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
     pControls->handle_keyboard_key_event(key, KEY_DOWN);
 
@@ -549,24 +556,16 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
-// Not used
+// Not used (no need)
 void handleSpecialKeysDown(int key, int x, int y) {
-
-    switch (key)
-    {
-        case GLUT_KEY_RIGHT:
-            break;
-
-        case GLUT_KEY_UP:
-            break;
-
-        case GLUT_KEY_LEFT:
-            break;
-
-        case GLUT_KEY_DOWN:
-            break;
-    }
+    //GLUT_KEY_RIGHT:
+    //GLUT_KEY_UP:
+    //GLUT_KEY_LEFT:
+    //GLUT_KEY_DOWN:
 }
+
+// Not used (no need)
+void handleSpecialKeysUp(int key, int x, int y) {cout << "handleSpecialKeysUp" << endl;}
 
 void handleMouseKeypress(int button, int state, int x, int y) {
 
@@ -681,7 +680,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
-// Not used, as not working on default Mac OS X GLUT
+// Not used (because not working on default Mac OS X GLUT)
 void handleMouseWheel(int wheel, int direction, int x, int y) {
     cout << "wheel: " << wheel << " direction: " << direction << endl;
 }
@@ -710,6 +709,7 @@ void handleMouseActiveMotion(int x, int y) {
 }
 
 void handleMousePassiveMotion(int x, int y) {
+
     mouse.x = x;
     mouse.y = y;
     pControls->handle_mouse_move(mouse);
@@ -717,6 +717,11 @@ void handleMousePassiveMotion(int x, int y) {
     need_to_render_menu = true;
     glutPostRedisplay();
 }
+
+// Not used (no need)
+void overlay_callback() {cout << "overlay_callback" << endl;}
+// Not used (no need)
+void idle_callback() {cout << "idle_callback" << endl;}
 
 // Render 2D text
 void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, Color_RGBA color) {
@@ -775,10 +780,10 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    pControls->add_button_boolean(20, 20,            // x, y
+    pControls->add_button_boolean(20, 20,           // x, y
                                  160, 30,           // w, h
                                  "Simulation On",   // Label
-                                 true,              // Initial state
+                                 simulation_on,     // Initial state
                                  start_simulation,  // Callback On
                                  stop_simulation);  // Callback Off
 
@@ -846,22 +851,29 @@ int main(int argc, char * argv[])
 
     // Render & Resize
     glutDisplayFunc(render_window);
+    glutVisibilityFunc(handle_window_visibility);
     glutReshapeFunc(resize_window);
 
     // Keyboard
     glutIgnoreKeyRepeat(1); // Don't use glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF), it disables globally (for other apps)
     glutKeyboardFunc(handleNormalKeysDown);
     glutKeyboardUpFunc(handleNormalKeysUp);
-    //glutSpecialFunc(handleSpecialKeysDown);
+    //glutSpecialFunc(handleSpecialKeysDown); // Not used (no need)
+    //glutSpecialUpFunc(handleSpecialKeysUp); // Not used (no need)
 
     // Mouse
     glutMouseFunc(handleMouseKeypress);
-    //glutMouseWheelFunc(handleMouseWheel);
+    //glutMouseWheelFunc(handleMouseWheel); // Not used (because not working on default Mac OS X GLUT)
     glutMotionFunc(handleMouseActiveMotion);
     glutPassiveMotionFunc(handleMousePassiveMotion);
 
     // Timer
-    glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
+    if (simulation_on)
+        glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
+
+    // Other callbacks
+    //glutOverlayDisplayFunc(overlay_callback);// Not used (no need)
+    //glutIdleFunc(idle_callback); // Not used (no need)
 
     /*
     // FreeType library initialization
