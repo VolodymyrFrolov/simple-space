@@ -40,22 +40,27 @@ using std::endl;
 //FT_Library  ft_library; // FreeType library handler
 //FT_Face     face;       // Face object handler
 
-int main_window_id;
+const int FRAMERATE = 60;
+
+int window_width = 1200;
+int window_height = 600;
+
+const int scene_min_width = 100;
+const int menu1_width = 200; // Left menu
+const int menu2_width = 100; // Right menu
+
+const int window_min_width = menu1_width + menu2_width + scene_min_width;
+const int window_min_height = 600;
+
+int main_window_id = -1;
 int radius_slider_id = -1;
 int mass_slider_id = -1;
-
-const int FRAMERATE = 60;
-int window_width = 0;
-int window_height = 0;
-
-const int menu_width = 200;
-const int menu_min_height = 400;
-const int scene_min_width = 100;
 
 int model_speed = 1;
 int model_scale = 200000;
 
 bool simulation_on = true;
+bool need_to_render_menu = true;
 
 Mouse mouse;
 
@@ -85,8 +90,8 @@ std::unique_ptr<ControlsManager> pControls(new ControlsManager);
 void initRendering();
 void onTimer(int next_timer_tick);
 
-void drawScene();
-void resizeWindow(int w, int h);
+void render_window();
+void resize_window(int w, int h);
 
 void handleNormalKeys(unsigned char key, int x, int y);
 void handleSpecialKeys(int key, int x, int y);
@@ -102,8 +107,12 @@ void draw_planet(GLdouble radius, GLdouble centre_x, GLdouble centre_y, Color_RG
 double model_x_from_screen_x(const int& x);
 double model_y_from_screen_y(const int& y);
 
+bool is_over_menu1(const int& x) {return x <= menu1_width;}
+bool is_over_menu2(const int& x) {return x > (window_width - menu2_width);}
+bool is_over_scene(const int& x) {return x > menu1_width && x < (window_width - menu2_width);}
+
 double model_x_from_screen_x(const int& x) {
-    return (x - (window_width + menu_width)/2 ) * model_scale;
+    return (x - (window_width + menu1_width - menu2_width)/2 ) * model_scale;
 }
 
 double model_y_from_screen_y(const int& y) {
@@ -195,32 +204,38 @@ void move_one_step() {
     }
 }
 
-void drawScene() {
+void render_window() {
 
-    // ---- Menu ----
-    glViewport(0, 0, menu_width, window_height);
+    // ---- Menu1 (Left) ----
 
-    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-    glScissor(0, 0, menu_width, window_height);
-    glEnable(GL_SCISSOR_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (need_to_render_menu) {
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+        glViewport(0, 0, menu1_width, window_height);
 
-    glOrtho(0.0f,           // left vertical clipping plane
-            menu_width,     // right vertical clipping plane
-            window_height,  // bottom horizontal clipping plane
-            0.0f,           // top horizontal clipping plane
-            1.0f,           // nearer clipping plane
-            -1.0f);         // farer clipping plane
+        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+        glScissor(0, 0, menu1_width, window_height);
+        glEnable(GL_SCISSOR_TEST);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
 
-    pControls->draw();
+        glOrtho(0.0f,           // left vertical clipping plane
+                menu1_width,     // right vertical clipping plane
+                window_height,  // bottom horizontal clipping plane
+                0.0f,           // top horizontal clipping plane
+                1.0f,           // nearer clipping plane
+                -1.0f);         // farer clipping plane
 
-    glDisable(GL_SCISSOR_TEST);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        pControls->draw();
+
+        glDisable(GL_SCISSOR_TEST);
+    }
+
+    // ---- Scene ----
 
     switch(gMode)
     {
@@ -243,50 +258,48 @@ void drawScene() {
             break;
     }
 
-    // ---- Scene ----
-    int scene_width = window_width - menu_width > 1 ? window_width - menu_width : 1;
-    glViewport(menu_width, 0, scene_width, window_height);
+    int scene_width = window_width - (menu1_width + menu2_width);
+    glViewport(menu1_width, 0, scene_width, window_height);
     
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glScissor(menu_width, 0, scene_width, window_height);
+    glScissor(menu1_width, 0, scene_width, window_height);
     glEnable(GL_SCISSOR_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    glOrtho(menu_width,     // left vertical clipping plane
-            window_width,   // right vertical clipping plane
-            window_height,  // bottom horizontal clipping plane
-            0.0f,           // top horizontal clipping plane
-            1.0f,           // nearer clipping plane
-            -1.0f);         // farer clipping plane
+    glOrtho(menu1_width,                  // left vertical clipping plane
+            window_width - menu2_width,   // right vertical clipping plane
+            window_height,                // bottom horizontal clipping plane
+            0.0f,                         // top horizontal clipping plane
+            1.0f,                         // nearer clipping plane
+            -1.0f);                       // farer clipping plane
 
     glMatrixMode(GL_MODELVIEW);
-    //glLoadIdentity();
+    glLoadIdentity();
+
+    int x_center_offset = (window_width + menu1_width - menu2_width)/2;
+    int y_center_offset = window_height/2;
 
     glPushMatrix();
-    glTranslated((window_width + menu_width)/2.0, window_height/2.0, 0.0);
+    glTranslated(x_center_offset, y_center_offset, 0.0);
 
-    //glRotatef(-_cameraAngle, 0.0f, 1.0f, 0.0f); //Rotate the camera
-    //glPushMatrix(); //Save the transformations performed thus far
-    //glPopMatrix(); //Undo the move to the center
-    
     for (std::vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
         it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
         draw_planet(it->rad_m/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f});
     }
 
-    if (mouse.left_key.is_down && (mouse.left_key.down_x > menu_width)) {
+    if (mouse.left_key.is_down && is_over_scene(mouse.left_key.down_x)) {
         draw_planet(next_planet.rad_m / model_scale,
-                    mouse.left_key.down_x - (window_width + menu_width)/2.0,
-                    mouse.left_key.down_y - window_height/2.0,
+                    mouse.left_key.down_x - x_center_offset,
+                    mouse.left_key.down_y - y_center_offset,
                     Color_RGBA(next_planet.color, 1.0f));
 
         glBegin(GL_LINES);
         glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
-        glVertex2d(mouse.left_key.down_x - (window_width + menu_width)/2.0, mouse.left_key.down_y - window_height/2.0);
-        glVertex2d(mouse.x - (window_width + menu_width)/2.0, mouse.y - window_height/2.0);
+        glVertex2d(mouse.left_key.down_x - x_center_offset, mouse.left_key.down_y - y_center_offset);
+        glVertex2d(mouse.x - x_center_offset, mouse.y - y_center_offset);
         glEnd();
 
         ss << next_planet.mass_kg;
@@ -295,8 +308,8 @@ void drawScene() {
         if (mass_modifier_key_down)
             text_color.A = 1.0f;
         render_bitmap_string_2d(str.c_str(),
-                                mouse.left_key.down_x - (window_width + menu_width)/2.0 - 30,
-                                mouse.left_key.down_y - window_height/2.0 + 25,
+                                mouse.left_key.down_x - x_center_offset - 30,
+                                mouse.left_key.down_y - y_center_offset + 25,
                                 GLUT_BITMAP_HELVETICA_12,
                                 text_color);
         ss.clear();
@@ -308,8 +321,8 @@ void drawScene() {
         if (rad_modifier_key_down)
             text_color.A = 1.0f;
         render_bitmap_string_2d(str.c_str(),
-                                mouse.left_key.down_x - (window_width + menu_width)/2.0 - 30,
-                                mouse.left_key.down_y - window_height/2.0 + 40,
+                                mouse.left_key.down_x - x_center_offset - 30,
+                                mouse.left_key.down_y - y_center_offset + 40,
                                 GLUT_BITMAP_HELVETICA_12,
                                 text_color);
         ss.clear();
@@ -321,25 +334,25 @@ void drawScene() {
         ss << sqrt(pow(next_planet.vel.x, 2) + pow(next_planet.vel.y, 2));
         str = std::string("Vel: ") + ss.str() + std::string(" m/s");
         render_bitmap_string_2d(str.c_str(),
-                                mouse.left_key.down_x - (window_width + menu_width)/2.0 - 30,
-                                mouse.left_key.down_y - window_height/2.0 + 55,
+                                mouse.left_key.down_x - x_center_offset - 30,
+                                mouse.left_key.down_y - y_center_offset + 55,
                                 GLUT_BITMAP_HELVETICA_12,
                                 text_color);
         ss.clear();
         ss.str(std::string());
     }
 
-    if (mouse.right_key.is_down && (mouse.right_key.down_x > menu_width)) {
+    if (mouse.right_key.is_down && is_over_scene(mouse.right_key.down_x)) {
         glBegin(GL_LINE_LOOP);
         glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-        glVertex2d(mouse.right_key.down_x - (window_width + menu_width)/2.0,
-                   mouse.right_key.down_y - window_height/2.0);
-        glVertex2d(mouse.x - (window_width + menu_width)/2.0,
-                   mouse.right_key.down_y - window_height/2.0);
-        glVertex2d(mouse.x - (window_width + menu_width)/2.0,
-                   mouse.y - window_height/2.0);
-        glVertex2d(mouse.right_key.down_x - (window_width + menu_width)/2.0,
-                   mouse.y - window_height/2.0);
+        glVertex2d(mouse.right_key.down_x - x_center_offset,
+                   mouse.right_key.down_y - y_center_offset);
+        glVertex2d(mouse.x - x_center_offset,
+                   mouse.right_key.down_y - y_center_offset);
+        glVertex2d(mouse.x - x_center_offset,
+                   mouse.y - y_center_offset);
+        glVertex2d(mouse.right_key.down_x - x_center_offset,
+                   mouse.y - y_center_offset);
 
         glEnd();
     }
@@ -357,37 +370,39 @@ void drawScene() {
     glPopMatrix();
         
     render_bitmap_string_2d("add/remove planets - mouse left/right keys",
-                            window_width - 800,
+                            window_width - 900,
                             window_height - 35,
                             GLUT_BITMAP_HELVETICA_12,
                             Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
     
     render_bitmap_string_2d("hold r/m to change radius or mass of new planet",
-                            window_width - 800,
+                            window_width - 900,
                             window_height - 20,
                             GLUT_BITMAP_HELVETICA_12,
                             Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
 
     render_bitmap_string_2d("a - antialiazing mode",
-                            window_width - 400,
+                            window_width - 600,
                             window_height - 35,
                             GLUT_BITMAP_HELVETICA_12,
                             Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
     render_bitmap_string_2d("space - start/stop",
-                            window_width - 400,
-                            window_height - 5,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    render_bitmap_string_2d(",/. speed",
-                            window_width - 100,
+                            window_width - 600,
                             window_height - 20,
                             GLUT_BITMAP_HELVETICA_12,
                             Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    render_bitmap_string_2d("q/esc - quit",
-                            window_width - 100,
-                            window_height - 5,
+    render_bitmap_string_2d(",/. speed",
+                            window_width - 400,
+                            window_height - 35,
                             GLUT_BITMAP_HELVETICA_12,
                             Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+    render_bitmap_string_2d("q/esc - quit",
+                            window_width - 400,
+                            window_height - 20,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+
+    glDisable(GL_SCISSOR_TEST);
 
     switch(gMode)
     {
@@ -404,12 +419,53 @@ void drawScene() {
             break;
     }
 
+    // ---- Menu2 (Right) ----
+
+    if (need_to_render_menu) {
+
+        glViewport(window_width - menu2_width, 0, window_width, window_height);
+
+        glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
+        glScissor(window_width - menu2_width, 0, window_width, window_height);
+        glEnable(GL_SCISSOR_TEST);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+
+        glOrtho(window_width - menu2_width,  // left vertical clipping plane
+                window_width,                // right vertical clipping plane
+                window_height,               // bottom horizontal clipping plane
+                0.0f,                        // top horizontal clipping plane
+                1.0f,                        // nearer clipping plane
+                -1.0f);                      // farer clipping plane
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        pControls->draw();
+
+        glDisable(GL_SCISSOR_TEST);
+    }
+
+    need_to_render_menu = false;
     glutSwapBuffers();
 }
 
-void resizeWindow(int w, int h) {
+void resize_window(int w, int h) {
+
     window_width = w;
     window_height = h;
+
+    if (w < window_min_width)
+        window_width = window_min_width;
+    if (h < window_min_height)
+        window_height = window_min_height;
+    if (w != window_width || h != window_height)
+        glutReshapeWindow(window_width, window_height);
+
+    need_to_render_menu = true;
+    glutPostRedisplay();
 }
 
 void handleNormalKeysDown(unsigned char key, int x, int y) {
@@ -469,7 +525,8 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
             break;
     }
 
-    if (!simulation_on) glutPostRedisplay();
+    need_to_render_menu = true;
+    glutPostRedisplay();
 }
 
 void handleNormalKeysUp(unsigned char key, int x, int y) {
@@ -488,7 +545,8 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
             break;
     }
 
-    if (!simulation_on) glutPostRedisplay();
+    need_to_render_menu = true;
+    glutPostRedisplay();
 }
 
 // Not used
@@ -550,7 +608,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
             switch (state)
             {
                 case GLUT_DOWN: // Prepare planet to be added
-                    if (x > menu_width) {
+                    if (is_over_scene(x)) {
 
                         double new_mass = 1e29;
                         Slider* mass_slider = dynamic_cast<Slider *>(pControls->find_by_id(mass_slider_id));
@@ -567,7 +625,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                             cout << "rad slider not found" << endl;
 
                         next_planet.reset_parameters();
-                        next_planet.pos.x = next_planet.prev_pos.x = (x - (window_width + menu_width)/2) * model_scale;
+                        next_planet.pos.x = next_planet.prev_pos.x = (x - (window_width + menu1_width - menu2_width)/2) * model_scale;
                         next_planet.pos.y = next_planet.prev_pos.y = (y - window_height/2) * model_scale;
                         next_planet.mass_kg = new_mass;
                         next_planet.rad_m = new_rad;
@@ -576,7 +634,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
 
                     break;
                 case GLUT_UP: // Add prepared planet
-                    if (mouse.left_key.down_x > menu_width) {
+                    if (is_over_scene(mouse.left_key.down_x)) {
                         pSimpleSpace->add_planet(next_planet);
                     }
                     break;
@@ -588,7 +646,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
             {
                 case GLUT_DOWN: // Immediately remove planet(s) at pressed position
                 {
-                    if (x > menu_width) {
+                    if (is_over_scene(x)) {
                         Physics::Vector2d clicked_model_pos(model_x_from_screen_x(mouse.x),
                                                             model_y_from_screen_y(mouse.y));
                         pair<bool, unsigned int> ret = pSimpleSpace->find_planet_by_click(clicked_model_pos);
@@ -600,7 +658,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                 }
                 case GLUT_UP:
                 {
-                    if (mouse.right_key.down_x > menu_width &&
+                    if (is_over_scene(mouse.right_key.down_x) &&
                         (x - mouse.right_key.down_x) != 0  &&
                         (y - mouse.right_key.down_y) != 0) {
 
@@ -619,7 +677,8 @@ void handleMouseKeypress(int button, int state, int x, int y) {
             break;
     }
 
-    if (!simulation_on) glutPostRedisplay();
+    need_to_render_menu = true;
+    glutPostRedisplay();
 }
 
 // Not used, as not working on default Mac OS X GLUT
@@ -646,14 +705,17 @@ void handleMouseActiveMotion(int x, int y) {
         }
     }
 
-    if (!simulation_on) glutPostRedisplay();
+    need_to_render_menu = true;
+    glutPostRedisplay();
 }
 
 void handleMousePassiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
     pControls->handle_mouse_move(mouse);
-    if (!simulation_on) glutPostRedisplay();
+
+    need_to_render_menu = true;
+    glutPostRedisplay();
 }
 
 // Render 2D text
@@ -778,13 +840,13 @@ int main(int argc, char * argv[])
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
-    glutInitWindowSize(1024, 600);
+    glutInitWindowSize(window_width, window_height);
     main_window_id = glutCreateWindow("Simple Space");
     initRendering();
 
     // Render & Resize
-    glutDisplayFunc(drawScene);
-    glutReshapeFunc(resizeWindow);
+    glutDisplayFunc(render_window);
+    glutReshapeFunc(resize_window);
 
     // Keyboard
     glutIgnoreKeyRepeat(1); // Don't use glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF), it disables globally (for other apps)
