@@ -904,3 +904,11 @@ int main(int argc, char * argv[])
     // Never get here
     return 0;
 }
+
+/*
+ * Known bugs:
+ * 1. System constantly gains energy during long continious collision
+ * 2. Flickering at start & too many menu updates cause simulation to slow down
+ * 3. Cursor does not blink with stopped simulation and no user actions
+ *
+ * /
