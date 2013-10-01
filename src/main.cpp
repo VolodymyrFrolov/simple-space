@@ -13,6 +13,7 @@ using std::endl;
 #include <string>
 #include <sstream>
 #include <memory> // std::unique_ptr
+#include <sys/time.h> // gettimeofday()
 
 #ifdef __APPLE__
     #include <OpenGL/OpenGL.h>
@@ -36,11 +37,20 @@ using std::endl;
 #include "simplespace.h"
 #include "planet.h"
 #include "physics.h"
+#include "timer.h"
 
 //FT_Library  ft_library; // FreeType library handler
 //FT_Face     face;       // Face object handler
 
-const int FRAMERATE = 60;
+const int frame_rate = 60;
+float fps1 = 0;
+float fps2 = 0;
+int frame_count1 = 0;
+int frame_count2 = 0;
+int previousTime = 0;
+timeval onTimer_time = {0,0};
+timeval render_window_time1 = {0,0};
+timeval render_window_time2 = {0,0};
 
 int window_width = 1200;
 int window_height = 600;
@@ -84,7 +94,7 @@ enum AliasMode {
 AliasMode gMode = ALIAS_MODE_MULTISAMPLE;
 
 // Creating global SimpleSpace
-std::unique_ptr<SimpleSpace> pSimpleSpace(new SimpleSpace(1000/FRAMERATE));
+std::unique_ptr<SimpleSpace> pSimpleSpace(new SimpleSpace(1000/frame_rate));
 std::unique_ptr<ControlsManager> pControls(new ControlsManager);
 
 void initRendering();
@@ -124,18 +134,36 @@ Color_RGB getRandomColor();
 
 void onTimer(int next_timer_tick) {
 
+    timeval tv;
+    gettimeofday(&tv, NULL);
+    //cout << "onTimer passed: " << (tv.tv_sec - onTimer_time.tv_sec) * 1000000 + (tv.tv_usec - onTimer_time.tv_usec) << "us [" << tv.tv_sec << "s " << tv.tv_usec << "us]" << endl;
+    onTimer_time = tv;
+
+    StopWatch sw;
+
     for (int i = 0; i < model_speed; ++i)
         pSimpleSpace->move_one_step();
     glutPostRedisplay();
 
+    sw.stop();
+    //cout << "    step finished in: " << sw.time_elaplsed_usec() << "us (" << sw.time_elaplsed_usec()/(next_timer_tick * 10) << "% from " << next_timer_tick * 1000 << "us)" << endl;
+
+    int next_timer_tick_corrected = next_timer_tick - sw.time_elaplsed_usec()/1000;
+    if (next_timer_tick_corrected < 0) {
+        cout << "    Warning: frame rate degradation; step took: " << sw.time_elaplsed_usec()/1000 << "ms" << endl;
+        next_timer_tick_corrected = 0;
+    } else {
+        //cout << "    next_timer_tick_corrected = " << next_timer_tick_corrected << endl;
+    }
+
     if (simulation_on)
-        glutTimerFunc(next_timer_tick, onTimer, next_timer_tick);
+        glutTimerFunc(next_timer_tick_corrected, onTimer, next_timer_tick);
 }
 
 void start_simulation() {
     if (!simulation_on) {
         simulation_on = true;
-        glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
+        glutTimerFunc(1000/frame_rate, onTimer, 1000/frame_rate);
     }
 }
 
@@ -206,6 +234,33 @@ void move_one_step() {
 }
 
 void render_window() {
+
+    // ---- Frame rate ----
+
+    timeval tv;
+    gettimeofday(&tv, NULL);
+
+    //cout << "render_window passed: " << (tv.tv_sec - render_window_time1.tv_sec) * 1000000 + (tv.tv_usec - render_window_time1.tv_usec) << "us [" << tv.tv_sec << "s " << tv.tv_usec << "us]" << endl;
+    //render_window_time1 = tv;
+
+    ++frame_count1;
+
+    int interval_ms = (tv.tv_sec - render_window_time2.tv_sec) * 1000 + (tv.tv_usec - render_window_time2.tv_usec)/1000;
+    if (interval_ms > 1000) {
+        fps1 = frame_count1 / (interval_ms / 1000.0f);
+        render_window_time2 = tv;
+        frame_count1 = 0;
+    }
+
+    ++frame_count2;
+
+    int currentTime = glutGet(GLUT_ELAPSED_TIME);
+    int timeInterval = currentTime - previousTime;
+    if (timeInterval > 1000) {
+        fps2 = frame_count2 / (timeInterval / 1000.0f);
+        previousTime = currentTime;
+        frame_count2 = 0;
+    }
 
     // ---- Menu1 (Left) ----
 
@@ -369,7 +424,27 @@ void render_window() {
     #endif
 
     glPopMatrix();
-        
+
+    ss << fps1;
+    str = std::string("fps1: ") + ss.str();
+    render_bitmap_string_2d(str.c_str(),
+                            menu1_width + 10,
+                            15,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+    ss.clear();
+    ss.str(std::string());
+
+    ss << fps2;
+    str = std::string("fps2: ") + ss.str();
+    render_bitmap_string_2d(str.c_str(),
+                            menu1_width + 10,
+                            30,
+                            GLUT_BITMAP_HELVETICA_12,
+                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+    ss.clear();
+    ss.str(std::string());
+
     render_bitmap_string_2d("add/remove planets - mouse left/right keys",
                             window_width - 900,
                             window_height - 35,
@@ -444,7 +519,7 @@ void render_window() {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
-        pControls->draw();
+        // Draw controls for right menu
 
         glDisable(GL_SCISSOR_TEST);
     }
@@ -462,13 +537,6 @@ void resize_window(int w, int h) {
 
     window_width = w;
     window_height = h;
-
-    if (w < window_min_width)
-        window_width = window_min_width;
-    if (h < window_min_height)
-        window_height = window_min_height;
-    if (w != window_width || h != window_height)
-        glutReshapeWindow(window_width, window_height);
 
     need_to_render_menu = true;
     glutPostRedisplay();
@@ -512,14 +580,14 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
         case ',':
             if (model_speed > 1) {
                 model_speed /= 10;
-                cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+                cout << "model speed: " << model_speed << " (" << frame_rate * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
             }
             break;
 
         case '.':
             if (!(model_speed * pSimpleSpace->get_model_time_step_ms() > 100000)) {
                 model_speed *= 10;
-                cout << "model speed: " << model_speed << " (" << FRAMERATE * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
+                cout << "model speed: " << model_speed << " (" << frame_rate * model_speed * pSimpleSpace->planets.size() << " calcs per second)" << endl;
             }
             break;
         case 'r':
@@ -600,6 +668,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
     }
 
     pControls->handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
+
 
     switch (button)
     {
@@ -689,6 +758,7 @@ void handleMouseActiveMotion(int x, int y) {
 
     mouse.x = x;
     mouse.y = y;
+
     pControls->handle_mouse_move(mouse);
 
     if (mouse.left_key.is_down) {
@@ -712,6 +782,7 @@ void handleMousePassiveMotion(int x, int y) {
 
     mouse.x = x;
     mouse.y = y;
+
     pControls->handle_mouse_move(mouse);
 
     need_to_render_menu = true;
@@ -869,7 +940,7 @@ int main(int argc, char * argv[])
 
     // Timer
     if (simulation_on)
-        glutTimerFunc(1000/FRAMERATE, onTimer, 1000/FRAMERATE);
+        glutTimerFunc(1000/frame_rate, onTimer, 1000/frame_rate);
 
     // Other callbacks
     //glutOverlayDisplayFunc(overlay_callback);// Not used (no need)

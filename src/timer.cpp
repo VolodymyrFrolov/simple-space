@@ -150,3 +150,40 @@ void Timer::wait_loop() {
     ...
 #endif
 */
+
+StopWatch::StopWatch(bool started) : _running(started) {
+    _start_time = {0,0};
+    if (_running) {
+        gettimeofday(&_start_time, NULL);
+    }
+    _stop_time = _start_time;
+}
+
+void StopWatch::start() {
+    if (!_running) {
+        _running = true;
+        gettimeofday(&_start_time, NULL);
+        _stop_time = _start_time;
+    }
+}
+
+void StopWatch::stop() {
+    if (_running) {
+        _running = false;
+        gettimeofday(&_stop_time, NULL);
+    }
+}
+
+long int StopWatch::time_elaplsed_usec() const {
+    if (_running) {
+        timeval tv;
+        gettimeofday(&tv, NULL);
+        return (tv.tv_sec - _start_time.tv_sec) * 1000000 + (tv.tv_usec - _start_time.tv_usec);
+    } else {
+        return (_stop_time.tv_sec - _start_time.tv_sec) * 1000000 + (_stop_time.tv_usec - _start_time.tv_usec);
+    }
+}
+
+bool StopWatch::running() const {
+    return _running;
+}

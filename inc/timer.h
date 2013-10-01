@@ -44,4 +44,16 @@ public:
     void change_interval(long int interval_millisec);
 };
 
+class StopWatch {
+    timeval _start_time;
+    timeval _stop_time;
+    bool _running;
+public:
+    StopWatch(bool started = true);
+    void start();
+    void stop();
+    long int time_elaplsed_usec() const;
+    bool running() const;
+};
+
 #endif /* defined(__timer__simplespace__) */
