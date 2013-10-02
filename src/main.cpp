@@ -162,6 +162,13 @@ void onTimer(int next_timer_tick) {
         glutTimerFunc(corrected_period, onTimer, next_timer_tick);
 }
 
+void check_need_to_render_bools(int next_timer_tick) {
+    if (need_to_render_menu1 || need_to_render_menu2 || need_to_render_scene)
+        glutPostRedisplay();
+    glutTimerFunc(next_timer_tick, check_need_to_render_bools, next_timer_tick);
+}
+
+
 void start_simulation() {
     if (!simulation_on) {
         simulation_on = true;
@@ -766,6 +773,7 @@ void handleMousePassiveMotion(int x, int y) {
     glutPostRedisplay();
 }
 
+// Not used, as consumes 100% CPU
 void idle_callback() {
     if (need_to_render_menu1 || need_to_render_menu2 || need_to_render_scene)
         glutPostRedisplay();
@@ -922,12 +930,13 @@ int main(int argc, char * argv[])
     glutMotionFunc(handleMouseActiveMotion);
     glutPassiveMotionFunc(handleMousePassiveMotion);
 
-    // Timer
+    // Timers
     if (simulation_on)
         glutTimerFunc(1000/frame_rate, onTimer, 1000/frame_rate);
+    glutTimerFunc(100, check_need_to_render_bools, 100);
 
     // Other callbacks
-    glutIdleFunc(idle_callback);
+    //glutIdleFunc(idle_callback); // Not used (consumes 100% CPU)
     //glutOverlayDisplayFunc(overlay_callback);// Not used (no need)
 
     /*
