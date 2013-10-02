@@ -105,9 +105,9 @@ void Timer::wait_loop() {
             cout << "Warning: [Timer] callback took more time ("
                  << (_current_time.tv_sec - _start_time.tv_sec) * 1000000 + \
                      (_current_time.tv_usec - _start_time.tv_usec)
-                 << " microseconds) than interval ("
+                 << " usec) than interval ("
                  << (_interval_millisec * 1000)
-                 << " microseconds)" << endl;
+                 << " usec)" << endl;
 
     } while (_running && _repeating);
 
@@ -187,8 +187,7 @@ bool StopWatch::running() const {
     return _running;
 }
 
-FPSCounter::FPSCounter() : _fps(0),
-                           _framecount(0) {
+FPSCounter::FPSCounter() : _fps(0), _framecount(0) {
     gettimeofday(&_start, NULL);
 }
 

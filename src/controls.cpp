@@ -269,7 +269,8 @@ void ButtonBoolean::draw() const {
 NumericBox::NumericBox(int id,
                        int x, int y,
                        int w, int h,
-                       double value) :
+                       double value,
+                       ActionCallback redraw_notifier) :
     UIControl(id, x, y, w, h),
     _value(value),
     _label_is_numeric(true),
@@ -277,9 +278,20 @@ NumericBox::NumericBox(int id,
     _is_active(false),
 
     _cursor_visible(false),
-    _cursor_timer(650, &NumericBox::static_wrapper_cursor_toggle, this, false) {
+    _cursor_timer(650, &NumericBox::static_wrapper_cursor_toggle, this, false),
+    _redraw_notifier(redraw_notifier) {
 
     set_value(_value);
+}
+
+void NumericBox::cursor_toggle() {
+    _cursor_visible = !_cursor_visible;
+    if (_redraw_notifier != NULL)
+        _redraw_notifier();
+}
+
+void NumericBox::static_wrapper_cursor_toggle(void* param) {
+    ((NumericBox*)param)->cursor_toggle();
 }
 
 bool NumericBox::check_label_is_numeric(const std::string& label) {
@@ -495,13 +507,14 @@ Slider::Slider(int id,
                double min,
                double max,
                double value,
-               std::string label) :
+               std::string label,
+               ActionCallback redraw_notifier) :
     UIControl(id, x, y, w, h),
     _is_pressed(false),
     _margin(10),
     _value(value), _value_min(min), _value_max(max),
     _label(label),
-    _value_box(0, _x + (_w - 50)/2, _y + 4*_h/6, 50, 15) {
+    _value_box(0, _x + (_w - 50)/2, _y + 4*_h/6, 50, 15, 0, redraw_notifier) {
 
     // Check range (done once)
     if (_value_min > _value_max) {
@@ -775,12 +788,12 @@ void Slider::draw() const {
 
 // ---- TestBox ----
 
-void TestBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
+void RedrawBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
     if (mouse_over_control(mouse.x, mouse.y) && action == KEY_DOWN)
         active = !active;
 }
 
-void TestBox::draw() const {
+void RedrawBox::draw() const {
 
     if (active) {
         R += 0.1;
@@ -801,6 +814,10 @@ void TestBox::draw() const {
 }
 
 // ---- ControlManager ----
+
+ControlsManager::ControlsManager(ActionCallback redraw_notifier) :
+    _redraw_notifier(redraw_notifier)
+{}
 
 ControlsManager::~ControlsManager() {
     if (controls.size() != 0) {
@@ -838,19 +855,19 @@ int ControlsManager::add_button_boolean(int x, int y, int width, int height, std
 
 int ControlsManager::add_numeric_box(int x, int y, int width, int height, double value) {
     int new_id = generate_unique_id();
-    controls.push_back(new NumericBox(new_id, x, y, width, height, value));
+    controls.push_back(new NumericBox(new_id, x, y, width, height, value, _redraw_notifier));
     return new_id;
 }
 
 int ControlsManager::add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label) {
     int new_id = generate_unique_id();
-    controls.push_back(new Slider(new_id, x, y, width, height, min, max,value, label));
+    controls.push_back(new Slider(new_id, x, y, width, height, min, max,value, label, _redraw_notifier));
     return new_id;
 }
 
-int ControlsManager::add_test_box(int x, int y, int width, int height) {
+int ControlsManager::add_redraw_box(int x, int y, int width, int height) {
     int new_id = generate_unique_id();
-    controls.push_back(new TestBox(new_id, x, y, width, height));
+    controls.push_back(new RedrawBox(new_id, x, y, width, height));
     return new_id;
 }
 
@@ -868,4 +885,13 @@ void ControlsManager::handle_keyboard_key_event(char key, KEY_ACTION action) {
 
 void ControlsManager::draw() const {
     std::for_each(controls.begin(), controls.end(), [&](UIControl* c) {c->draw();} );
+}
+
+void ControlsManager::shift_conrols_position(const int& x_offset, const int& y_offset) {
+    std::for_each(controls.begin(), controls.end(), [&x_offset, &y_offset](UIControl* c) {
+        if (x_offset != 0)
+            c->set_x(c->get_x() + x_offset);
+        if (y_offset != 0)
+            c->set_y(c->get_y() + y_offset);
+    } );
 }

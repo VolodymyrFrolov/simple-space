@@ -81,10 +81,10 @@ public:
     int get_y() const {return _y;}
     int get_width() const {return _w;}
     int get_height() const {return _h;}
-    void set_x(int& x) {_x = x;}
-    void set_y(int& y) {_y = y;}
-    void set_width(int& w) {_w = w;}
-    void set_height(int& h) {_h = h;}
+    void set_x(const int& x) {_x = x;}
+    void set_y(const int& y) {_y = y;}
+    void set_width(const int& w) {_w = w;}
+    void set_height(const int& h) {_h = h;}
 
     virtual void handle_mouse_move(const Mouse& mouse) {};
     virtual void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {};
@@ -155,18 +155,20 @@ class NumericBox : public UIControl {
 
     bool _cursor_visible;
     Timer _cursor_timer;
+    ActionCallback _redraw_notifier;
 
     bool check_label_is_numeric(const std::string& label);
     double label_to_value(const std::string& label) const;
 
-    void cursor_toggle() {_cursor_visible = !_cursor_visible;};
-    static void static_wrapper_cursor_toggle(void* param) {((NumericBox*)param)->cursor_toggle();}
+    void cursor_toggle();
+    static void static_wrapper_cursor_toggle(void* param);
 
 public:
     NumericBox(int id,
                int x, int y,
                int w, int h,
-               double value = 0);
+               double value = 0,
+               ActionCallback redraw_notifier = NULL);
 
     void set_label(const std::string& label); // Does not update _value
     void set_label(const double& value);     // Does not update _value
@@ -213,7 +215,8 @@ public:
            double min,
            double max,
            double value,
-           std::string label);
+           std::string label,
+           ActionCallback redraw_notifier);
 
     double get_value() {return _value;}
 
@@ -224,13 +227,13 @@ public:
 };
 
 
-class TestBox : public UIControl {
+class RedrawBox : public UIControl {
     bool active;
     mutable float R;
     mutable float G;
     mutable float B;
 public:
-    TestBox(int id, int x, int y, int w, int h) :
+    RedrawBox(int id, int x, int y, int w, int h) :
         UIControl(id, x, y, w, h),
         active(false),
         R(0), G(0), B(0) {};
@@ -243,7 +246,9 @@ public:
 class ControlsManager {
     std::vector<UIControl *> controls;
     int generate_unique_id() const;
+    ActionCallback _redraw_notifier;
 public:
+    ControlsManager(ActionCallback redraw_notifier = NULL);
     ~ControlsManager();
 
     UIControl* find_by_id(int id);
@@ -252,12 +257,14 @@ public:
     int add_button_boolean(int x, int y, int width, int height, std::string label, bool start_state, ActionCallback button_callback_on, ActionCallback button_callback_off);
     int add_numeric_box(int x, int y, int width, int height, double value);
     int add_slider(int x, int y, int width, int height, double min, double max, double value, std::string label);
-    int add_test_box(int x, int y, int width, int height);
+    int add_redraw_box(int x, int y, int width, int height);
 
     void handle_mouse_move(const Mouse& mouse);
     void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
     void handle_keyboard_key_event(char key, KEY_ACTION action);
     void draw() const;
+
+    void shift_conrols_position(const int& x_offset, const int& y_offset);
 };
 
 #endif /* defined(__controls__simplespace__) */

@@ -44,15 +44,6 @@ using std::endl;
 
 const int frame_rate = 60;
 
-float fps1 = 0;
-float fps2 = 0;
-int frame_count1 = 0;
-int frame_count2 = 0;
-int previousTime = 0;
-timeval onTimer_time = {0,0};
-timeval render_window_time1 = {0,0};
-timeval render_window_time2 = {0,0};
-
 int window_width = 1200;
 int window_height = 600;
 
@@ -71,7 +62,20 @@ int model_speed = 1;
 int model_scale = 200000;
 
 bool simulation_on = true;
-bool need_to_render_menu = true;
+bool need_to_render_menu1 = true;
+bool need_to_render_menu2 = true;
+bool need_to_render_scene = true;
+
+// These functions are intented to be passed as callbacks
+void notify_to_update_menu1() {need_to_render_menu1 = true;}
+void notify_to_update_menu2() {need_to_render_menu2 = true;}
+void notify_to_update_scene() {need_to_render_scene = true;}
+
+void notify_to_update_all() {
+    notify_to_update_menu1();
+    notify_to_update_menu2();
+    notify_to_update_scene();
+}
 
 Mouse mouse;
 
@@ -94,11 +98,15 @@ enum AliasMode {
 
 AliasMode gMode = ALIAS_MODE_MULTISAMPLE;
 
-// Creating global SimpleSpace
+// Creating global smart pointers (unique_ptr in std)
 std::unique_ptr<SimpleSpace> pSimpleSpace(new SimpleSpace(1000/frame_rate));
-std::unique_ptr<ControlsManager> pControls(new ControlsManager);
+std::unique_ptr<ControlsManager> pControlsLeft(new ControlsManager(notify_to_update_menu1));
+std::unique_ptr<ControlsManager> pControlsRight(new ControlsManager(notify_to_update_menu2));
 std::unique_ptr<FPSCounter> pFPSCounter(new FPSCounter);
 std::unique_ptr<StopWatch> pStopWatch(new StopWatch(false));
+
+// Temp stopwatch to count time of rendring frame
+//std::unique_ptr<StopWatch> pStopWatch_render(new StopWatch(false));
 
 void initRendering();
 void onTimer(int next_timer_tick);
@@ -141,11 +149,12 @@ void onTimer(int next_timer_tick) {
     for (int i = 0; i < model_speed; ++i)
         pSimpleSpace->move_one_step();
     pStopWatch->stop();
+    need_to_render_scene = true;
     glutPostRedisplay();
 
-    int corrected_period = next_timer_tick - pStopWatch->time_elaplsed_usec()/1000;
+    int corrected_period = next_timer_tick - int(pStopWatch->time_elaplsed_usec()/1000);
     if (corrected_period < 0) {
-        cout << "    Warning: [onTimer] FPS degradation; calculations took: " << pStopWatch->time_elaplsed_usec()/1000 << "ms (> " << next_timer_tick << "ms)" << endl;
+        cout << "    Warning: [onTimer] FPS degradation; calculation took: " << pStopWatch->time_elaplsed_usec()/1000 << "ms (> " << next_timer_tick << "ms)" << endl;
         corrected_period = 0;
     }
 
@@ -189,10 +198,12 @@ void restart_simulation() {
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    if (need_to_resume)
+    if (need_to_resume) {
         simulation_on = true;
-    else
+    } else {
+        need_to_render_scene = true;
         glutPostRedisplay();
+    }
 }
 
 void remove_all_objects() {
@@ -228,24 +239,25 @@ void move_one_step() {
 
 void render_window() {
 
-    pFPSCounter->update_on_frame();
+    //pStopWatch_render->start();
+
+    glEnable(GL_SCISSOR_TEST);
 
     // ---- Menu1 (Left) ----
 
-    if (need_to_render_menu) {
+    if (need_to_render_menu1) {
+        need_to_render_menu1 = false;
 
         glViewport(0, 0, menu1_width, window_height);
-
-        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
         glScissor(0, 0, menu1_width, window_height);
-        glEnable(GL_SCISSOR_TEST);
+        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
         glOrtho(0.0f,           // left vertical clipping plane
-                menu1_width,     // right vertical clipping plane
+                menu1_width,    // right vertical clipping plane
                 window_height,  // bottom horizontal clipping plane
                 0.0f,           // top horizontal clipping plane
                 1.0f,           // nearer clipping plane
@@ -254,214 +266,214 @@ void render_window() {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
-        pControls->draw();
-
-        glDisable(GL_SCISSOR_TEST);
+        pControlsLeft->draw();
     }
 
     // ---- Scene ----
 
-    switch(gMode)
-    {
-        case ALIAS_MODE_ALIASED:
-            glDisable(GL_LINE_SMOOTH);
-            glDisable(GL_POLYGON_SMOOTH);
-            glDisable(GL_MULTISAMPLE);
-            break;
+    if (need_to_render_scene) {
+        need_to_render_scene = false;
 
-        case ALIAS_MODE_ANTIALIASED:
-            glEnable(GL_LINE_SMOOTH);
-            glEnable(GL_POLYGON_SMOOTH);
-            glDisable(GL_MULTISAMPLE);
-            break;
+        pFPSCounter->update_on_frame();
 
-        case ALIAS_MODE_MULTISAMPLE:
-            glDisable(GL_LINE_SMOOTH);
-            glDisable(GL_POLYGON_SMOOTH);
-            glEnable(GL_MULTISAMPLE);
-            break;
-    }
+        switch(gMode)
+        {
+            case ALIAS_MODE_ALIASED:
+                glDisable(GL_LINE_SMOOTH);
+                glDisable(GL_POLYGON_SMOOTH);
+                glDisable(GL_MULTISAMPLE);
+                break;
 
-    int scene_width = window_width - (menu1_width + menu2_width);
-    glViewport(menu1_width, 0, scene_width, window_height);
-    
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glScissor(menu1_width, 0, scene_width, window_height);
-    glEnable(GL_SCISSOR_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            case ALIAS_MODE_ANTIALIASED:
+                glEnable(GL_LINE_SMOOTH);
+                glEnable(GL_POLYGON_SMOOTH);
+                glDisable(GL_MULTISAMPLE);
+                break;
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+            case ALIAS_MODE_MULTISAMPLE:
+                glDisable(GL_LINE_SMOOTH);
+                glDisable(GL_POLYGON_SMOOTH);
+                glEnable(GL_MULTISAMPLE);
+                break;
+        }
 
-    glOrtho(menu1_width,                  // left vertical clipping plane
-            window_width - menu2_width,   // right vertical clipping plane
-            window_height,                // bottom horizontal clipping plane
-            0.0f,                         // top horizontal clipping plane
-            1.0f,                         // nearer clipping plane
-            -1.0f);                       // farer clipping plane
+        int scene_width = window_width - (menu1_width + menu2_width);
+        glViewport(menu1_width, 0, scene_width, window_height);
+        glScissor(menu1_width, 0, scene_width, window_height);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
 
-    int x_center_offset = (window_width + menu1_width - menu2_width)/2;
-    int y_center_offset = window_height/2;
+        glOrtho(menu1_width,                  // left vertical clipping plane
+                window_width - menu2_width,   // right vertical clipping plane
+                window_height,                // bottom horizontal clipping plane
+                0.0f,                         // top horizontal clipping plane
+                1.0f,                         // nearer clipping plane
+                -1.0f);                       // farer clipping plane
 
-    glPushMatrix();
-    glTranslated(x_center_offset, y_center_offset, 0.0);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
-    for (std::vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
-        it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
-        draw_planet(it->rad_m/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f});
-    }
+        int x_center_offset = (window_width + menu1_width - menu2_width)/2;
+        int y_center_offset = window_height/2;
 
-    if (mouse.left_key.is_down && is_over_scene(mouse.left_key.down_x)) {
-        draw_planet(next_planet.rad_m / model_scale,
-                    mouse.left_key.down_x - x_center_offset,
-                    mouse.left_key.down_y - y_center_offset,
-                    Color_RGBA(next_planet.color, 1.0f));
+        glPushMatrix();
+        glTranslated(x_center_offset, y_center_offset, 0.0);
 
-        glBegin(GL_LINES);
-        glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
-        glVertex2d(mouse.left_key.down_x - x_center_offset, mouse.left_key.down_y - y_center_offset);
-        glVertex2d(mouse.x - x_center_offset, mouse.y - y_center_offset);
-        glEnd();
+        for (std::vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
+            it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
+            draw_planet(it->rad_m/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f});
+        }
 
-        ss << next_planet.mass_kg;
-        str = std::string("Mass: ") + ss.str() + std::string(" kg");
-        Color_RGBA text_color = Color_RGBA(1.0f, 1.0f, 1.0f, 0.5f);
-        if (mass_modifier_key_down)
-            text_color.A = 1.0f;
-        render_bitmap_string_2d(str.c_str(),
-                                mouse.left_key.down_x - x_center_offset - 30,
-                                mouse.left_key.down_y - y_center_offset + 25,
-                                GLUT_BITMAP_HELVETICA_12,
-                                text_color);
-        ss.clear();
-        ss.str(std::string());
+        if (mouse.left_key.is_down && is_over_scene(mouse.left_key.down_x)) {
+            draw_planet(next_planet.rad_m / model_scale,
+                        mouse.left_key.down_x - x_center_offset,
+                        mouse.left_key.down_y - y_center_offset,
+                        Color_RGBA(next_planet.color, 1.0f));
 
-        ss << next_planet.rad_m;
-        str = std::string("Rad: ") + ss.str() + std::string(" m");
-        text_color = Color_RGBA(1.0f, 1.0f, 1.0f, 0.5f);
-        if (rad_modifier_key_down)
-            text_color.A = 1.0f;
-        render_bitmap_string_2d(str.c_str(),
-                                mouse.left_key.down_x - x_center_offset - 30,
-                                mouse.left_key.down_y - y_center_offset + 40,
-                                GLUT_BITMAP_HELVETICA_12,
-                                text_color);
-        ss.clear();
-        ss.str(std::string());
+            glBegin(GL_LINES);
+            glColor4f(next_planet.color.R, next_planet.color.G, next_planet.color.B, 1.0f);
+            glVertex2d(mouse.left_key.down_x - x_center_offset, mouse.left_key.down_y - y_center_offset);
+            glVertex2d(mouse.x - x_center_offset, mouse.y - y_center_offset);
+            glEnd();
 
-        text_color = Color_RGBA(1.0f, 1.0f, 1.0f, 0.5f);
-        if (!mass_modifier_key_down && !rad_modifier_key_down)
-            text_color.A = 1.0f;
-        ss << sqrt(pow(next_planet.vel.x, 2) + pow(next_planet.vel.y, 2));
-        str = std::string("Vel: ") + ss.str() + std::string(" m/s");
-        render_bitmap_string_2d(str.c_str(),
-                                mouse.left_key.down_x - x_center_offset - 30,
-                                mouse.left_key.down_y - y_center_offset + 55,
-                                GLUT_BITMAP_HELVETICA_12,
-                                text_color);
-        ss.clear();
-        ss.str(std::string());
-    }
+            ss << next_planet.mass_kg;
+            str = std::string("Mass: ") + ss.str() + std::string(" kg");
+            Color_RGBA text_color = Color_RGBA(1.0f, 1.0f, 1.0f, 0.5f);
+            if (mass_modifier_key_down)
+                text_color.A = 1.0f;
+            render_bitmap_string_2d(str.c_str(),
+                                    mouse.left_key.down_x - x_center_offset - 30,
+                                    mouse.left_key.down_y - y_center_offset + 25,
+                                    GLUT_BITMAP_HELVETICA_12,
+                                    text_color);
+            ss.clear();
+            ss.str(std::string());
 
-    if (mouse.right_key.is_down && is_over_scene(mouse.right_key.down_x)) {
+            ss << next_planet.rad_m;
+            str = std::string("Rad: ") + ss.str() + std::string(" m");
+            text_color = Color_RGBA(1.0f, 1.0f, 1.0f, 0.5f);
+            if (rad_modifier_key_down)
+                text_color.A = 1.0f;
+            render_bitmap_string_2d(str.c_str(),
+                                    mouse.left_key.down_x - x_center_offset - 30,
+                                    mouse.left_key.down_y - y_center_offset + 40,
+                                    GLUT_BITMAP_HELVETICA_12,
+                                    text_color);
+            ss.clear();
+            ss.str(std::string());
+
+            text_color = Color_RGBA(1.0f, 1.0f, 1.0f, 0.5f);
+            if (!mass_modifier_key_down && !rad_modifier_key_down)
+                text_color.A = 1.0f;
+            ss << sqrt(pow(next_planet.vel.x, 2) + pow(next_planet.vel.y, 2));
+            str = std::string("Vel: ") + ss.str() + std::string(" m/s");
+            render_bitmap_string_2d(str.c_str(),
+                                    mouse.left_key.down_x - x_center_offset - 30,
+                                    mouse.left_key.down_y - y_center_offset + 55,
+                                    GLUT_BITMAP_HELVETICA_12,
+                                    text_color);
+            ss.clear();
+            ss.str(std::string());
+        }
+
+        if (mouse.right_key.is_down && is_over_scene(mouse.right_key.down_x)) {
+            glBegin(GL_LINE_LOOP);
+            glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+            glVertex2d(mouse.right_key.down_x - x_center_offset,
+                       mouse.right_key.down_y - y_center_offset);
+            glVertex2d(mouse.x - x_center_offset,
+                       mouse.right_key.down_y - y_center_offset);
+            glVertex2d(mouse.x - x_center_offset,
+                       mouse.y - y_center_offset);
+            glVertex2d(mouse.right_key.down_x - x_center_offset,
+                       mouse.y - y_center_offset);
+
+            glEnd();
+        }
+
+        #if (BORDERS_ENABLED > 0)
+        glColor3f(1.0f, 1.0f, 1.0f);
         glBegin(GL_LINE_LOOP);
-        glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-        glVertex2d(mouse.right_key.down_x - x_center_offset,
-                   mouse.right_key.down_y - y_center_offset);
-        glVertex2d(mouse.x - x_center_offset,
-                   mouse.right_key.down_y - y_center_offset);
-        glVertex2d(mouse.x - x_center_offset,
-                   mouse.y - y_center_offset);
-        glVertex2d(mouse.right_key.down_x - x_center_offset,
-                   mouse.y - y_center_offset);
-
+        glVertex2d(RIGHT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
+        glVertex2d(LEFT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
+        glVertex2d(LEFT_BORDER/double(model_scale), BOTTOM_BORDER/double(model_scale));
+        glVertex2d(RIGHT_BORDER/double(model_scale), BOTTOM_BORDER/double(model_scale));
         glEnd();
-    }
+        #endif
 
-    #if (BORDERS_ENABLED > 0)
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_LINE_LOOP);
-    glVertex2d(RIGHT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
-    glVertex2d(LEFT_BORDER/double(model_scale), TOP_BORDER/double(model_scale));
-    glVertex2d(LEFT_BORDER/double(model_scale), BOTTOM_BORDER/double(model_scale));
-    glVertex2d(RIGHT_BORDER/double(model_scale), BOTTOM_BORDER/double(model_scale));
-    glEnd();
-    #endif
+        glPopMatrix();
 
-    glPopMatrix();
+        ss << pFPSCounter->get_fps();
+        str = std::string("FPS: ") + ss.str();
+        render_bitmap_string_2d(str.c_str(),
+                                menu1_width + 10,
+                                15,
+                                GLUT_BITMAP_HELVETICA_12,
+                                Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+        ss.clear();
+        ss.str(std::string());
 
-    ss << pFPSCounter->get_fps();
-    str = std::string("fps: ") + ss.str();
-    render_bitmap_string_2d(str.c_str(),
-                            menu1_width + 10,
-                            15,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    ss.clear();
-    ss.str(std::string());
+        render_bitmap_string_2d("add/remove planets - mouse left/right keys",
+                                window_width - 900,
+                                window_height - 35,
+                                GLUT_BITMAP_HELVETICA_12,
+                                Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
 
-    render_bitmap_string_2d("add/remove planets - mouse left/right keys",
-                            window_width - 900,
-                            window_height - 35,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    
-    render_bitmap_string_2d("hold r/m to change radius or mass of new planet",
-                            window_width - 900,
-                            window_height - 20,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+        render_bitmap_string_2d("hold r/m to change radius or mass of new planet",
+                                window_width - 900,
+                                window_height - 20,
+                                GLUT_BITMAP_HELVETICA_12,
+                                Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
 
-    render_bitmap_string_2d("a - antialiazing mode",
-                            window_width - 600,
-                            window_height - 35,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    render_bitmap_string_2d("space - start/stop",
-                            window_width - 600,
-                            window_height - 20,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    render_bitmap_string_2d(",/. speed",
-                            window_width - 400,
-                            window_height - 35,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    render_bitmap_string_2d("q/esc - quit",
-                            window_width - 400,
-                            window_height - 20,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+        render_bitmap_string_2d("a - antialiazing mode",
+                                window_width - 600,
+                                window_height - 35,
+                                GLUT_BITMAP_HELVETICA_12,
+                                Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+        render_bitmap_string_2d("space - start/stop",
+                                window_width - 600,
+                                window_height - 20,
+                                GLUT_BITMAP_HELVETICA_12,
+                                Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+        render_bitmap_string_2d(",/. speed",
+                                window_width - 400,
+                                window_height - 35,
+                                GLUT_BITMAP_HELVETICA_12,
+                                Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
+        render_bitmap_string_2d("q/esc - quit",
+                                window_width - 400,
+                                window_height - 20,
+                                GLUT_BITMAP_HELVETICA_12,
+                                Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
 
-    glDisable(GL_SCISSOR_TEST);
+        switch(gMode)
+        {
+            case ALIAS_MODE_ALIASED:
+                break;
 
-    switch(gMode)
-    {
-        case ALIAS_MODE_ALIASED:
-            break;
+            case ALIAS_MODE_ANTIALIASED:
+                glDisable(GL_LINE_SMOOTH);
+                glDisable(GL_POLYGON_SMOOTH);
+                break;
 
-        case ALIAS_MODE_ANTIALIASED:
-            glDisable(GL_LINE_SMOOTH);
-            glDisable(GL_POLYGON_SMOOTH);
-            break;
+            case ALIAS_MODE_MULTISAMPLE:
+                glDisable(GL_MULTISAMPLE);
+                break;
+        }
 
-        case ALIAS_MODE_MULTISAMPLE:
-            glDisable(GL_MULTISAMPLE);
-            break;
     }
 
     // ---- Menu2 (Right) ----
 
-    if (need_to_render_menu) {
+    if (need_to_render_menu2) {
+        need_to_render_menu2 = false;
 
-        glViewport(window_width - menu2_width, 0, window_width, window_height);
-
+        glViewport(window_width - menu2_width, 0, menu2_width, window_height);
+        glScissor(window_width - menu2_width, 0, menu2_width, window_height);
         glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
-        glScissor(window_width - menu2_width, 0, window_width, window_height);
-        glEnable(GL_SCISSOR_TEST);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glMatrixMode(GL_PROJECTION);
@@ -477,33 +489,37 @@ void render_window() {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
-        // Draw controls for right menu
-
-        glDisable(GL_SCISSOR_TEST);
+        pControlsRight->draw();
     }
 
-    need_to_render_menu = false;
+    glDisable(GL_SCISSOR_TEST);
     glutSwapBuffers();
+
+    //pStopWatch_render->stop();
+    //cout << "Frame rendering took " << pStopWatch_render->time_elaplsed_usec() << "us" << endl;
 }
 
 void handle_window_visibility(int state) {
-    need_to_render_menu = true;
+    notify_to_update_all();
     glutPostRedisplay();
 }
 
 void resize_window(int w, int h) {
 
+    pControlsRight->shift_conrols_position(w - window_width, 0);
+
     window_width = w;
     window_height = h;
 
-    need_to_render_menu = true;
+    notify_to_update_all();
     glutPostRedisplay();
 }
 
 void handleNormalKeysDown(unsigned char key, int x, int y) {
 
     // To see if modifier key is pressed use: (glutGetModifiers() & GLUT_ACTIVE_SHIFT)
-    pControls->handle_keyboard_key_event(key, KEY_DOWN);
+    pControlsLeft->handle_keyboard_key_event(key, KEY_DOWN);
+    pControlsRight->handle_keyboard_key_event(key, KEY_DOWN);
 
     switch (key)
     {
@@ -558,13 +574,14 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
             break;
     }
 
-    need_to_render_menu = true;
+    notify_to_update_all();
     glutPostRedisplay();
 }
 
 void handleNormalKeysUp(unsigned char key, int x, int y) {
 
-    pControls->handle_keyboard_key_event(key, KEY_UP);
+    pControlsLeft->handle_keyboard_key_event(key, KEY_UP);
+    pControlsRight->handle_keyboard_key_event(key, KEY_UP);
 
     switch (key)
     {
@@ -578,7 +595,7 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
             break;
     }
 
-    need_to_render_menu = true;
+    notify_to_update_all();
     glutPostRedisplay();
 }
 
@@ -625,8 +642,8 @@ void handleMouseKeypress(int button, int state, int x, int y) {
             break;
     }
 
-    pControls->handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
-
+    pControlsLeft->handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
+    pControlsRight->handle_mouse_key_event(mouse, current_mouse_key, current_mouse_key_action);
 
     switch (button)
     {
@@ -637,14 +654,14 @@ void handleMouseKeypress(int button, int state, int x, int y) {
                     if (is_over_scene(x)) {
 
                         double new_mass = 1e29;
-                        Slider* mass_slider = dynamic_cast<Slider *>(pControls->find_by_id(mass_slider_id));
+                        Slider* mass_slider = dynamic_cast<Slider *>(pControlsLeft->find_by_id(mass_slider_id));
                         if (mass_slider != NULL)
                             new_mass = mass_slider->get_value();
                         else
                             cout << "mass slider not found" << endl;
 
                         double new_rad = 2e6;
-                        Slider* rad_slider = dynamic_cast<Slider *>(pControls->find_by_id(radius_slider_id));
+                        Slider* rad_slider = dynamic_cast<Slider *>(pControlsLeft->find_by_id(radius_slider_id));
                         if (rad_slider != NULL)
                             new_rad = rad_slider->get_value();
                         else
@@ -703,7 +720,7 @@ void handleMouseKeypress(int button, int state, int x, int y) {
             break;
     }
 
-    need_to_render_menu = true;
+    notify_to_update_all();
     glutPostRedisplay();
 }
 
@@ -717,7 +734,8 @@ void handleMouseActiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
 
-    pControls->handle_mouse_move(mouse);
+    pControlsLeft->handle_mouse_move(mouse);
+    pControlsRight->handle_mouse_move(mouse);
 
     if (mouse.left_key.is_down) {
         if (mass_modifier_key_down) {
@@ -732,7 +750,7 @@ void handleMouseActiveMotion(int x, int y) {
         }
     }
 
-    need_to_render_menu = true;
+    notify_to_update_all();
     glutPostRedisplay();
 }
 
@@ -741,16 +759,20 @@ void handleMousePassiveMotion(int x, int y) {
     mouse.x = x;
     mouse.y = y;
 
-    pControls->handle_mouse_move(mouse);
+    pControlsLeft->handle_mouse_move(mouse);
+    pControlsRight->handle_mouse_move(mouse);
 
-    need_to_render_menu = true;
+    notify_to_update_all();
     glutPostRedisplay();
+}
+
+void idle_callback() {
+    if (need_to_render_menu1 || need_to_render_menu2 || need_to_render_scene)
+        glutPostRedisplay();
 }
 
 // Not used (no need)
 void overlay_callback() {cout << "overlay_callback" << endl;}
-// Not used (no need)
-void idle_callback() {cout << "idle_callback" << endl;}
 
 // Render 2D text
 void render_bitmap_string_2d(const char * cstr, float x, float y, void * font, Color_RGBA color) {
@@ -809,68 +831,72 @@ int main(int argc, char * argv[])
     pSimpleSpace->add_planet(Planet(Vector2d(0,  dist/1.5), Vector2d(-1.5e6, 0), 1e15, 1e6, getRandomColor()));
     pSimpleSpace->add_planet(Planet(Vector2d(0, -dist/1.5), Vector2d( 1.5e6, 0), 1e15, 1e6, getRandomColor()));
 
-    pControls->add_button_boolean(20, 20,           // x, y
-                                 160, 30,           // w, h
-                                 "Simulation On",   // Label
-                                 simulation_on,     // Initial state
-                                 start_simulation,  // Callback On
-                                 stop_simulation);  // Callback Off
+    pControlsLeft->add_button_boolean(20, 20,           // x, y
+                                      160, 30,           // w, h
+                                       "Simulation On",   // Label
+                                       simulation_on,     // Initial state
+                                       start_simulation,  // Callback On
+                                       stop_simulation);  // Callback Off
 
-    pControls->add_button(20, 60,               // x, y
-                          160, 30,              // w, h
-                          "Move One Step",      // Label
-                          move_one_step);       // Callback
+    pControlsLeft->add_button(20, 60,               // x, y
+                              160, 30,              // w, h
+                              "Move One Step",      // Label
+                               move_one_step);       // Callback
 
-    pControls->add_button(20, 100,              // x, y
-                          75, 30,               // w, h
-                          "Restart",            // Label
-                          restart_simulation);  // Callback
+    pControlsLeft->add_button(20, 100,              // x, y
+                              75, 30,               // w, h
+                              "Restart",            // Label
+                              restart_simulation);  // Callback
 
-    pControls->add_button(105, 100,             // x, y
-                          75, 30,               // w, h
-                          "Clear All",          // Label
-                          remove_all_objects);  // Callback
+    pControlsLeft->add_button(105, 100,             // x, y
+                              75, 30,               // w, h
+                              "Clear All",          // Label
+                               remove_all_objects);  // Callback
 
-    pControls->add_button(40, 140,      // x, y
-                          55, 30,       // w, h
-                          "+",          // Label
-                          zoom_in);     // Callback
+    pControlsLeft->add_button(40, 140,      // x, y
+                              55, 30,       // w, h
+                              "+",          // Label
+                              zoom_in);     // Callback
 
-    pControls->add_button(105, 140,     // x, y
-                          55, 30,       // w, h
-                          "-",          // Label
-                          zoom_out);    // Callback
+    pControlsLeft->add_button(105, 140,     // x, y
+                              55, 30,       // w, h
+                              "-",          // Label
+                              zoom_out);    // Callback
     radius_slider_id = \
-    pControls->add_slider(20, 280,      // x, y
-                          160, 60,      // w, h
-                          1e6, 3e6,     // Min, Max
-                          2e6,          // Value
-                          "Radius");    // Label
+    pControlsLeft->add_slider(20, 280,      // x, y
+                              160, 60,      // w, h
+                              1e6, 3e6,     // Min, Max
+                              2e6,          // Value
+                              "Radius");    // Label
 
     mass_slider_id = \
-    pControls->add_slider(20, 350,      // x, y
-                          160, 60,      // w, h
-                          5e28, 1e30,   // Min, Max
-                          1e29,         // Value
-                          "Mass");      // Label
+    pControlsLeft->add_slider(20, 350,      // x, y
+                              160, 60,      // w, h
+                              5e28, 1e30,   // Min, Max
+                              1e29,         // Value
+                              "Mass");      // Label
 
-    pControls->add_slider(20, 420,      // x, y
-                          160, 60,      // w, h
-                          -100, 450,    // Min, Max
-                          30,           // Value
-                          "Test");      // Label
+    pControlsLeft->add_slider(20, 420,      // x, y
+                              160, 60,      // w, h
+                              -100, 450,    // Min, Max
+                              30,           // Value
+                              "Test");      // Label
 
-    pControls->add_numeric_box(30, 490, // x, y
-                           140, 20,     // w, h
-                           123);        // Value
+    pControlsLeft->add_numeric_box(30, 490, // x, y
+                                   140, 20, // w, h
+                                   123);     // Value
 
-    pControls->add_button(40, 540,      // x, y
-                          120, 30,      // w, h
-                          "Exit",       // Label
-                          exit);        // Callback
+    pControlsLeft->add_button(40, 540,      // x, y
+                              120, 30,      // w, h
+                              "Exit",       // Label
+                              exit);        // Callback
 
-    pControls->add_test_box(10, 580,    // x, y
-                            10, 10);    // w, h
+    pControlsLeft->add_redraw_box(10, 580,  // x, y
+                                10, 10);    // w, h
+
+    pControlsRight->add_numeric_box(window_width - menu2_width + 10, 10, // x, y
+                                    80, 20, // w, h
+                                    123);   // Value
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_MULTISAMPLE);
@@ -901,8 +927,8 @@ int main(int argc, char * argv[])
         glutTimerFunc(1000/frame_rate, onTimer, 1000/frame_rate);
 
     // Other callbacks
+    glutIdleFunc(idle_callback);
     //glutOverlayDisplayFunc(overlay_callback);// Not used (no need)
-    //glutIdleFunc(idle_callback); // Not used (no need)
 
     /*
     // FreeType library initialization
@@ -936,5 +962,3 @@ int main(int argc, char * argv[])
 
 // Known bugs:
 // 1. System constantly gains energy during long continious collision
-// 2. Flickering at start & too many menu updates cause simulation to slow down
-// 3. Cursor does not blink with stopped simulation and no user actions
