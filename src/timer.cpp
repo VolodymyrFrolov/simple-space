@@ -152,14 +152,12 @@ void Timer::wait_loop() {
 */
 
 StopWatch::StopWatch(bool started) : _running(started) {
-    _start_time = {0,0};
-    if (_running) {
-        gettimeofday(&_start_time, NULL);
-    }
+    gettimeofday(&_start_time, NULL);
     _stop_time = _start_time;
 }
 
 void StopWatch::start() {
+    std::lock_guard<std::mutex> guard(start_stop_mutex);
     if (!_running) {
         _running = true;
         gettimeofday(&_start_time, NULL);
@@ -168,6 +166,7 @@ void StopWatch::start() {
 }
 
 void StopWatch::stop() {
+    std::lock_guard<std::mutex> guard(start_stop_mutex);
     if (_running) {
         _running = false;
         gettimeofday(&_stop_time, NULL);
@@ -176,9 +175,9 @@ void StopWatch::stop() {
 
 long int StopWatch::time_elaplsed_usec() const {
     if (_running) {
-        timeval tv;
-        gettimeofday(&tv, NULL);
-        return (tv.tv_sec - _start_time.tv_sec) * 1000000 + (tv.tv_usec - _start_time.tv_usec);
+        timeval now;
+        gettimeofday(&now, NULL);
+        return (now.tv_sec - _start_time.tv_sec) * 1000000 + (now.tv_usec - _start_time.tv_usec);
     } else {
         return (_stop_time.tv_sec - _start_time.tv_sec) * 1000000 + (_stop_time.tv_usec - _start_time.tv_usec);
     }
@@ -186,4 +185,36 @@ long int StopWatch::time_elaplsed_usec() const {
 
 bool StopWatch::running() const {
     return _running;
+}
+
+FPSCounter::FPSCounter() : _fps(0),
+                           _framecount(0) {
+    gettimeofday(&_start, NULL);
+}
+
+void FPSCounter::update_on_frame() {
+
+    std::lock_guard<std::mutex> guard(reset_mutex);
+    ++_framecount;
+    timeval now;
+    gettimeofday(&now, NULL);
+
+    long int period_usec = (now.tv_sec - _start.tv_sec) * 1000000 + (now.tv_usec - _start.tv_usec);
+    if (period_usec > 1000000) {
+        _fps = _framecount / (period_usec / 1000000.0f);
+        _framecount = 0;
+        _start = now;
+    }
+}
+
+void FPSCounter::reset() {
+
+    std::lock_guard<std::mutex> guard(reset_mutex);
+    _fps = 0;
+    _framecount = 0;
+    gettimeofday(&_start, NULL);
+}
+
+float FPSCounter::get_fps() {
+    return _fps;
 }

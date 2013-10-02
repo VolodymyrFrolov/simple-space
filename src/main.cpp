@@ -43,6 +43,7 @@ using std::endl;
 //FT_Face     face;       // Face object handler
 
 const int frame_rate = 60;
+
 float fps1 = 0;
 float fps2 = 0;
 int frame_count1 = 0;
@@ -96,6 +97,8 @@ AliasMode gMode = ALIAS_MODE_MULTISAMPLE;
 // Creating global SimpleSpace
 std::unique_ptr<SimpleSpace> pSimpleSpace(new SimpleSpace(1000/frame_rate));
 std::unique_ptr<ControlsManager> pControls(new ControlsManager);
+std::unique_ptr<FPSCounter> pFPSCounter(new FPSCounter);
+std::unique_ptr<StopWatch> pStopWatch(new StopWatch(false));
 
 void initRendering();
 void onTimer(int next_timer_tick);
@@ -134,30 +137,20 @@ Color_RGB getRandomColor();
 
 void onTimer(int next_timer_tick) {
 
-    timeval tv;
-    gettimeofday(&tv, NULL);
-    //cout << "onTimer passed: " << (tv.tv_sec - onTimer_time.tv_sec) * 1000000 + (tv.tv_usec - onTimer_time.tv_usec) << "us [" << tv.tv_sec << "s " << tv.tv_usec << "us]" << endl;
-    onTimer_time = tv;
-
-    StopWatch sw;
-
+    pStopWatch->start();
     for (int i = 0; i < model_speed; ++i)
         pSimpleSpace->move_one_step();
+    pStopWatch->stop();
     glutPostRedisplay();
 
-    sw.stop();
-    //cout << "    step finished in: " << sw.time_elaplsed_usec() << "us (" << sw.time_elaplsed_usec()/(next_timer_tick * 10) << "% from " << next_timer_tick * 1000 << "us)" << endl;
-
-    int next_timer_tick_corrected = next_timer_tick - sw.time_elaplsed_usec()/1000;
-    if (next_timer_tick_corrected < 0) {
-        cout << "    Warning: frame rate degradation; step took: " << sw.time_elaplsed_usec()/1000 << "ms" << endl;
-        next_timer_tick_corrected = 0;
-    } else {
-        //cout << "    next_timer_tick_corrected = " << next_timer_tick_corrected << endl;
+    int corrected_period = next_timer_tick - pStopWatch->time_elaplsed_usec()/1000;
+    if (corrected_period < 0) {
+        cout << "    Warning: [onTimer] FPS degradation; calculations took: " << pStopWatch->time_elaplsed_usec()/1000 << "ms (> " << next_timer_tick << "ms)" << endl;
+        corrected_period = 0;
     }
 
     if (simulation_on)
-        glutTimerFunc(next_timer_tick_corrected, onTimer, next_timer_tick);
+        glutTimerFunc(corrected_period, onTimer, next_timer_tick);
 }
 
 void start_simulation() {
@@ -235,32 +228,7 @@ void move_one_step() {
 
 void render_window() {
 
-    // ---- Frame rate ----
-
-    timeval tv;
-    gettimeofday(&tv, NULL);
-
-    //cout << "render_window passed: " << (tv.tv_sec - render_window_time1.tv_sec) * 1000000 + (tv.tv_usec - render_window_time1.tv_usec) << "us [" << tv.tv_sec << "s " << tv.tv_usec << "us]" << endl;
-    //render_window_time1 = tv;
-
-    ++frame_count1;
-
-    int interval_ms = (tv.tv_sec - render_window_time2.tv_sec) * 1000 + (tv.tv_usec - render_window_time2.tv_usec)/1000;
-    if (interval_ms > 1000) {
-        fps1 = frame_count1 / (interval_ms / 1000.0f);
-        render_window_time2 = tv;
-        frame_count1 = 0;
-    }
-
-    ++frame_count2;
-
-    int currentTime = glutGet(GLUT_ELAPSED_TIME);
-    int timeInterval = currentTime - previousTime;
-    if (timeInterval > 1000) {
-        fps2 = frame_count2 / (timeInterval / 1000.0f);
-        previousTime = currentTime;
-        frame_count2 = 0;
-    }
+    pFPSCounter->update_on_frame();
 
     // ---- Menu1 (Left) ----
 
@@ -425,21 +393,11 @@ void render_window() {
 
     glPopMatrix();
 
-    ss << fps1;
-    str = std::string("fps1: ") + ss.str();
+    ss << pFPSCounter->get_fps();
+    str = std::string("fps: ") + ss.str();
     render_bitmap_string_2d(str.c_str(),
                             menu1_width + 10,
                             15,
-                            GLUT_BITMAP_HELVETICA_12,
-                            Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
-    ss.clear();
-    ss.str(std::string());
-
-    ss << fps2;
-    str = std::string("fps2: ") + ss.str();
-    render_bitmap_string_2d(str.c_str(),
-                            menu1_width + 10,
-                            30,
                             GLUT_BITMAP_HELVETICA_12,
                             Color_RGBA(0.9f, 0.9f, 0.9f, 1.0f));
     ss.clear();

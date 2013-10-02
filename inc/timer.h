@@ -6,6 +6,11 @@
 //  Copyright (c) 2013 Vladimir Frolov. All rights reserved.
 //
 
+// Classes:
+//   Timer
+//   StopWatch
+//   FPSCounter
+
 #ifndef __timer__simplespace__
 #define __timer__simplespace__
 
@@ -48,12 +53,25 @@ class StopWatch {
     timeval _start_time;
     timeval _stop_time;
     bool _running;
+    std::mutex start_stop_mutex;
 public:
     StopWatch(bool started = true);
     void start();
     void stop();
     long int time_elaplsed_usec() const;
     bool running() const;
+};
+
+class FPSCounter {
+    float _fps;
+    int _framecount;
+    timeval _start;
+    std::mutex reset_mutex;
+public:
+    FPSCounter();
+    void update_on_frame();
+    void reset();
+    float get_fps();
 };
 
 #endif /* defined(__timer__simplespace__) */
