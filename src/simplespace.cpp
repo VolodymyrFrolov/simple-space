@@ -19,6 +19,10 @@ SimpleSpace::~SimpleSpace() {
     cout << "SimpleSpace instance destroyed" << endl;
 }
 
+unsigned long SimpleSpace::get_planets_count() const {
+    return planets.size();
+}
+
 int SimpleSpace::get_model_time_step_ms() const {
     return time_step_ms;
 }

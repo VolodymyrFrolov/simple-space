@@ -51,6 +51,8 @@ public:
     void remove_planet(const unsigned int& id);
     void remove_all_objects();
     void move_one_step();
+
+    unsigned long get_planets_count() const;
     int get_model_time_step_ms() const;
     std::pair<bool, unsigned int> find_planet_by_click(const Vector2d& click_pos);
     std::vector<unsigned int> find_planets_by_selection(const Vector2d& sel_start_pos,
