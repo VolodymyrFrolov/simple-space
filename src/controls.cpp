@@ -17,16 +17,6 @@ void draw_text_2d(const char* str, int x, int y, void* font) {
         glutBitmapCharacter(font, *ch);
 }
 
-// ---- MouseKey ----
-
-void MouseKey::update(bool pressed, int x, int y) {
-    is_down = pressed;
-    if (pressed) {
-        down_x = x;
-        down_y = y;
-    }
-}
-
 // ---- UIControl ----
 
 bool UIControl::mouse_over_control(const int& mouse_x, const int& mouse_y) const {

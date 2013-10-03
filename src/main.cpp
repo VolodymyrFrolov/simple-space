@@ -168,7 +168,6 @@ void check_need_to_render_bools(int next_timer_tick) {
     glutTimerFunc(next_timer_tick, check_need_to_render_bools, next_timer_tick);
 }
 
-
 void start_simulation() {
     if (!simulation_on) {
         simulation_on = true;
@@ -222,7 +221,7 @@ void zoom_in() {
         model_scale /= 2;
         //cout << "zoomed out to model scale: " << model_scale << endl;
     } else {
-        cout << "Can't zoom in any more" << endl;
+        cout << "Max zoom in reached" << endl;
     }
 }
 
@@ -231,7 +230,7 @@ void zoom_out() {
         model_scale *= 2;
         //cout << "zoomed in to model scale: " << model_scale << endl;
     } else {
-        cout << "Can't zoom out any more" << endl;
+        cout << "Max zoom out reached" << endl;
     }
 }
 
@@ -329,10 +328,7 @@ void render_window() {
         glPushMatrix();
         glTranslated(x_center_offset, y_center_offset, 0.0);
 
-        for (std::vector<Planet>::const_iterator it = pSimpleSpace->planets.begin(),
-            it_end = pSimpleSpace->planets.end(); it != it_end; ++it) {
-            draw_planet(it->rad_m/model_scale, it->pos.x/model_scale, it->pos.y/model_scale, {it->color.R, it->color.G, it->color.B, 1.0f});
-        }
+        pSimpleSpace->draw_scene(model_scale);
 
         if (mouse.left_key.is_down && is_over_scene(mouse.left_key.down_x)) {
             draw_planet(next_planet.rad_m / model_scale,

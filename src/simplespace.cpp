@@ -242,3 +242,18 @@ void SimpleSpace::remove_all_objects() {
     std::lock_guard<std::mutex> guard(movement_step_mutex);
     planets.clear();
 }
+
+void SimpleSpace::draw_planet(const float& rad, const float& x, const float& y) const {
+    glBegin(GL_POLYGON);
+    float delta = M_PI / 50;
+    for (float i = 0; i < 2 * M_PI; i += delta)
+        glVertex2f(rad * cos(i) + x, rad * sin(i) + y);
+    glEnd();
+}
+
+void SimpleSpace::draw_scene(const float& scale) const {
+    std::for_each(planets.begin(), planets.end(), [&](Planet p) {
+        glColor3f(p.color.R, p.color.G, p.color.B);
+        draw_planet(p.rad_m/scale, p.pos.x/scale, p.pos.y/scale);
+    } );
+}

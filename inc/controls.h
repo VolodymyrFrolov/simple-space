@@ -14,6 +14,7 @@
 using std::cout;   // temp
 using std::endl;   // temp
 
+#include "mouse.h"
 #include "timer.h"
 
 #ifdef __APPLE__
@@ -26,45 +27,7 @@ using std::endl;   // temp
     // Unsupproted platform
 #endif
 
-enum KEY_ACTION {
-    KEY_DOWN,
-    KEY_UP
-};
-
-enum MOUSE_KEY {
-    MOUSE_LEFT_KEY,
-    MOUSE_MIDDLE_KEY,
-    MOUSE_RIGHT_KEY
-};
-
-struct MouseKey {
-    bool is_down;
-    int down_x;
-    int down_y;
-
-    MouseKey(bool is_down = false,
-             int down_x = 0,
-             int down_y = 0) :
-    is_down(is_down),
-    down_x(down_x),
-    down_y(down_y) {}
-
-    void update(bool is_pressed, int x, int y);
-};
-
-struct Mouse {
-    int x;
-    int y;
-
-    MouseKey left_key;
-    MouseKey middle_key;
-    MouseKey right_key;
-
-    Mouse(int x = 0, int y = 0) : x(x), y(y) {}
-};
-
 typedef void (*ActionCallback)();
-
 
 class UIControl {
 protected:

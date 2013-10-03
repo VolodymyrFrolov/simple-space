@@ -10,14 +10,23 @@
 #define __simple_space__simplespace__
 
 #include <iostream>
-
 #include <vector>
-#include <stdlib.h> // For rand()
+//#include <stdlib.h> // For rand()
 using std::cout;   // temp
 using std::endl;   // temp
 #include <mutex>
 
-#include "physics.h"
+#ifdef __APPLE__
+    #include <OpenGL/OpenGL.h>
+    #include <GLUT/glut.h>
+#elif __linux__
+  //#include <GL/glut.h>
+    #include <GL/freeglut.h>
+#else
+    // Unsupproted platform
+#endif
+
+#include "mouse.h"
 #include "planet.h"
 #include "physics.h"
 using Physics::Vector2d;
@@ -44,6 +53,7 @@ class SimpleSpace
     std::mutex movement_step_mutex;
     double time_step_ms;
 
+    void draw_planet(const float& rad, const float& x, const float& y) const;
 public:
     SimpleSpace(int timestep_ms = 10);
     ~SimpleSpace();
@@ -60,6 +70,11 @@ public:
 
     std::vector<Planet> planets;
     const unsigned int planets_number_max; // std::numeric_limits<unsigned int>::max()
+
+    void handle_mouse_move(const Mouse& mouse);
+    void handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action);
+    void handle_keyboard_key_event(char key, KEY_ACTION action);
+    void draw_scene(const float& scale) const;
 };
 
 #endif /* defined(__simple_space__simplespace__) */
