@@ -602,12 +602,32 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
-// Not used (no need)
 void handleSpecialKeysDown(int key, int x, int y) {
-    //GLUT_KEY_RIGHT:
-    //GLUT_KEY_UP:
-    //GLUT_KEY_LEFT:
-    //GLUT_KEY_DOWN:
+    switch (key)
+    {
+        case GLUT_KEY_LEFT:
+            pControlsLeft->handle_keyboard_key_event(ARROW_LEFT, KEY_DOWN);
+            pControlsRight->handle_keyboard_key_event(ARROW_LEFT, KEY_DOWN);
+            break;
+
+        case GLUT_KEY_RIGHT:
+            pControlsLeft->handle_keyboard_key_event(ARROW_RIGHT, KEY_DOWN);
+            pControlsRight->handle_keyboard_key_event(ARROW_RIGHT, KEY_DOWN);
+            break;
+
+        case GLUT_KEY_UP:
+            pControlsLeft->handle_keyboard_key_event(ARROW_UP, KEY_DOWN);
+            pControlsRight->handle_keyboard_key_event(ARROW_UP, KEY_DOWN);
+            break;
+
+        case GLUT_KEY_DOWN:
+            pControlsLeft->handle_keyboard_key_event(ARROW_DOWN, KEY_DOWN);
+            pControlsRight->handle_keyboard_key_event(ARROW_DOWN, KEY_DOWN);
+            break;
+    }
+
+    notify_to_update_all();
+    glutPostRedisplay();
 }
 
 // Not used (no need)
@@ -914,10 +934,10 @@ int main(int argc, char * argv[])
     glutReshapeFunc(resize_window);
 
     // Keyboard
-    glutIgnoreKeyRepeat(1); // Don't use glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF), it disables globally (for other apps)
+    //glutIgnoreKeyRepeat(1); // Don't use glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF), it disables globally (for other apps)
     glutKeyboardFunc(handleNormalKeysDown);
     glutKeyboardUpFunc(handleNormalKeysUp);
-    //glutSpecialFunc(handleSpecialKeysDown); // Not used (no need)
+    glutSpecialFunc(handleSpecialKeysDown);
     //glutSpecialUpFunc(handleSpecialKeysUp); // Not used (no need)
 
     // Mouse

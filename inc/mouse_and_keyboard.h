@@ -16,6 +16,13 @@ enum KEY_ACTION {
     KEY_UP
 };
 
+enum ARROW_KEY {
+    ARROW_LEFT,
+    ARROW_RIGHT,
+    ARROW_UP,
+    ARROW_DOWN
+};
+
 enum MOUSE_KEY {
     MOUSE_LEFT_KEY,
     MOUSE_MIDDLE_KEY,

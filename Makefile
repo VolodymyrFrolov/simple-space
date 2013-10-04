@@ -1,4 +1,4 @@
-SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp timer.cpp controls.cpp mouse.cpp
+SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp timer.cpp controls.cpp mouse_and_keyboard.cpp
 #SOURCES_FULL_PATHS = $(addprefix src/, $(SOURCES))
 OBJECTS = $(SOURCES:.cpp=.o)
 TARGET = simple-space
@@ -28,7 +28,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o $(TARGET)
 
-main.o: src/main.cpp inc/simplespace.h inc/planet.h inc/physics.h inc/timer.h inc/controls.h inc/mouse.h
+main.o: src/main.cpp inc/simplespace.h inc/planet.h inc/physics.h inc/timer.h inc/controls.h inc/mouse_and_keyboard.h
 	$(CC) $(CFLAGS) src/main.cpp
 
 simplespace.o: src/simplespace.cpp inc/simplespace.h
@@ -46,8 +46,8 @@ timer.o: src/timer.cpp inc/timer.h
 controls.o : src/controls.cpp inc/controls.h
 	$(CC) $(CFLAGS) src/controls.cpp
 
-mouse.o : src/mouse.cpp inc/mouse.h
-	$(CC) $(CFLAGS) src/mouse.cpp
+mouse_and_keyboard.o : src/mouse_and_keyboard.cpp inc/mouse_and_keyboard.h
+	$(CC) $(CFLAGS) src/mouse_and_keyboard.cpp
 
 clean:
 	rm -rf $(TARGET) *.o

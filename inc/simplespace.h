@@ -26,7 +26,7 @@ using std::endl;   // temp
     // Unsupproted platform
 #endif
 
-#include "mouse.h"
+#include "mouse_and_keyboard.h"
 #include "planet.h"
 #include "physics.h"
 using Physics::Vector2d;

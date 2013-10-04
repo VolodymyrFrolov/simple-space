@@ -230,7 +230,7 @@ void ButtonBoolean::draw() const {
     }
 
     if (_state_on)
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor3f(0.3f, 0.9f, 0.5f);
     else
         glColor3f(0.4f, 0.4f, 0.4f);
 
@@ -264,10 +264,11 @@ NumericBox::NumericBox(int id,
     UIControl(id, x, y, w, h),
     _value(value),
     _label_is_numeric(true),
-
     _is_active(false),
 
     _cursor_visible(false),
+    _cursor_x(0),
+    _cursor_char_offset(0),
     _cursor_timer(650, &NumericBox::static_wrapper_cursor_toggle, this, false),
     _redraw_notifier(redraw_notifier) {
 
@@ -341,12 +342,52 @@ void NumericBox::set_value(const double& value) {
     set_label(_value);
 }
 
+int NumericBox::count_cursor_x(int char_offset) const {
+    int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
+    int label_begin = _x + (_w - label_width)/2;
+
+    const char* string_before_cursor = std::string(_label.begin(), _label.begin() + char_offset).c_str();
+    int cursor_offset = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)string_before_cursor);
+
+    return label_begin + cursor_offset + 1; // +1pixel margin for cursor
+}
+
+unsigned int NumericBox::count_cursor_char_offset(int pos_x) const {
+    int ret;
+    int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
+    int label_begin = _x + (_w - label_width)/2;
+
+    if (pos_x < label_begin || _label.size() == 0) {
+        ret = 0;
+    } else if (pos_x > (label_begin + label_width)) {
+        ret = _label.size();
+    } else {
+        int cursor_offset = pos_x - label_begin;
+
+        std::string temp_str = _label;
+        int temp_str_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)temp_str.c_str());
+
+        while (temp_str_width > cursor_offset) {
+            temp_str.erase(temp_str.end()-1);
+            temp_str_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)temp_str.c_str());
+        }
+
+        ret = temp_str.size();
+    }
+
+    return ret;
+}
+
 void NumericBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
 
     switch (action)
     {
         case KEY_DOWN:
             if (mouse_over_control(mouse.x, mouse.y)) {
+
+                _cursor_char_offset = count_cursor_char_offset(mouse.x);
+                _cursor_x = count_cursor_x(_cursor_char_offset);
+
                 if (!_is_active) {
                     _is_active = true;
                     _cursor_visible = true;
@@ -378,11 +419,15 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
     {
         case KEY_DOWN:
             if (_is_active) {
+
                 switch (key)
                 {
                     case char(8):   // Backspce
-                        if(_label.size() > 0) {
-                            _label.erase(_label.end()-1);
+                        if(_label.size() > 0 && _cursor_char_offset > 0) {
+                            _label.erase(_label.begin() + _cursor_char_offset - 1);
+
+                            --_cursor_char_offset;
+                            _cursor_x = count_cursor_x(_cursor_char_offset);
 
                             if (_label.size() > 0) {
                                 check_label_is_numeric(_label);
@@ -394,9 +439,18 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                         break;
 
                     case char(127): // Delete
-                        _label.clear();
-                        // Force "true" for empty label
-                        _label_is_numeric = true;
+                        if(_label.size() > 0 && (_cursor_char_offset < _label.size())) {
+                            _label.erase(_label.begin() + _cursor_char_offset);
+
+                            _cursor_x = count_cursor_x(_cursor_char_offset);
+
+                            if (_label.size() > 0) {
+                                check_label_is_numeric(_label);
+                            } else {
+                                // Force "true" for empty label
+                                _label_is_numeric = true;
+                            }
+                        }
                         break;
 
                     case char(13):  // Enter
@@ -409,9 +463,33 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                         _value = label_to_value(_label);
                         break;
 
+                    case ARROW_LEFT:
+                        _cursor_timer.stop();
+                        if (_cursor_char_offset > 0) {
+                            --_cursor_char_offset;
+                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                        }
+                        _cursor_visible = true;
+                        _cursor_timer.start();
+                        break;
+
+                    case ARROW_RIGHT:
+                        _cursor_timer.stop();
+                        if (_cursor_char_offset < _label.size()) {
+                            ++_cursor_char_offset;
+                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                        }
+                        _cursor_visible = true;
+                        _cursor_timer.start();
+                        break;
+
                     default: // Latin keys (32-126), except space (32)
                         if (char(key) > 32 && char(key) < 127 && _label.size() < 8) {
-                            _label.append(1, key);
+                            _label.insert(_label.begin() + _cursor_char_offset, key);
+
+                            ++_cursor_char_offset;
+                            _cursor_x = count_cursor_x(_cursor_char_offset);
+
                             check_label_is_numeric(_label);
                         }
                         break;
@@ -473,7 +551,8 @@ void NumericBox::draw() const {
 
     // Label
 
-    int font_x = _x + (_w - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str()))/2;
+    int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
+    int font_x = _x + (_w - label_width)/2;
     int font_y = _y + _h/2 + 5;
 
     glColor3f(0.0f, 0.0f, 0.0f);
@@ -483,8 +562,8 @@ void NumericBox::draw() const {
 
     if (_cursor_visible) {
         glBegin(GL_LINES);
-        glVertex2i(_x + _w - 10, _y + _h/2 - 8);
-        glVertex2i(_x + _w - 10, _y + _h/2 + 8);
+        glVertex2i(_cursor_x, _y + _h/2 - 8);
+        glVertex2i(_cursor_x, _y + _h/2 + 8);
         glEnd();
     }
 }

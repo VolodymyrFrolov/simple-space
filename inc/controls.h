@@ -14,7 +14,7 @@
 using std::cout;   // temp
 using std::endl;   // temp
 
-#include "mouse.h"
+#include "mouse_and_keyboard.h"
 #include "timer.h"
 
 #ifdef __APPLE__
@@ -117,6 +117,8 @@ class NumericBox : public UIControl {
     bool _is_active;
 
     bool _cursor_visible;
+    int _cursor_x;
+    unsigned int _cursor_char_offset;
     Timer _cursor_timer;
     ActionCallback _redraw_notifier;
 
@@ -125,6 +127,8 @@ class NumericBox : public UIControl {
 
     void cursor_toggle();
     static void static_wrapper_cursor_toggle(void* param);
+    int count_cursor_x(int char_offset) const;
+    unsigned int count_cursor_char_offset(int x) const;
 
 public:
     NumericBox(int id,
