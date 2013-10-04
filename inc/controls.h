@@ -118,8 +118,12 @@ class NumericBox : public UIControl {
 
     bool _cursor_visible;
     int _cursor_x;
-    unsigned int _cursor_char_offset;
+    unsigned long _cursor_char_offset;
     Timer _cursor_timer;
+
+    int _sel_x_begin;
+    int _sel_x_end;
+
     ActionCallback _redraw_notifier;
 
     bool check_label_is_numeric(const std::string& label);
@@ -127,9 +131,10 @@ class NumericBox : public UIControl {
 
     void cursor_toggle();
     static void static_wrapper_cursor_toggle(void* param);
-    int count_cursor_x(int char_offset) const;
-    unsigned int count_cursor_char_offset(int x) const;
-
+    int count_cursor_x(unsigned long char_offset) const;
+    unsigned long count_char_offset(int pos_x) const;
+    void select_all();
+    void cancel_selection();
 public:
     NumericBox(int id,
                int x, int y,

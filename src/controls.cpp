@@ -270,6 +270,8 @@ NumericBox::NumericBox(int id,
     _cursor_x(0),
     _cursor_char_offset(0),
     _cursor_timer(650, &NumericBox::static_wrapper_cursor_toggle, this, false),
+    _sel_x_begin(0),
+    _sel_x_end(0),
     _redraw_notifier(redraw_notifier) {
 
     set_value(_value);
@@ -352,7 +354,7 @@ int NumericBox::count_cursor_x(int char_offset) const {
     return label_begin + cursor_offset + 1; // +1pixel margin for cursor
 }
 
-unsigned int NumericBox::count_cursor_char_offset(int pos_x) const {
+unsigned int NumericBox::count_char_offset(int pos_x) const {
     int ret;
     int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
     int label_begin = _x + (_w - label_width)/2;
@@ -378,6 +380,18 @@ unsigned int NumericBox::count_cursor_char_offset(int pos_x) const {
     return ret;
 }
 
+void NumericBox::select_all() {
+    int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
+    int label_begin = _x + (_w - label_width)/2;
+    _sel_x_begin = label_begin;
+    _sel_x_end = label_begin + label_width;
+}
+
+void NumericBox::cancel_selection() {
+    _sel_x_begin = 0;
+    _sel_x_end = 0;
+}
+
 void NumericBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
 
     switch (action)
@@ -385,11 +399,14 @@ void NumericBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_A
         case KEY_DOWN:
             if (mouse_over_control(mouse.x, mouse.y)) {
 
-                _cursor_char_offset = count_cursor_char_offset(mouse.x);
-                _cursor_x = count_cursor_x(_cursor_char_offset);
-
                 if (!_is_active) {
+                    select_all();
                     _is_active = true;
+                } else {
+                    _cursor_char_offset = count_char_offset(mouse.x);
+                    _cursor_x = count_cursor_x(_cursor_char_offset);
+
+                    cancel_selection();
                     _cursor_visible = true;
                     _cursor_timer.start();
                 }
@@ -586,6 +603,28 @@ void NumericBox::draw() const {
         glBegin(GL_LINES);
         glVertex2i(_cursor_x, _y + _h/2 - 8);
         glVertex2i(_cursor_x, _y + _h/2 + 8);
+        glEnd();
+    }
+
+    // Selection
+
+    if (_is_active && (_sel_x_end - _sel_x_begin) != 0) {
+
+        int begin, end;
+        if ((_sel_x_end - _sel_x_begin) > 0) {
+            begin = _sel_x_begin;
+            end = _sel_x_end;
+        } else {
+            begin = _sel_x_end;
+            end = _sel_x_begin;
+        }
+
+        glColor4f(0.1f, 0.1f, 0.3f,  0.3f);
+        glBegin(GL_QUADS);
+        glVertex2i(begin, font_y - 10);
+        glVertex2i(end,   font_y - 10);
+        glVertex2i(end,   font_y + 1 );
+        glVertex2i(begin, font_y + 1 );
         glEnd();
     }
 }
