@@ -344,7 +344,7 @@ void NumericBox::set_value(const double& value) {
     set_label(_value);
 }
 
-int NumericBox::count_cursor_x(int char_offset) const {
+int NumericBox::count_cursor_x(unsigned long char_offset) const {
     int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
     int label_begin = _x + (_w - label_width)/2;
 
@@ -354,8 +354,8 @@ int NumericBox::count_cursor_x(int char_offset) const {
     return label_begin + cursor_offset + 1; // +1pixel margin for cursor
 }
 
-unsigned int NumericBox::count_char_offset(int pos_x) const {
-    int ret;
+unsigned long NumericBox::count_char_offset(int pos_x) const {
+    unsigned long ret;
     int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
     int label_begin = _x + (_w - label_width)/2;
 
@@ -780,7 +780,7 @@ void Slider::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTIO
 
     if (_value_box.get_value() != this->get_value()) {
 
-        // Prevent value from out of range //FROLOV
+        // Prevent value from out of range
         double temp = _value_box.get_value();
         check_and_correct_value(temp);
         _value_box.set_value(_value);
