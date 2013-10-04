@@ -603,6 +603,7 @@ void handleNormalKeysUp(unsigned char key, int x, int y) {
 }
 
 void handleSpecialKeysDown(int key, int x, int y) {
+
     switch (key)
     {
         case GLUT_KEY_LEFT:
@@ -623,6 +624,16 @@ void handleSpecialKeysDown(int key, int x, int y) {
         case GLUT_KEY_DOWN:
             pControlsLeft->handle_keyboard_key_event(ARROW_DOWN, KEY_DOWN);
             pControlsRight->handle_keyboard_key_event(ARROW_DOWN, KEY_DOWN);
+            break;
+
+        case GLUT_KEY_HOME:
+            pControlsLeft->handle_keyboard_key_event(HOME_KEY, KEY_DOWN);
+            pControlsRight->handle_keyboard_key_event(HOME_KEY, KEY_DOWN);
+            break;
+
+        case GLUT_KEY_END:
+            pControlsLeft->handle_keyboard_key_event(END_KEY, KEY_DOWN);
+            pControlsRight->handle_keyboard_key_event(END_KEY, KEY_DOWN);
             break;
     }
 

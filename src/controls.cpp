@@ -464,6 +464,7 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                         break;
 
                     case ARROW_LEFT:
+                    case ARROW_UP:
                         _cursor_timer.stop();
                         if (_cursor_char_offset > 0) {
                             --_cursor_char_offset;
@@ -474,9 +475,30 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                         break;
 
                     case ARROW_RIGHT:
+                    case ARROW_DOWN:
                         _cursor_timer.stop();
                         if (_cursor_char_offset < _label.size()) {
                             ++_cursor_char_offset;
+                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                        }
+                        _cursor_visible = true;
+                        _cursor_timer.start();
+                        break;
+
+                    case HOME_KEY:
+                        _cursor_timer.stop();
+                        if (_cursor_char_offset != 0) {
+                            _cursor_char_offset = 0;
+                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                        }
+                        _cursor_visible = true;
+                        _cursor_timer.start();
+                        break;
+
+                    case END_KEY:
+                        _cursor_timer.stop();
+                        if (_cursor_char_offset != _label.size()) {
+                            _cursor_char_offset = _label.size();
                             _cursor_x = count_cursor_x(_cursor_char_offset);
                         }
                         _cursor_visible = true;

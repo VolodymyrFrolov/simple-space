@@ -16,11 +16,13 @@ enum KEY_ACTION {
     KEY_UP
 };
 
-enum ARROW_KEY {
+enum SPECIAL_KEY {
     ARROW_LEFT,
     ARROW_RIGHT,
     ARROW_UP,
-    ARROW_DOWN
+    ARROW_DOWN,
+    HOME_KEY,
+    END_KEY
 };
 
 enum MOUSE_KEY {
