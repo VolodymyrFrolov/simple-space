@@ -135,7 +135,7 @@ class NumericBox : public UIControl {
     int unsigned count_char_offset(int offset_pix) const;
     void select_all();
     void cancel_selection();
-    void erase_under_selection();
+    void erase_selected();
     bool selection_present() const;
 public:
     NumericBox(int id,

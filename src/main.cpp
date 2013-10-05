@@ -582,7 +582,7 @@ void handleNormalKeysDown(unsigned char key, int x, int y) {
 }
 
 void handleNormalKeysUp(unsigned char key, int x, int y) {
-    cout << "key=" << key << " code=" << int(key) << endl;
+
     pControlsLeft->handle_keyboard_key_event(key, KEY_UP);
     pControlsRight->handle_keyboard_key_event(key, KEY_UP);
 

@@ -392,12 +392,16 @@ void NumericBox::cancel_selection() {
     _sel_end_pix_offset = _sel_begin_pix_offset;
 }
 
-void NumericBox::erase_under_selection() {
-    _cursor_char_offset = count_char_offset(_sel_begin_pix_offset);
-    _label.erase(_label.begin() + count_char_offset(_sel_begin_pix_offset),
-                 _label.begin() + count_char_offset(_sel_end_pix_offset));
-    _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
-    cancel_selection();
+void NumericBox::erase_selected() {
+    if (selection_present()) {
+        _cursor_char_offset = count_char_offset(_sel_begin_pix_offset);
+        _label.erase(_label.begin() + count_char_offset(_sel_begin_pix_offset),
+                     _label.begin() + count_char_offset(_sel_end_pix_offset));
+        _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
+        cancel_selection();
+        _cursor_visible = true;
+        _cursor_timer.start();
+    }
 }
 
 bool NumericBox::selection_present() const {
@@ -464,16 +468,11 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
 #endif
                         if(_label.size() > 0) {
 
-                            if (selection_present()) {
-                                erase_under_selection();
-                                _cursor_visible = true;
-                                _cursor_timer.start();
-
-                            } else if (_cursor_char_offset > 0) {
-
-                            _label.erase(_label.begin() + _cursor_char_offset - 1);
-                            --_cursor_char_offset;
-                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
+                            erase_selected();
+                            if (_cursor_char_offset > 0) {
+                                _label.erase(_label.begin() + _cursor_char_offset - 1);
+                                --_cursor_char_offset;
+                                _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
                             }
 
                             if (_label.size() > 0) {
@@ -493,15 +492,10 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
 #endif
                         if(_label.size() > 0) {
 
-                            if (selection_present()) {
-                                erase_under_selection();
-                                _cursor_visible = true;
-                                _cursor_timer.start();
-
-                            } else if (_cursor_char_offset < _label.size()) {
-
-                            _label.erase(_label.begin() + _cursor_char_offset);
-                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
+                            erase_selected();
+                            if (_cursor_char_offset < _label.size()) {
+                                _label.erase(_label.begin() + _cursor_char_offset);
+                                _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
                             }
 
                             if (_label.size() > 0) {
@@ -576,18 +570,14 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                         break;
 
                     default: // Latin keys (32-126), except space (32)
+                        if (char(key) > 32 && char(key) < 127) {
 
-                        if (char(key) > 32 && char(key) < 127 && _label.size() < 8) {
-                            if (selection_present()) {
-                                erase_under_selection();
-                                _cursor_visible = true;
-                                _cursor_timer.start();
+                            erase_selected();
+                            if (_label.size() < 8) {
+                                _label.insert(_label.begin() + _cursor_char_offset, key);
+                                ++_cursor_char_offset;
+                                _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
                             }
-
-                            _label.insert(_label.begin() + _cursor_char_offset, key);
-
-                            ++_cursor_char_offset;
-                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
 
                             check_label_is_numeric(_label);
                         }
