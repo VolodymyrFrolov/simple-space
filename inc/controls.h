@@ -117,12 +117,12 @@ class NumericBox : public UIControl {
     bool _is_active;
 
     bool _cursor_visible;
-    int _cursor_x;
-    unsigned long _cursor_char_offset;
+    int _cursor_pix_offset;
+    int unsigned _cursor_char_offset;
     Timer _cursor_timer;
 
-    int _sel_x_begin;
-    int _sel_x_end;
+    int _sel_begin_pix_offset;
+    int _sel_end_pix_offset;
 
     ActionCallback _redraw_notifier;
 
@@ -131,10 +131,12 @@ class NumericBox : public UIControl {
 
     void cursor_toggle();
     static void static_wrapper_cursor_toggle(void* param);
-    int count_cursor_x(unsigned long char_offset) const;
-    unsigned long count_char_offset(int pos_x) const;
+    int count_pix_offset(int unsigned char_offset) const;
+    int unsigned count_char_offset(int offset_pix) const;
     void select_all();
     void cancel_selection();
+    void erase_under_selection();
+    bool selection_present() const;
 public:
     NumericBox(int id,
                int x, int y,

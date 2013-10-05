@@ -69,9 +69,9 @@ void Button::draw() const {
     // Body
 
     if (_is_mouse_over)
-        glColor3f(0.7f,0.7f,0.7f);
+        glColor3f(0.7f, 0.7f, 0.7f);
     else
-        glColor3f(0.6f,0.6f,0.6f);
+        glColor3f(0.6f, 0.6f, 0.6f);
 
     glBegin(GL_QUADS);
     glVertex2i(_x,      _y     );
@@ -267,11 +267,11 @@ NumericBox::NumericBox(int id,
     _is_active(false),
 
     _cursor_visible(false),
-    _cursor_x(0),
+    _cursor_pix_offset(0),
     _cursor_char_offset(0),
     _cursor_timer(650, &NumericBox::static_wrapper_cursor_toggle, this, false),
-    _sel_x_begin(0),
-    _sel_x_end(0),
+    _sel_begin_pix_offset(0),
+    _sel_end_pix_offset(0),
     _redraw_notifier(redraw_notifier) {
 
     set_value(_value);
@@ -344,37 +344,37 @@ void NumericBox::set_value(const double& value) {
     set_label(_value);
 }
 
-int NumericBox::count_cursor_x(unsigned long char_offset) const {
+int NumericBox::count_pix_offset(int unsigned char_offset) const {
     int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
-    int label_begin = _x + (_w - label_width)/2;
+    int label_offset = (_w - label_width)/2;
 
     const char* string_before_cursor = std::string(_label.begin(), _label.begin() + char_offset).c_str();
     int cursor_offset = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)string_before_cursor);
 
-    return label_begin + cursor_offset + 1; // +1pixel margin for cursor
+    return label_offset + cursor_offset + 1; // +1 pixel margin for cursor
 }
 
-unsigned long NumericBox::count_char_offset(int pos_x) const {
-    unsigned long ret;
+int unsigned NumericBox::count_char_offset(int offset_pix) const {
+    int unsigned ret;
     int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
-    int label_begin = _x + (_w - label_width)/2;
+    int label_offset = (_w - label_width)/2;
 
-    if (pos_x < label_begin || _label.size() == 0) {
+    if (offset_pix < label_offset || _label.size() == 0) {
         ret = 0;
-    } else if (pos_x > (label_begin + label_width)) {
-        ret = _label.size();
+    } else if (offset_pix > (label_offset + label_width)) {
+        ret = static_cast<int unsigned>(_label.size());
     } else {
-        int cursor_offset = pos_x - label_begin;
+        int offset_from_string_begin = offset_pix - label_offset;
 
         std::string temp_str = _label;
         int temp_str_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)temp_str.c_str());
 
-        while (temp_str_width > cursor_offset) {
+        while (temp_str_width > offset_from_string_begin) {
             temp_str.erase(temp_str.end()-1);
             temp_str_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)temp_str.c_str());
         }
 
-        ret = temp_str.size();
+        ret = static_cast<int unsigned>(temp_str.size());
     }
 
     return ret;
@@ -382,14 +382,26 @@ unsigned long NumericBox::count_char_offset(int pos_x) const {
 
 void NumericBox::select_all() {
     int label_width = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_label.c_str());
-    int label_begin = _x + (_w - label_width)/2;
-    _sel_x_begin = label_begin;
-    _sel_x_end = label_begin + label_width;
+    int label_offset = (_w - label_width)/2;
+    _sel_begin_pix_offset = label_offset;
+    _sel_end_pix_offset = label_offset + label_width;
 }
 
 void NumericBox::cancel_selection() {
-    _sel_x_begin = 0;
-    _sel_x_end = 0;
+    _sel_begin_pix_offset = _cursor_pix_offset;
+    _sel_end_pix_offset = _sel_begin_pix_offset;
+}
+
+void NumericBox::erase_under_selection() {
+    _cursor_char_offset = count_char_offset(_sel_begin_pix_offset);
+    _label.erase(_label.begin() + count_char_offset(_sel_begin_pix_offset),
+                 _label.begin() + count_char_offset(_sel_end_pix_offset));
+    _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
+    cancel_selection();
+}
+
+bool NumericBox::selection_present() const {
+    return (_sel_begin_pix_offset - _sel_end_pix_offset) != 0;
 }
 
 void NumericBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_ACTION action) {
@@ -399,17 +411,22 @@ void NumericBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_A
         case KEY_DOWN:
             if (mouse_over_control(mouse.x, mouse.y)) {
 
-                if (!_is_active) {
-                    select_all();
+                if (!_is_active)
                     _is_active = true;
+
+                if (_label.size() > 0) {
+                    select_all();
+                    _cursor_char_offset = 0;
+                    _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
                 } else {
-                    _cursor_char_offset = count_char_offset(mouse.x);
-                    _cursor_x = count_cursor_x(_cursor_char_offset);
+                    _cursor_char_offset = count_char_offset(mouse.x - _x);
+                    _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
 
                     cancel_selection();
                     _cursor_visible = true;
                     _cursor_timer.start();
                 }
+
             } else {
                 if (_is_active) {
                     _is_active = false;
@@ -439,12 +456,25 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
 
                 switch (key)
                 {
-                    case char(8):   // Backspce
-                        if(_label.size() > 0 && _cursor_char_offset > 0) {
-                            _label.erase(_label.begin() + _cursor_char_offset - 1);
+                    // Backspce (Mac OS X GLUT has swapped backspace/delete)
+#ifdef              __APPLE__
+                    case char(127):
+#else
+                    case char(8):
+#endif
+                        if(_label.size() > 0) {
 
+                            if (selection_present()) {
+                                erase_under_selection();
+                                _cursor_visible = true;
+                                _cursor_timer.start();
+
+                            } else if (_cursor_char_offset > 0) {
+
+                            _label.erase(_label.begin() + _cursor_char_offset - 1);
                             --_cursor_char_offset;
-                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
+                            }
 
                             if (_label.size() > 0) {
                                 check_label_is_numeric(_label);
@@ -455,11 +485,24 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                         }
                         break;
 
-                    case char(127): // Delete
-                        if(_label.size() > 0 && (_cursor_char_offset < _label.size())) {
-                            _label.erase(_label.begin() + _cursor_char_offset);
+                    // Delete (Mac OS X GLUT has swapped backspace/delete)
+#ifdef              __APPLE__
+                    case char(8):
+#else
+                    case char(127):
+#endif
+                        if(_label.size() > 0) {
 
-                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                            if (selection_present()) {
+                                erase_under_selection();
+                                _cursor_visible = true;
+                                _cursor_timer.start();
+
+                            } else if (_cursor_char_offset < _label.size()) {
+
+                            _label.erase(_label.begin() + _cursor_char_offset);
+                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
+                            }
 
                             if (_label.size() > 0) {
                                 check_label_is_numeric(_label);
@@ -483,10 +526,14 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                     case ARROW_LEFT:
                     case ARROW_UP:
                         _cursor_timer.stop();
-                        if (_cursor_char_offset > 0) {
+                        if (selection_present()) {
+                            _cursor_char_offset = count_char_offset(_sel_begin_pix_offset);
+                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
+                        } else if (_cursor_char_offset > 0) {
                             --_cursor_char_offset;
-                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
                         }
+                        cancel_selection();
                         _cursor_visible = true;
                         _cursor_timer.start();
                         break;
@@ -494,10 +541,14 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                     case ARROW_RIGHT:
                     case ARROW_DOWN:
                         _cursor_timer.stop();
-                        if (_cursor_char_offset < _label.size()) {
+                        if (selection_present()) {
+                            _cursor_char_offset = count_char_offset(_sel_end_pix_offset);
+                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
+                        } else if (_cursor_char_offset < _label.size()) {
                             ++_cursor_char_offset;
-                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
                         }
+                        cancel_selection();
                         _cursor_visible = true;
                         _cursor_timer.start();
                         break;
@@ -506,8 +557,9 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                         _cursor_timer.stop();
                         if (_cursor_char_offset != 0) {
                             _cursor_char_offset = 0;
-                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
                         }
+                        cancel_selection();
                         _cursor_visible = true;
                         _cursor_timer.start();
                         break;
@@ -515,19 +567,27 @@ void NumericBox::handle_keyboard_key_event(char key, KEY_ACTION action) {
                     case END_KEY:
                         _cursor_timer.stop();
                         if (_cursor_char_offset != _label.size()) {
-                            _cursor_char_offset = _label.size();
-                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                            _cursor_char_offset = static_cast<int unsigned>(_label.size());
+                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
                         }
+                        cancel_selection();
                         _cursor_visible = true;
                         _cursor_timer.start();
                         break;
 
                     default: // Latin keys (32-126), except space (32)
+
                         if (char(key) > 32 && char(key) < 127 && _label.size() < 8) {
+                            if (selection_present()) {
+                                erase_under_selection();
+                                _cursor_visible = true;
+                                _cursor_timer.start();
+                            }
+
                             _label.insert(_label.begin() + _cursor_char_offset, key);
 
                             ++_cursor_char_offset;
-                            _cursor_x = count_cursor_x(_cursor_char_offset);
+                            _cursor_pix_offset = count_pix_offset(_cursor_char_offset);
 
                             check_label_is_numeric(_label);
                         }
@@ -601,30 +661,21 @@ void NumericBox::draw() const {
 
     if (_cursor_visible) {
         glBegin(GL_LINES);
-        glVertex2i(_cursor_x, _y + _h/2 - 8);
-        glVertex2i(_cursor_x, _y + _h/2 + 8);
+        glVertex2i(_x + _cursor_pix_offset, _y + _h/2 - 8);
+        glVertex2i(_x + _cursor_pix_offset, _y + _h/2 + 8);
         glEnd();
     }
 
     // Selection
 
-    if (_is_active && (_sel_x_end - _sel_x_begin) != 0) {
-
-        int begin, end;
-        if ((_sel_x_end - _sel_x_begin) > 0) {
-            begin = _sel_x_begin;
-            end = _sel_x_end;
-        } else {
-            begin = _sel_x_end;
-            end = _sel_x_begin;
-        }
+    if (_is_active && selection_present()) {
 
         glColor4f(0.1f, 0.1f, 0.3f,  0.3f);
         glBegin(GL_QUADS);
-        glVertex2i(begin, font_y - 10);
-        glVertex2i(end,   font_y - 10);
-        glVertex2i(end,   font_y + 1 );
-        glVertex2i(begin, font_y + 1 );
+        glVertex2i(_x + _sel_begin_pix_offset, font_y - 11);
+        glVertex2i(_x + _sel_end_pix_offset,   font_y - 11);
+        glVertex2i(_x + _sel_end_pix_offset,   font_y + 2 );
+        glVertex2i(_x + _sel_begin_pix_offset, font_y + 2 );
         glEnd();
     }
 }
@@ -904,16 +955,17 @@ void Slider::draw() const {
     glColor3f(0.0f, 0.0f, 0.0f);
     draw_text_2d(_label.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 
-    _value_box.draw();
-
     // Min & Max label
 
+    glColor3f(0.0f, 0.0f, 0.0f);
     font_x = _x + _margin;
     font_y = _y + 7*_h/8;
     draw_text_2d(_str_min.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
 
     font_x = _x + _w - _margin - glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char*)_str_max.c_str());
     draw_text_2d(_str_max.c_str(), font_x, font_y, GLUT_BITMAP_HELVETICA_12);
+
+    _value_box.draw();
 }
 
 // ---- TestBox ----
