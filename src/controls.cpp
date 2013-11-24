@@ -269,7 +269,7 @@ NumericBox::NumericBox(int id,
     _cursor_visible(false),
     _cursor_pix_offset(0),
     _cursor_char_offset(0),
-    _cursor_timer(650, &NumericBox::static_wrapper_cursor_toggle, this, false),
+    _cursor_timer(650, &NumericBox::static_cursor_toggle, this, false),
     _sel_begin_pix_offset(0),
     _sel_end_pix_offset(0),
     _redraw_notifier(redraw_notifier) {
@@ -277,14 +277,12 @@ NumericBox::NumericBox(int id,
     set_value(_value);
 }
 
-void NumericBox::cursor_toggle() {
-    _cursor_visible = !_cursor_visible;
-    if (_redraw_notifier != NULL)
-        _redraw_notifier();
-}
-
-void NumericBox::static_wrapper_cursor_toggle(void* param) {
-    ((NumericBox*)param)->cursor_toggle();
+thread_ret win_attr NumericBox::static_cursor_toggle(void* param) {
+    NumericBox* pNumericBox = static_cast<NumericBox*>(param);
+    pNumericBox->_cursor_visible = !pNumericBox->_cursor_visible;
+    if (pNumericBox->_redraw_notifier != NULL)
+        pNumericBox->_redraw_notifier();
+    return 0;
 }
 
 bool NumericBox::check_label_is_numeric(const std::string& label) {
@@ -414,7 +412,6 @@ void NumericBox::handle_mouse_key_event(const Mouse& mouse, MOUSE_KEY key, KEY_A
     {
         case KEY_DOWN:
             if (mouse_over_control(mouse.x, mouse.y)) {
-
                 if (!_is_active)
                     _is_active = true;
 

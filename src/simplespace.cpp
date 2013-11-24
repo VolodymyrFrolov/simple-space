@@ -12,11 +12,15 @@
 #include <vector>
 using std::vector;
 
+const char* tag = "SimpleSpace";
+
 SimpleSpace::SimpleSpace(int Time_Step_ms) : time_step_ms(Time_Step_ms), planets_number_max(500) {
-    cout << "SimpleSpace instance created with _timestep_ms: " << get_model_time_step_ms() << endl;
+    mutex_init_wrapper(&movement_step_mutex);
+    LOGD(tag, "SimpleSpace instance created with _timestep_ms: %d", get_model_time_step_ms());
 }
 SimpleSpace::~SimpleSpace() {
-    cout << "SimpleSpace instance destroyed" << endl;
+    mutex_deinit_wrapper(&movement_step_mutex);
+    LOGD(tag, "SimpleSpace instance destroyed");
 }
 
 unsigned long SimpleSpace::get_planets_count() const {
@@ -28,7 +32,7 @@ int SimpleSpace::get_model_time_step_ms() const {
 }
 
 void SimpleSpace::move_one_step() {
-    std::lock_guard<std::mutex> guard(movement_step_mutex);
+    mutex_lock_wrapper(&movement_step_mutex);
 
     if (planets.size() == 0)
         return;
@@ -80,6 +84,8 @@ void SimpleSpace::move_one_step() {
         check_and_resolve_border_collision(*it);
     }
     #endif
+    
+    mutex_unlock_wrapper(&movement_step_mutex);
 }
 
 void SimpleSpace::move_apart_bodies(Planet& p1, Planet& p2) {
@@ -175,7 +181,7 @@ void SimpleSpace::check_and_resolve_border_collision(Planet& pl) {
 }
 
 void SimpleSpace::add_planet(const Planet& pl) {
-    std::lock_guard<std::mutex> guard(movement_step_mutex);
+    mutex_lock_wrapper(&movement_step_mutex);
 
     unsigned int new_id = 0;
     while (std::any_of(planets.begin(), planets.end(), [&](Planet pl) {return pl.id == new_id;}))
@@ -191,10 +197,12 @@ void SimpleSpace::add_planet(const Planet& pl) {
             move_apart_bodies(new_planet, *it);
     }
     planets.push_back(new_planet);
+
+    mutex_unlock_wrapper(&movement_step_mutex);
 }
 
 void SimpleSpace::remove_planet(const unsigned int& id) {
-    std::lock_guard<std::mutex> guard(movement_step_mutex);
+    mutex_lock_wrapper(&movement_step_mutex);
 
     std::vector<Planet>::iterator it = std::find_if(planets.begin(), planets.end(), [&](Planet pl) {return pl.id == id;});
     if (it == planets.end()) {
@@ -202,10 +210,13 @@ void SimpleSpace::remove_planet(const unsigned int& id) {
     } else {
         planets.erase(it);
     }
+
+    mutex_unlock_wrapper(&movement_step_mutex);
 }
 
 std::pair<bool, unsigned int> SimpleSpace::find_planet_by_click(const Vector2d& click_pos) {
-    std::lock_guard<std::mutex> guard(movement_step_mutex);
+    mutex_lock_wrapper(&movement_step_mutex);
+
     pair<bool, unsigned int> result;
     result.first = false;
     result.second = std::numeric_limits<unsigned int>::max();
@@ -216,12 +227,14 @@ std::pair<bool, unsigned int> SimpleSpace::find_planet_by_click(const Vector2d& 
             break;
         }
     }
+
+    mutex_unlock_wrapper(&movement_step_mutex);
     return result;
 }
 
 std::vector<unsigned int> SimpleSpace::find_planets_by_selection(const Vector2d& sel_start_pos,
                                                                  const Vector2d& sel_end_pos) {
-    std::lock_guard<std::mutex> guard(movement_step_mutex);
+    mutex_lock_wrapper(&movement_step_mutex);
     double border_right  = (sel_end_pos.x > sel_start_pos.x) ? sel_end_pos.x : sel_start_pos.x;
     double border_top    = (sel_end_pos.y > sel_start_pos.y) ? sel_end_pos.y : sel_start_pos.y;
     double border_left   = (sel_end_pos.x > sel_start_pos.x) ? sel_start_pos.x : sel_end_pos.x;
@@ -235,12 +248,14 @@ std::vector<unsigned int> SimpleSpace::find_planets_by_selection(const Vector2d&
             found_id_list.push_back(it->id);
         }
     }
+    mutex_unlock_wrapper(&movement_step_mutex);
     return found_id_list;
 }
 
 void SimpleSpace::remove_all_objects() {
-    std::lock_guard<std::mutex> guard(movement_step_mutex);
+    mutex_lock_wrapper(&movement_step_mutex);
     planets.clear();
+    mutex_unlock_wrapper(&movement_step_mutex);
 }
 
 void SimpleSpace::draw_planet(const float& rad, const float& x, const float& y) const {

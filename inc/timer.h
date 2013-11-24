@@ -15,30 +15,31 @@
 #define __timer__simplespace__
 
 #include <iostream>
-#include <thread>
 #include <sys/time.h> // gettimeofday()
 //#include <time.h>
-
-typedef void (*TimerCallback)(void* param);
+extern "C" {
+#include "thread_wrapper.h"
+#include "mutex_wrapper.h"
+}
 
 class Timer {
     long int _interval_millisec;
-    TimerCallback _timer_callback;
+    thread_func _timer_callback;
     void* _cb_param;
     volatile bool _running;
     bool _repeating;
 
-    std::mutex start_stop_mutex;
+    mutex_hdl start_stop_mutex;
     timeval _start_time;
     timeval _current_time;
 
-    std::thread _wait_loop_thread;
-    void wait_loop();
-    long int timeval_diff(const timeval& t1, const timeval& t2) const;
+    thread_hdl _wait_loop_thread;
+    static thread_ret win_attr wait_loop(void* arg);
+    static long int timeval_diff(const timeval& t1, const timeval& t2);
 
 public:
     Timer(int interval_millisec,
-          TimerCallback timer_callback,
+          thread_func timer_callback,
           void* callback_param,
           bool started = true,
           bool repeating = true);
@@ -53,9 +54,10 @@ class StopWatch {
     timeval _start_time;
     timeval _stop_time;
     bool _running;
-    std::mutex start_stop_mutex;
+    mutex_hdl start_stop_mutex;
 public:
     StopWatch(bool started = true);
+    ~StopWatch();
     void start();
     void stop();
     long int time_elaplsed_usec() const;
@@ -66,9 +68,10 @@ class FPSCounter {
     float _fps;
     int _framecount;
     timeval _start;
-    std::mutex reset_mutex;
+    mutex_hdl reset_mutex;
 public:
     FPSCounter();
+    ~FPSCounter();
     void update_on_frame();
     void reset();
     float get_fps();
