@@ -1,0 +1,22 @@
+#ifndef WRP_MUTEX_H_
+#define WRP_MUTEX_H_
+
+#if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    #include <pthread.h>
+    #define wrp_mutex_t pthread_mutex_t
+
+#elif defined(__WIN32__)
+    #include <windows.h>
+    #define wrp_mutex_t CRITICAL_SECTION
+
+#else
+    #error "Unsupported platform" // This check is done only once at the beginning of file for convenience
+#endif
+
+int wrp_mutex_init(wrp_mutex_t* mutex);
+int wrp_mutex_destroy(wrp_mutex_t* mutex);
+
+int wrp_mutex_lock(wrp_mutex_t* mutex);
+int wrp_mutex_unlock(wrp_mutex_t* mutex);
+
+#endif /* WRP_MUTEX_H_ */

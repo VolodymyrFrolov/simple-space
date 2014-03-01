@@ -11,44 +11,35 @@
 using std::cout;
 using std::endl;
 
-
-class A {
-public:
-    thread_ret win_attr testfunc(void* arg) {
-        return (void*)0;
-    }
-
-};
-
 Timer::Timer(int interval_millisec,
-             thread_func callback,
+             wrp_thread_func_t timer_callback,
              void* callback_param,
              bool started,
              bool repeating) :
     _interval_millisec(interval_millisec),
-    _timer_callback(callback),
+    _timer_callback(timer_callback),
     _cb_param(callback_param),
     _running(started),
     _repeating(repeating) {
 
     // Actually mutex is not needed here, but in case of imaginable wiered situation,
     // where start() is called before constructor is executed
-    mutex_init_wrapper(&start_stop_mutex);
-    mutex_lock_wrapper(&start_stop_mutex);
+    wrp_mutex_init(&start_stop_mutex);
+    wrp_mutex_lock(&start_stop_mutex);
     printf("Timer::Timer: _interval_millisec=%ld _running=%d\n", _interval_millisec, _running);
 
     if (_interval_millisec <= 0) {
         cout << "Error: [Timer] interval in constructor " << _interval_millisec << "<= 0" << endl;
         _running = false;
     } else if (_running) {
-        thread_create_wrapper(&_wait_loop_thread, Timer::wait_loop, this);
+        wrp_thread_create(&_wait_loop_thread, Timer::wait_loop, this);
     }
-    mutex_unlock_wrapper(&start_stop_mutex);
+    wrp_mutex_unlock(&start_stop_mutex);
 }
 
 Timer::~Timer() {
     stop();
-    mutex_deinit_wrapper(&start_stop_mutex);
+    wrp_mutex_destroy(&start_stop_mutex);
 }
 
 long int Timer::timeval_diff(const timeval& t1, const timeval& t2) {
@@ -56,39 +47,39 @@ long int Timer::timeval_diff(const timeval& t1, const timeval& t2) {
 }
 
 void Timer::start() {
-    mutex_lock_wrapper(&start_stop_mutex);
+    wrp_mutex_lock(&start_stop_mutex);
 
     printf("Timer::start\n");
     if (!_running && (_interval_millisec > 0)) {
 
         _running = true;
-        thread_create_wrapper(&_wait_loop_thread, Timer::wait_loop, this);
+        wrp_thread_create(&_wait_loop_thread, Timer::wait_loop, this);
     }
-    mutex_unlock_wrapper(&start_stop_mutex);
+    wrp_mutex_unlock(&start_stop_mutex);
 }
 
 void Timer::stop() {
-    mutex_lock_wrapper(&start_stop_mutex);
+    wrp_mutex_lock(&start_stop_mutex);
     if (_running) {
         _running = false;
-        if (thread_join_wrapper(_wait_loop_thread, NULL) != 0)
+        if (wrp_thread_join(_wait_loop_thread, NULL) != 0)
             printf("Timer::stop(): Error on joining thread\n");
     }
-    mutex_unlock_wrapper(&start_stop_mutex);
+    wrp_mutex_unlock(&start_stop_mutex);
 }
 
 void Timer::change_interval(long int interval_millisec) {
-    mutex_lock_wrapper(&start_stop_mutex);
+    wrp_mutex_lock(&start_stop_mutex);
 
     if (interval_millisec > 0)
         _interval_millisec = interval_millisec;
     else
         cout << "Warning: [Timer] attempt to set interval to " << _interval_millisec << " was ignored" << endl;
 
-     mutex_unlock_wrapper(&start_stop_mutex);
+     wrp_mutex_unlock(&start_stop_mutex);
 }
 
-thread_ret win_attr Timer::wait_loop(void* arg) {
+wrp_thread_ret_t win_attr Timer::wait_loop(void* arg) {
 
     if(arg == NULL) {
         printf("Timer::wait_loop: Error: arg is NULL\n");
@@ -174,32 +165,32 @@ thread_ret win_attr Timer::wait_loop(void* arg) {
 */
 
 StopWatch::StopWatch(bool started) : _running(started) {
-    mutex_init_wrapper(&start_stop_mutex);
+    wrp_mutex_init(&start_stop_mutex);
     gettimeofday(&_start_time, NULL);
     _stop_time = _start_time;
 }
 
 StopWatch::~StopWatch() {
-    mutex_deinit_wrapper(&start_stop_mutex);
+    wrp_mutex_destroy(&start_stop_mutex);
 }
 
 void StopWatch::start() {
-    mutex_lock_wrapper(&start_stop_mutex);
+    wrp_mutex_lock(&start_stop_mutex);
     if (!_running) {
         _running = true;
         gettimeofday(&_start_time, NULL);
         _stop_time = _start_time;
     }
-    mutex_unlock_wrapper(&start_stop_mutex);
+    wrp_mutex_unlock(&start_stop_mutex);
 }
 
 void StopWatch::stop() {
-    mutex_lock_wrapper(&start_stop_mutex);
+    wrp_mutex_lock(&start_stop_mutex);
     if (_running) {
         _running = false;
         gettimeofday(&_stop_time, NULL);
     }
-    mutex_unlock_wrapper(&start_stop_mutex);
+    wrp_mutex_unlock(&start_stop_mutex);
 }
 
 long int StopWatch::time_elaplsed_usec() const {
@@ -218,17 +209,17 @@ bool StopWatch::running() const {
 
 
 FPSCounter::FPSCounter() : _fps(0), _framecount(0) {
-    mutex_init_wrapper(&reset_mutex);
+    wrp_mutex_init(&reset_mutex);
     gettimeofday(&_start, NULL);
 }
 
 FPSCounter::~FPSCounter() {
-    mutex_deinit_wrapper(&reset_mutex);
+    wrp_mutex_destroy(&reset_mutex);
 }
 
 void FPSCounter::update_on_frame() {
 
-    mutex_lock_wrapper(&reset_mutex);
+    wrp_mutex_lock(&reset_mutex);
     ++_framecount;
     timeval now;
     gettimeofday(&now, NULL);
@@ -239,15 +230,15 @@ void FPSCounter::update_on_frame() {
         _framecount = 0;
         _start = now;
     }
-    mutex_unlock_wrapper(&reset_mutex);
+    wrp_mutex_unlock(&reset_mutex);
 }
 
 void FPSCounter::reset() {
-    mutex_lock_wrapper(&reset_mutex);
+    wrp_mutex_lock(&reset_mutex);
     _fps = 0;
     _framecount = 0;
     gettimeofday(&_start, NULL);
-    mutex_unlock_wrapper(&reset_mutex);
+    wrp_mutex_unlock(&reset_mutex);
 }
 
 float FPSCounter::get_fps() {

@@ -1,53 +1,88 @@
-SOURCES = main.cpp simplespace.cpp planet.cpp physics.cpp timer.cpp controls.cpp mouse_and_keyboard.cpp
-#SOURCES_FULL_PATHS = $(addprefix src/, $(SOURCES))
-OBJECTS = $(SOURCES:.cpp=.o)
-TARGET = simple-space
+TARGET = simplespace
 
-#Later replace with -std=c++11, when use compiler version that supports it
-CFLAGS = -std=c++0x -Iinc
+SOURCES =   ./src/main.cpp                           \
+            ./src/simplespace/simplespace.cpp        \
+            ./src/simplespace/physics.cpp            \
+            ./src/simplespace/planet.cpp             \
+            ./src/simplespace/controls.cpp           \
+            ./src/simplespace/mouse_and_keyboard.cpp \
+            ./src/simplespace/timer.cpp              \
+            ./src/wrappers/wrp_mutex.c               \
+            ./src/wrappers/wrp_thread.c              \
+            ./src/wrappers/wrp_cond.c                \
+            ./src/wrappers/wrp_common.c              \
+            ./src/logs/logs.c
 
-UNAME := $(firstword $(shell uname -s))
+OBJECTS_STRIPPED_NAMES += $(patsubst %.c,   %.o, $(notdir $(filter %.c,   $(SOURCES))))
+OBJECTS_STRIPPED_NAMES += $(patsubst %.cpp, %.o, $(notdir $(filter %.cpp, $(SOURCES))))
 
-ifeq ($(UNAME), Linux)
-CC = g++
-CFLAGS += -Wall -c
-LDFLAGS = -pthread
-LDLIBS = -lGL -lglut
-#Check these: -lglut -lGLU -lGL -L/usr/X11R6/lib/ -lXmu -lXi -lXext -lX11 -lXt
+MAIN_DIR =        ./src
+SS_DIR = ./src/simplespace
+WRP_DIR =    ./src/wrappers
+LOGS_DIR =        ./src/logs
+
+OBJ_DIR = ./obj
+BIN_DIR = ./bin
+
+OBJECTS = $(addprefix $(OBJ_DIR)/, $(OBJECTS_STRIPPED_NAMES))
+
+CC_C = gcc
+CC_CPP = g++
+
+# Common for all platforms
+CFLAGS = -g -Wall -MD -I$(SS_DIR) -I$(WRP_DIR) -I$(LOGS_DIR)
+#Later replace -std=c++0x with -std=c++11, when use compiler version that supports it
+#CPP_SPECIFIC_FLAGS = -std=c++0x
+LFLAGS =
+
+# Platform specific
+ifeq ($(OS), Windows_NT)
+    @echo "Compiling for win: "$(OS)
+else
+    LFLAGS += -lpthread
+    UNAME_S := $(firstword $(shell uname -s))
+    ifeq ($(UNAME_S), Linux)
+        LFLAGS += -lGL -lglut
+        #Check these: -lglut -lGLU -lGL -L/usr/X11R6/lib/ -lXmu -lXi -lXext -lX11 -lXt
+    endif
+    ifeq ($(UNAME_S), Darwin)
+        CFLAGS += -I/opt/X11/include -stdlib=libc++
+        LFLAGS += -framework GLUT -framework OpenGL
+        #Check these: -framework GLU
+    endif
 endif
 
-ifeq ($(UNAME), Darwin)
-CC = cc
-CFLAGS += -stdlib=libc++ -I/opt/X11/include
-LDLIBS = -framework GLUT -framework OpenGL
-#Check these: -framework GLU
-endif
 
-all: $(TARGET)
+.PHONY: all
+
+all: create_folders $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o $(TARGET)
+	@echo "Linking:"
+	$(CC_CPP) $(OBJECTS) -o $@ $(LFLAGS)
 
-main.o: src/main.cpp inc/simplespace.h inc/planet.h inc/physics.h inc/timer.h inc/controls.h inc/mouse_and_keyboard.h
-	$(CC) $(CFLAGS) src/main.cpp
+create_folders:
+	@echo "Creating folders"
+	mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
-simplespace.o: src/simplespace.cpp inc/simplespace.h
-	$(CC) $(CFLAGS) src/simplespace.cpp
-	
-planet.o: src/planet.cpp inc/planet.h
-	$(CC) $(CFLAGS) src/planet.cpp
-
-physics.o: src/physics.cpp inc/physics.h
-	$(CC) $(CFLAGS) src/physics.cpp
-
-timer.o: src/timer.cpp inc/timer.h
-	$(CC) $(CFLAGS) src/timer.cpp
-
-controls.o : src/controls.cpp inc/controls.h
-	$(CC) $(CFLAGS) src/controls.cpp
-
-mouse_and_keyboard.o : src/mouse_and_keyboard.cpp inc/mouse_and_keyboard.h
-	$(CC) $(CFLAGS) src/mouse_and_keyboard.cpp
-
+.PHONY: clean
 clean:
-	rm -rf $(TARGET) *.o
+	@echo "Removing all"
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
+
+
+$(OBJ_DIR)/%.o: $(MAIN_DIR)/%.cpp
+	@echo "Compiling $<"
+	$(CC_CPP) -c $(CFLAGS) $(CPP_SPECIFIC_FLAGS) $< -o $@
+
+$(OBJ_DIR)/%.o: $(SS_DIR)/%.cpp
+	@echo "Compiling $<"
+	$(CC_CPP) -c $(CFLAGS) $(CPP_SPECIFIC_FLAGS) $< -o $@
+	
+$(OBJ_DIR)/%.o: $(WRP_DIR)/%.c
+	@echo "Compiling $<"
+	$(CC_C) -c $(CFLAGS) $< -o $@
+
+$(OBJ_DIR)/%.o: $(LOGS_DIR)/%.c
+	@echo "Compiling $<"
+	$(CC_C) -c $(CFLAGS) $< -o $@

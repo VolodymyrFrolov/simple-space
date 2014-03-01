@@ -18,28 +18,28 @@
 #include <sys/time.h> // gettimeofday()
 //#include <time.h>
 extern "C" {
-#include "thread_wrapper.h"
-#include "mutex_wrapper.h"
+#include "wrp_mutex.h"
+#include "wrp_thread.h"
 }
 
 class Timer {
     long int _interval_millisec;
-    thread_func _timer_callback;
+    wrp_thread_func_t _timer_callback;
     void* _cb_param;
     volatile bool _running;
     bool _repeating;
 
-    mutex_hdl start_stop_mutex;
+    wrp_mutex_t start_stop_mutex;
     timeval _start_time;
     timeval _current_time;
 
-    thread_hdl _wait_loop_thread;
-    static thread_ret win_attr wait_loop(void* arg);
+    wrp_thread_t _wait_loop_thread;
+    static wrp_thread_ret_t win_attr wait_loop(void* arg);
     static long int timeval_diff(const timeval& t1, const timeval& t2);
 
 public:
     Timer(int interval_millisec,
-          thread_func timer_callback,
+          wrp_thread_func_t timer_callback,
           void* callback_param,
           bool started = true,
           bool repeating = true);
@@ -54,7 +54,7 @@ class StopWatch {
     timeval _start_time;
     timeval _stop_time;
     bool _running;
-    mutex_hdl start_stop_mutex;
+    wrp_mutex_t start_stop_mutex;
 public:
     StopWatch(bool started = true);
     ~StopWatch();
@@ -68,7 +68,7 @@ class FPSCounter {
     float _fps;
     int _framecount;
     timeval _start;
-    mutex_hdl reset_mutex;
+    wrp_mutex_t reset_mutex;
 public:
     FPSCounter();
     ~FPSCounter();

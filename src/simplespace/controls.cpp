@@ -269,7 +269,8 @@ NumericBox::NumericBox(int id,
     _cursor_visible(false),
     _cursor_pix_offset(0),
     _cursor_char_offset(0),
-    _cursor_timer(650, &NumericBox::static_cursor_toggle, this, false),
+    //_cursor_timer(650, &NumericBox::static_cursor_toggle, this, false, true),
+    _cursor_timer(650, &NumericBox::static_cursor_toggle, this, false, true),
     _sel_begin_pix_offset(0),
     _sel_end_pix_offset(0),
     _redraw_notifier(redraw_notifier) {
@@ -277,7 +278,7 @@ NumericBox::NumericBox(int id,
     set_value(_value);
 }
 
-thread_ret win_attr NumericBox::static_cursor_toggle(void* param) {
+wrp_thread_ret_t win_attr NumericBox::static_cursor_toggle(void* param) {
     NumericBox* pNumericBox = static_cast<NumericBox*>(param);
     pNumericBox->_cursor_visible = !pNumericBox->_cursor_visible;
     if (pNumericBox->_redraw_notifier != NULL)
