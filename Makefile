@@ -32,7 +32,7 @@ CC_CPP = g++
 # Common for all platforms
 CFLAGS = -g -Wall -MD -I$(SS_DIR) -I$(WRP_DIR) -I$(LOGS_DIR)
 #Later replace -std=c++0x with -std=c++11, when use compiler version that supports it
-#CPP_SPECIFIC_FLAGS = -std=c++0x
+CPP_SPECIFIC_FLAGS = -std=c++0x
 LFLAGS =
 
 # Platform specific
