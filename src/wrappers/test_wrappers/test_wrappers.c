@@ -1,8 +1,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <inttypes.h>
 #include <unistd.h> // usleep()
+#include <stdbool.h>
 
 #include "wrp_mutex.h"
 #include "wrp_thread.h"
@@ -22,11 +23,11 @@ wrp_thread_ret_t win_attr some_func(void* arg) {
     int counts = 3;
     for (i = 0; i < counts; ++i) {
         wrp_mutex_lock(&the_mutex);
-        printf("func %c iteration: %d started\n", (int)arg, i+1);
-        
+        printf("func %d iteration: %d started\n", (intptr_t)arg, i + 1);
+ 
         wrp_sleep_ms(1000);
-    
-        printf("func %c iteration: %d finished\n", (int)arg, i+1);
+
+        printf("func %d iteration: %d finished\n", (intptr_t)arg, i + 1);
         wrp_mutex_unlock(&the_mutex);
 
         wrp_sleep_ms(50);
@@ -40,7 +41,7 @@ bool ready_to_consume() {
 
 wrp_thread_ret_t win_attr consumer_func(void* arg) {
     printf("consuming started\n");
-    int i = (int)arg;
+    uintptr_t i = (uintptr_t)arg;
     
     while (i > 0) {
         wrp_mutex_lock(&the_mutex);
@@ -63,12 +64,12 @@ wrp_thread_ret_t win_attr consumer_func(void* arg) {
 
 wrp_thread_ret_t win_attr producer_func(void* arg) {
     printf("producing started\n");
-    while (g_products < (int)arg) {
+    while (g_products < (uintptr_t)arg) {
         wrp_mutex_lock(&the_mutex);
         wrp_sleep_ms(1000);
         g_products++;
         wrp_mutex_unlock(&the_mutex);
-        printf("produced:%d/%d\n", g_products, (int)arg);
+        printf("produced:%d/%d\n", g_products, (uintptr_t)arg);
         if (ready_to_consume())
             wrp_cond_signal(&the_cond);
     }
@@ -82,9 +83,9 @@ int main(void) {
     printf("Test Case 1: Started\n");
     wrp_mutex_init(&the_mutex);
 
-    wrp_thread_create(&thread1, some_func, (void*)'A');
+    wrp_thread_create(&thread1, some_func, (void*)1);
     wrp_sleep_ms(50);
-    wrp_thread_create(&thread2, some_func, (void*)'B');
+    wrp_thread_create(&thread2, some_func, (void*)2);
 
     wrp_thread_ret_t ret1;
     wrp_thread_ret_t ret2;
@@ -93,8 +94,8 @@ int main(void) {
     
     wrp_mutex_destroy(&the_mutex);
 
-    printf("main: thread1 returned: %c\n", (int)ret1);
-    printf("main: thread2 returned: %c\n", (int)ret2);
+    printf("main: thread1 returned: %d\n", (uintptr_t)ret1);
+    printf("main: thread2 returned: %d\n", (uintptr_t)ret2);
     printf("Test Case 1: Finished\n");
     
     // ==== Test Case 2 ====

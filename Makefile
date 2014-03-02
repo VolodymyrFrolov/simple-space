@@ -16,10 +16,10 @@ SOURCES =   ./src/main.cpp                           \
 OBJECTS_STRIPPED_NAMES += $(patsubst %.c,   %.o, $(notdir $(filter %.c,   $(SOURCES))))
 OBJECTS_STRIPPED_NAMES += $(patsubst %.cpp, %.o, $(notdir $(filter %.cpp, $(SOURCES))))
 
-MAIN_DIR =        ./src
+MAIN_DIR = ./src
 SS_DIR = ./src/simplespace
-WRP_DIR =    ./src/wrappers
-LOGS_DIR =        ./src/logs
+WRP_DIR = ./src/wrappers
+LOGS_DIR = ./src/logs
 
 OBJ_DIR = ./obj
 BIN_DIR = ./bin
@@ -30,7 +30,7 @@ CC_C = gcc
 CC_CPP = g++
 
 # Common for all platforms
-CFLAGS = -g -Wall -MD -I$(SS_DIR) -I$(WRP_DIR) -I$(LOGS_DIR)
+CFLAGS = -g -Wall -MMD -MP -I$(SS_DIR) -I$(WRP_DIR) -I$(LOGS_DIR)
 #Later replace -std=c++0x with -std=c++11, when use compiler version that supports it
 CPP_SPECIFIC_FLAGS = -std=c++0x
 LFLAGS =
@@ -54,22 +54,13 @@ endif
 
 
 .PHONY: all
-
 all: create_folders $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	@echo "Linking:"
-	$(CC_CPP) $(OBJECTS) -o $@ $(LFLAGS)
+	$(CC_CPP) $(OBJECTS) -o $(BIN_DIR)/$@ $(LFLAGS)
 
-create_folders:
-	@echo "Creating folders"
-	mkdir -p $(OBJ_DIR) $(BIN_DIR)
-
-.PHONY: clean
-clean:
-	@echo "Removing all"
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
-
+-include $(OBJECTS:%.o=%.d)
 
 $(OBJ_DIR)/%.o: $(MAIN_DIR)/%.cpp
 	@echo "Compiling $<"
@@ -86,3 +77,12 @@ $(OBJ_DIR)/%.o: $(WRP_DIR)/%.c
 $(OBJ_DIR)/%.o: $(LOGS_DIR)/%.c
 	@echo "Compiling $<"
 	$(CC_C) -c $(CFLAGS) $< -o $@
+
+.PHONY: create_folders
+create_folders:
+	mkdir -p $(OBJ_DIR) $(BIN_DIR)
+
+.PHONY: clean
+clean:
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
+

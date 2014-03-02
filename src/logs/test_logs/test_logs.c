@@ -1,8 +1,7 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include "logs.h"
 
-const char* tag = "MyTestApp";
+const char* tag = "TestApp";
 
 void func() {
     LOG_ENTER_FUNC(tag);
@@ -12,7 +11,7 @@ void func() {
 
 int main() {
     init_logs();
-    init_write_logs_to_file("application_saved.log");
+    init_write_logs_to_file("test_logs.log");
     LOG_ENTER_FUNC(tag);
 
     LOGE(tag, "this is error log");
@@ -25,5 +24,6 @@ int main() {
     deinit_write_logs_to_file();
     deinit_logs();
 
-    return EXIT_SUCCESS;
+    return 0;
 }
+
