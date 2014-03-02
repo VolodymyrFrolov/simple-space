@@ -79,7 +79,7 @@ void reset_parameters() {
         vel = Vector2d();
         mass_kg = 0;
         rad_m = 0;
-        color = {1.0f, 1.0f, 1.0f};
+        color = Color_RGB(1.0f, 1.0f, 1.0f);
     }
 };
 

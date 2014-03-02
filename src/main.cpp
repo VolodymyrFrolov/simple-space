@@ -834,9 +834,9 @@ void draw_planet(GLdouble rad, GLdouble centre_x, GLdouble centre_y, Color_RGBA 
 }
 
 Color_RGB getRandomColor() {
-    return {static_cast<float>((rand()%10 + 1)/10.0),
+    return Color_RGB(static_cast<float>((rand()%10 + 1)/10.0),
             static_cast<float>((rand()%10 + 1)/10.0),
-            static_cast<float>((rand()%10 + 1)/10.0)};
+            static_cast<float>((rand()%10 + 1)/10.0));
 }
 
 //Initializes rendering
