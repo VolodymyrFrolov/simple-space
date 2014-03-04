@@ -1,3 +1,4 @@
+
 #ifndef WRP_MUTEX_H_
 #define WRP_MUTEX_H_
 
@@ -6,6 +7,9 @@
     #define wrp_mutex_t pthread_mutex_t
 
 #elif defined(__WIN32__)
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
     #include <windows.h>
     #define wrp_mutex_t CRITICAL_SECTION
 

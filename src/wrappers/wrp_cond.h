@@ -1,3 +1,4 @@
+
 #ifndef WRP_COND_H_
 #define WRP_COND_H_
 
@@ -12,6 +13,9 @@
     #define WRP_TIMEOUT_ERR ETIMEDOUT
 
 #elif defined(__WIN32__)
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
     #include <windows.h>
     #define wrp_cond_t HANDLE
     #define WRP_TIMEOUT_INIFINITE INFINITE

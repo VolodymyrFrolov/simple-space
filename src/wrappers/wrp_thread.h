@@ -1,3 +1,4 @@
+
 #ifndef WRP_THREAD_H_
 #define WRP_THREAD_H_
 
@@ -9,6 +10,9 @@
     #define WRP_THREAD_TERMINATED PTHREAD_CANCELED
 
 #elif defined(__WIN32__)
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
     #include <windows.h>
     #include "process.h"
     #define wrp_thread_t HANDLE

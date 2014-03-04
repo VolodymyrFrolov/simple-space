@@ -15,16 +15,21 @@ using std::endl;
 #include <memory> // std::unique_ptr
 #include <sys/time.h> // gettimeofday()
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
     #include <OpenGL/OpenGL.h>
     #include <OpenGL/glu.h>
     //#include <GLUT/glut.h>
     #include <GL/freeglut.h>
-#elif __linux__
+#elif defined(__linux__)
     //#include <GL/glut.h>
     #include <GL/freeglut.h>
+#elif defined(__WIN32__)
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <windows.h>
 #else
-    // Unsupproted platform
+    #error "Unsupported platform"
 #endif
 
 //#include <ft2build.h>
@@ -41,6 +46,10 @@ using std::endl;
 
 //FT_Library  ft_library; // FreeType library handler
 //FT_Face     face;       // Face object handler
+
+#if defined(__WIN32__)
+LARGE_INTEGER &gSystemFrequency;
+#endif
 
 const int frame_rate = 60;
 
@@ -857,6 +866,13 @@ int main(int argc, char * argv[])
 {
     // Seed for random values
     srand(static_cast<unsigned int>(time(NULL)));
+
+    #if defined(__WIN32__)
+    if (QueryPerformanceFrequency(&gSystemFrequency) == 0) {
+        printf("main: error at QueryPerformanceFrequency\n");
+        return 0;
+    }
+    #endif
 
     // SimpleSpace testing begin
     double dist = 4e7;

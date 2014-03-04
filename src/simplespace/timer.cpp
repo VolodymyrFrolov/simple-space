@@ -11,6 +11,10 @@
 using std::cout;
 using std::endl;
 
+#if defined(__WIN32__)
+extern LARGE_INTEGER gSystemFrequency;
+#endif
+
 Timer::Timer(int interval_millisec,
              wrp_thread_func_t timer_callback,
              void* callback_param,
@@ -42,8 +46,39 @@ Timer::~Timer() {
     wrp_mutex_destroy(&start_stop_mutex);
 }
 
-long int Timer::timeval_diff(const timeval& t1, const timeval& t2) {
-    return (t2.tv_sec - t1.tv_sec) * 1000000 + (t2.tv_usec - t1.tv_usec);
+int Timer::wrp_time_now(wrp_time_t& time) {
+    int ret = 0;
+
+    #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    ret = gettimeofday(&time, NULL);
+
+    #elif defined(__WIN32__)
+    if (QueryPerformanceCounter(&time) == 0)
+        ret = -1;
+    #endif
+
+    if (ret != 0)
+        printf("get_curr_time: Error\n");
+
+    return ret;
+}
+
+static unsigned long wrp_time_to_ms(const wrp_time_t& time) {
+    #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    return time.tv_sec*1000 + time.tv_usec/1000;
+
+    #elif defined(__WIN32__)
+    return (time.QuadPart*1000) / gSystemFrequency.QuadPart;
+    #endif
+}
+
+unsigned long Timer::wrp_time_diff_ms(const wrp_time_t& earlier, const wrp_time_t& later) {
+    #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    return (later.tv_sec - earlier.tv_sec)*1000 + (later.tv_usec - earlier.tv_usec)/1000;
+
+    #elif defined(__WIN32__)
+    return ((later.QuadPart - earlier.QuadPart)*1000) / gSystemFrequency.QuadPart;
+    #endif
 }
 
 void Timer::start() {
@@ -81,7 +116,7 @@ void Timer::change_interval(long int interval_millisec) {
 
 wrp_thread_ret_t win_attr Timer::wait_loop(void* arg) {
 
-    if(arg == NULL) {
+    if (arg == NULL) {
         printf("Timer::wait_loop: Error: arg is NULL\n");
         return (void*)-1;
     }
@@ -96,30 +131,26 @@ wrp_thread_ret_t win_attr Timer::wait_loop(void* arg) {
         return (void*)-10;
     }
 
-    gettimeofday(&pTimer->_start_time, NULL);
-    pTimer->_current_time = pTimer->_start_time;
+    wrp_time_t current, start;
+    wrp_time_now(current);
+    start = current;
 
     do {
-        while ((Timer::timeval_diff(pTimer->_start_time, pTimer->_current_time) < (pTimer->_interval_millisec * 1000)) && pTimer->_running) {
+        while ((wrp_time_diff_ms(start, current) < (pTimer->_interval_millisec)) && pTimer->_running) {
             usleep(1000); // 1ms
-            gettimeofday(&pTimer->_current_time, NULL);
+            wrp_time_now(current);
         }
 
-        // Trigger callback
-        gettimeofday(&pTimer->_start_time, NULL);
+        // Trigger callback and save time before and after
+        wrp_time_now(start);
         if (pTimer->_running) {
             pTimer->_timer_callback(pTimer->_cb_param);
         }
-        gettimeofday(&pTimer->_current_time, NULL);
+        wrp_time_now(current);
 
         // Warn if callback took more time then interval
-        if (timeval_diff(pTimer->_start_time, pTimer->_current_time) > (pTimer->_interval_millisec * 1000))
-            cout << "Warning: [Timer] callback took more time ("
-                 << (pTimer->_current_time.tv_sec - pTimer->_start_time.tv_sec) * 1000000 + \
-                     (pTimer->_current_time.tv_usec - pTimer->_start_time.tv_usec)
-                 << " usec) than interval ("
-                 << (pTimer->_interval_millisec * 1000)
-                 << " usec)" << endl;
+        if (wrp_time_diff_ms(start, current) > (pTimer->_interval_millisec))
+            cout << "Warning: [Timer] callback took more time, than interval" << endl;
 
     } while (pTimer->_running && pTimer->_repeating);
 
@@ -128,41 +159,6 @@ wrp_thread_ret_t win_attr Timer::wait_loop(void* arg) {
     pTimer->_running = false;
     return 0;
 }
-
-// Code example to add For Windows support:
-/*
-#ifdef WIN32
-    LARGE_INTEGER frequency;                    // ticks per second
-    LARGE_INTEGER startCount;                   //
-    LARGE_INTEGER endCount;                     //
-#else
-    ...
-#endif
-
-#ifdef WIN32
-    QueryPerformanceFrequency(&frequency);
-    startCount.QuadPart = 0;
-    endCount.QuadPart = 0;
-#else
-    ...
-#endif
-
-#ifdef WIN32
-    QueryPerformanceCounter(&endCount);
-#else
-    ...
-#endif
-
-#ifdef WIN32
-    if(!stopped)
-        QueryPerformanceCounter(&endCount);
-
-    startTimeInMicroSec = startCount.QuadPart * (1000000.0 / frequency.QuadPart);
-    endTimeInMicroSec = endCount.QuadPart * (1000000.0 / frequency.QuadPart);
-#else
-    ...
-#endif
-*/
 
 StopWatch::StopWatch(bool started) : _running(started) {
     wrp_mutex_init(&start_stop_mutex);

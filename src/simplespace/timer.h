@@ -22,6 +22,20 @@ extern "C" {
 #include "wrp_thread.h"
 }
 
+#if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    #define wrp_time_t timeval
+
+#elif defined(__WIN32__)
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <windows.h>
+    #define wrp_time_t LARGE_INTEGER
+
+#else
+    #error "Unsupported platform"
+#endif
+
 class Timer {
     long int _interval_millisec;
     wrp_thread_func_t _timer_callback;
@@ -30,12 +44,12 @@ class Timer {
     bool _repeating;
 
     wrp_mutex_t start_stop_mutex;
-    timeval _start_time;
-    timeval _current_time;
-
     wrp_thread_t _wait_loop_thread;
     static wrp_thread_ret_t win_attr wait_loop(void* arg);
-    static long int timeval_diff(const timeval& t1, const timeval& t2);
+
+    static int wrp_time_now(wrp_time_t& time);
+    static unsigned long wrp_time_to_ms(const wrp_time_t& time);
+    static unsigned long wrp_time_diff_ms(const wrp_time_t& earlier, const wrp_time_t& later);
 
 public:
     Timer(int interval_millisec,
