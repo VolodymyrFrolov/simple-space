@@ -2,5 +2,5 @@
 #.gitignore
 
 # XCode project files and folder
-*.xcodeproj
-*.xcodeproj/*
+#*.xcodeproj
+#*.xcodeproj/*

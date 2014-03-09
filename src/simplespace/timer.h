@@ -36,53 +36,56 @@ extern "C" {
     #error "Unsupported platform"
 #endif
 
+// ********** Common Functions **********
+int wrp_time_now(wrp_time_t& time);
+unsigned long wrp_time_to_ms(const wrp_time_t& time);
+unsigned long wrp_time_diff_ms(const wrp_time_t& earlier, const wrp_time_t& later);
+
+// ********** Timer **********
 class Timer {
-    long int _interval_millisec;
-    wrp_thread_func_t _timer_callback;
-    void* _cb_param;
-    volatile bool _running;
-    bool _repeating;
+    wrp_thread_func_t _callback;
+    void*             _param;
+    unsigned long     _interval_ms;
+    volatile bool     _running;
+    bool              _repeating;
 
-    wrp_mutex_t start_stop_mutex;
-    wrp_thread_t _wait_loop_thread;
-    static wrp_thread_ret_t win_attr wait_loop(void* arg);
-
-    static int wrp_time_now(wrp_time_t& time);
-    static unsigned long wrp_time_to_ms(const wrp_time_t& time);
-    static unsigned long wrp_time_diff_ms(const wrp_time_t& earlier, const wrp_time_t& later);
+    wrp_mutex_t state_lock;
+    wrp_thread_t loop_thread;
+    static wrp_thread_ret_t win_attr loop_func(void* arg);
 
 public:
-    Timer(int interval_millisec,
-          wrp_thread_func_t timer_callback,
-          void* callback_param,
-          bool started = true,
-          bool repeating = true);
+    Timer(wrp_thread_func_t callback,
+          void*             param,
+          unsigned long     interval_ms,
+          bool              started = true,
+          bool              repeating = true);
     ~Timer();
 
     void start();
     void stop();
-    void change_interval(long int interval_millisec);
 };
 
+// ********** StopWatch **********
 class StopWatch {
-    timeval _start_time;
-    timeval _stop_time;
     bool _running;
-    wrp_mutex_t start_stop_mutex;
+    wrp_time_t start_time;
+    wrp_time_t stop_time;
+    wrp_mutex_t state_lock;
 public:
     StopWatch(bool started = true);
     ~StopWatch();
     void start();
     void stop();
-    long int time_elaplsed_usec() const;
+    unsigned long time_elaplsed_usec() const;
     bool running() const;
 };
 
+// ********** FPSCounter **********
 class FPSCounter {
-    float _fps;
-    int _framecount;
-    timeval _start;
-    wrp_mutex_t reset_mutex;
+    float fps;
+    unsigned int framecount;
+    wrp_time_t start_time;
+    wrp_mutex_t state_lock;
 public:
     FPSCounter();
     ~FPSCounter();

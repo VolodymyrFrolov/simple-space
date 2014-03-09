@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>2BB70973-0158-4A24-BA22-9FB9F8E4D65F</string>
+	<key>IDESourceControlProjectName</key>
+	<string>simple-space</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>7D56797A-C89A-4588-88FC-B13ECDB61770</key>
+		<string>ssh://github.com/VolodymyrFrolov/simple-space.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>simple-space.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>7D56797A-C89A-4588-88FC-B13ECDB61770</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>ssh://github.com/VolodymyrFrolov/simple-space.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>7D56797A-C89A-4588-88FC-B13ECDB61770</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>7D56797A-C89A-4588-88FC-B13ECDB61770</string>
+			<key>IDESourceControlWCCName</key>
+			<string>simple-space</string>
+		</dict>
+	</array>
+</dict>
+</plist>
