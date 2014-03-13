@@ -2,10 +2,8 @@
 #include "wrp_mutex.h"
 
 void wrp_mutex_init(wrp_mutex_t* mutex) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = pthread_mutex_init(mutex, NULL);
+    int = ret = pthread_mutex_init(mutex, NULL);
     assert(ret == 0);
     #elif defined(__WIN32__)
     InitializeCriticalSection(mutex);
@@ -13,10 +11,8 @@ void wrp_mutex_init(wrp_mutex_t* mutex) {
 }
 
 void wrp_mutex_destroy(wrp_mutex_t* mutex) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = pthread_mutex_destroy(mutex);
+    int ret = pthread_mutex_destroy(mutex);
     assert(ret == 0);
     #elif defined(__WIN32__)
     DeleteCriticalSection(mutex);
@@ -24,10 +20,8 @@ void wrp_mutex_destroy(wrp_mutex_t* mutex) {
 }
 
 void wrp_mutex_lock(wrp_mutex_t* mutex) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = pthread_mutex_lock(mutex);
+    int ret = pthread_mutex_lock(mutex);
     assert(ret == 0);
     #elif defined(__WIN32__)
     EnterCriticalSection(mutex);
@@ -35,10 +29,8 @@ void wrp_mutex_lock(wrp_mutex_t* mutex) {
 }
 
 void wrp_mutex_unlock(wrp_mutex_t* mutex) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = pthread_mutex_unlock(mutex);
+    int ret = pthread_mutex_unlock(mutex);
     assert(ret == 0);
     #elif defined(__WIN32__)
     LeaveCriticalSection(mutex);

@@ -37,7 +37,7 @@ LFLAGS =
 
 # Platform specific
 ifeq ($(OS), Windows_NT)
-    @echo "Compiling for win: "$(OS)
+     # Do nothing
 else
     LFLAGS += -lpthread
     UNAME_S := $(firstword $(shell uname -s))

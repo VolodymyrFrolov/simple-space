@@ -3,9 +3,8 @@
 
 
 void wrp_thread_create(wrp_thread_t* thread, wrp_thread_func_t func, void* arg, bool joinable) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    int ret;
     pthread_attr_t attr;
     if (!joinable) {
         ret = pthread_attr_init(&attr);
@@ -23,6 +22,7 @@ void wrp_thread_create(wrp_thread_t* thread, wrp_thread_func_t func, void* arg, 
     }
 
     #elif defined(__WIN32__)
+    int ret;
     *thread = CreateThread(NULL, 0, func, arg, 0, NULL);
     assert(*thread != NULL);
 
@@ -34,14 +34,12 @@ void wrp_thread_create(wrp_thread_t* thread, wrp_thread_func_t func, void* arg, 
 }
 
 void wrp_thread_join(wrp_thread_t thread, wrp_thread_ret_t* wrp_thread_ret) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = pthread_join(thread, wrp_thread_ret);
+    int ret = pthread_join(thread, wrp_thread_ret);
     assert(ret == 0);
 
     #elif defined(__WIN32__)
-    ret = WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0);
+    int ret = WaitForSingleObject(thread, INFINITE);
     assert(ret == WAIT_OBJECT_0);
 
     if (wrp_thread_ret != NULL) {
@@ -55,16 +53,14 @@ void wrp_thread_join(wrp_thread_t thread, wrp_thread_ret_t* wrp_thread_ret) {
 }
 
 void wrp_thread_terminate(wrp_thread_t thread) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = pthread_cancel(thread);
+    int ret = pthread_cancel(thread);
     assert(ret == 0);
 
     #elif defined(__WIN32__)
-    ret = TerminateThread(thread, WRP_THREAD_TERMINATED);
+    int ret = TerminateThread(thread, WRP_THREAD_TERMINATED);
     assert(ret != 0);
-    
+
     ret = CloseHandle(thread);
     assert(ret != 0);
     #endif
