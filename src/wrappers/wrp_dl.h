@@ -2,6 +2,7 @@
 #ifndef WRP_DL_H_
 #define WRP_DL_H_
 
+#include <stdlib.h>
 #include <assert.h> // #define NDEBUG will disable asserts in code
 
 #if defined(__linux__) || defined(__APPLE__) || defined(__android__)

@@ -6,7 +6,7 @@ SOURCES =   ./src/main.cpp                           \
             ./src/simplespace/planet.cpp             \
             ./src/simplespace/controls.cpp           \
             ./src/simplespace/mouse_and_keyboard.cpp \
-            ./src/simplespace/timer.cpp              \
+            ./src/wrappers/timer.cpp                 \
             ./src/wrappers/wrp_mutex.c               \
             ./src/wrappers/wrp_thread.c              \
             ./src/wrappers/wrp_cond.c                \
@@ -48,7 +48,7 @@ else
     ifeq ($(UNAME_S), Darwin)
         CFLAGS += -I/opt/X11/include
         LFLAGS += -framework GLUT -framework OpenGL
-        APPLE_SPECIFIC_FLAGS = -stdlib=libc++
+        APPLE_CPP_SPECIFIC_FLAGS = -stdlib=libc++
         #Check these: -framework GLU
     endif
 endif
@@ -59,18 +59,22 @@ all: create_folders $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	@echo "Linking:"
-	$(CC_CPP) $(APPLE_SPECIFIC_FLAGS) $(OBJECTS) -o $(BIN_DIR)/$@ $(LFLAGS)
+	$(CC_CPP) $(APPLE_CPP_SPECIFIC_FLAGS) $(OBJECTS) -o $(BIN_DIR)/$@ $(LFLAGS)
 
 -include $(OBJECTS:%.o=%.d)
 
 $(OBJ_DIR)/%.o: $(MAIN_DIR)/%.cpp
 	@echo "Compiling $<"
-	$(CC_CPP) -c $(CFLAGS) $(APPLE_SPECIFIC_FLAGS) $(CPP_SPECIFIC_FLAGS) $< -o $@
+	$(CC_CPP) -c $(CFLAGS) $(APPLE_CPP_SPECIFIC_FLAGS) $(CPP_SPECIFIC_FLAGS) $< -o $@
 
 $(OBJ_DIR)/%.o: $(SS_DIR)/%.cpp
 	@echo "Compiling $<"
-	$(CC_CPP) -c $(CFLAGS) $(APPLE_SPECIFIC_FLAGS) $(CPP_SPECIFIC_FLAGS) $< -o $@
-	
+	$(CC_CPP) -c $(CFLAGS) $(APPLE_CPP_SPECIFIC_FLAGS) $(CPP_SPECIFIC_FLAGS) $< -o $@
+
+$(OBJ_DIR)/%.o: $(WRP_DIR)/%.cpp
+	@echo "Compiling $<"
+	$(CC_C) -c $(CFLAGS) $(APPLE_CPP_SPECIFIC_FLAGS) $(CPP_SPECIFIC_FLAGS) $< -o $@
+
 $(OBJ_DIR)/%.o: $(WRP_DIR)/%.c
 	@echo "Compiling $<"
 	$(CC_C) -c $(CFLAGS) $< -o $@

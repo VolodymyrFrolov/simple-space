@@ -16,11 +16,9 @@ const char* tag = "SimpleSpace";
 
 SimpleSpace::SimpleSpace(int Time_Step_ms) : time_step_ms(Time_Step_ms), planets_number_max(500) {
     wrp_mutex_init(&movement_step_mutex);
-    LOGD(tag, "SimpleSpace instance created with _timestep_ms: %d", get_model_time_step_ms());
 }
 SimpleSpace::~SimpleSpace() {
     wrp_mutex_destroy(&movement_step_mutex);
-    LOGD(tag, "SimpleSpace instance destroyed");
 }
 
 unsigned long SimpleSpace::get_planets_count() const {

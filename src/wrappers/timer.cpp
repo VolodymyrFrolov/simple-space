@@ -13,45 +13,44 @@
 // ********** Common Functions **********
 
 #if defined(__WIN32__)
-LARGE_INTEGER gFrequency.QuadPart = 0;
+static LARGE_INTEGER gFrequency.QuadPart = 0;
 
 void init_freq() {
-    if ((gFrequency.QuadPart == 0) &&
-        (QueryPerformanceFrequency(&gFrequency) == 0))
-        printf("Error at QueryPerformanceFrequency\n");
+    if (gFrequency.QuadPart == 0) {
+        int ret = QueryPerformanceFrequency(&gFrequency);
+        assert(ret != 0);
+    }
 }
 #endif
 
 int wrp_time_now(wrp_time_t& time) {
-    int ret = 0;
+    int ret;
     
-#if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
     ret = gettimeofday(&time, NULL);
-#elif defined(__WIN32__)
-    if (QueryPerformanceCounter(&time) == 0)
-        ret = -1;
-#endif
-    
-    if (ret != 0)
-        printf("wrp_time_now: Error\n");
-    
+    assert(ret == 0);
+    #elif defined(__WIN32__)
+    ret = QueryPerformanceCounter(&time);
+    assert(ret != 0);
+    #endif
+
     return ret;
 }
 
 unsigned long wrp_time_to_ms(const wrp_time_t& time) {
-#if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
     return time.tv_sec*1000 + time.tv_usec/1000;
-#elif defined(__WIN32__)
+    #elif defined(__WIN32__)
     return (time.QuadPart*1000) / gFrequency.QuadPart;
 #endif
 }
 
 unsigned long wrp_time_diff_ms(const wrp_time_t& earlier, const wrp_time_t& later) {
-#if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
     return (later.tv_sec - earlier.tv_sec)*1000 + (later.tv_usec - earlier.tv_usec)/1000;
-#elif defined(__WIN32__)
+    #elif defined(__WIN32__)
     return ((later.QuadPart - earlier.QuadPart)*1000) / gFrequency.QuadPart; // *1e6 to get usec
-#endif
+    #endif
 }
 
 
@@ -106,7 +105,6 @@ void Timer::stop() {
 wrp_thread_ret_t win_attr Timer::loop_func(void* arg) {
 
     if (arg == NULL) {
-        printf("Timer::loop_func: Error: arg is NULL\n");
         return (wrp_thread_ret_t)-1;
     }
 
@@ -115,9 +113,8 @@ wrp_thread_ret_t win_attr Timer::loop_func(void* arg) {
     // Check here, not constructor,
     // as currently no exception implemented in constructor
     if (pTimer->_callback == NULL) {
-        printf("ERROR: [Timer] callback is NULL\n");
         pTimer->_running = false;
-        return (void*)-10;
+        return (wrp_thread_ret_t)-1;
     }
 
     wrp_time_t current, start;
@@ -139,7 +136,7 @@ wrp_thread_ret_t win_attr Timer::loop_func(void* arg) {
 
         // Warn if callback took more time then interval
         if (wrp_time_diff_ms(start, current) > (pTimer->_interval_ms))
-            printf("Warning: [Timer] callback took more time, than interval\n");
+            printf("Timer: callback took more time, than interval\n");
 
     } while (pTimer->_running && pTimer->_repeating);
 

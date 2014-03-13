@@ -7,22 +7,27 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdarg.h> // var args
+#include <time.h>
 #include <assert.h> // #define NDEBUG will disable asserts in code
+
 #include "wrp_mutex.h"
 
 #if defined(__linux__) || defined (__APPLE__) || defined (__android__)
-    #include <pthread.h> // for thread id
+    #include <sys/time.h> // gettimeofday()
+    #include <pthread.h>  // thread id
 #elif defined(__WIN32__)
     #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN
     #endif
-    #include <windows.h> // for thread id
+    #include <windows.h>  // thread id
 #else
     #error "Unsupported platform"
 #endif
 
 // Use LOG_DEST, LOG_LEVEL, LOG_ENTER_EXIT to configure logging
-// Use INIT_LOGS
+// Use INIT_LOGS() or INIT_LOGS("file.abc") before to starting logging
+// Use DEINIT_LOGS() to close logging
 
 // Options
 #define LOG_LEVEL_DISABLED 0
@@ -80,6 +85,7 @@ void print_enter_exit_func(const char* tag, const char* file, int line, const ch
 #error "Invalid LOG_LEVEL option"
 #endif
 
+
 // LOG_ENTER_EXIT
 #if   (LOG_ENTER_EXIT == LOG_ENTER_EXIT_OFF)
 #define LOG_ENTER_FUNC(tag)
@@ -92,6 +98,7 @@ void print_enter_exit_func(const char* tag, const char* file, int line, const ch
 #else
 #error "Invalid LOG_ENTER_EXIT option"
 #endif
+
 
 // INIT / DEINIT
 void init_logs_wothout_file();

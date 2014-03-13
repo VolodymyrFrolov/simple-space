@@ -16,11 +16,11 @@
 		E7417BBB18C26CE7005F7989 /* physics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E7417BA118C26CE6005F7989 /* physics.cpp */; };
 		E7417BBC18C26CE7005F7989 /* planet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E7417BA318C26CE6005F7989 /* planet.cpp */; };
 		E7417BBD18C26CE7005F7989 /* simplespace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E7417BA518C26CE6005F7989 /* simplespace.cpp */; };
-		E7417BBE18C26CE7005F7989 /* timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E7417BA718C26CE6005F7989 /* timer.cpp */; };
 		E7417BC118C26CE7005F7989 /* wrp_common.c in Sources */ = {isa = PBXBuildFile; fileRef = E7417BAD18C26CE6005F7989 /* wrp_common.c */; };
 		E7417BC218C26CE7005F7989 /* wrp_cond.c in Sources */ = {isa = PBXBuildFile; fileRef = E7417BAF18C26CE7005F7989 /* wrp_cond.c */; };
 		E7417BC318C26CE7005F7989 /* wrp_mutex.c in Sources */ = {isa = PBXBuildFile; fileRef = E7417BB118C26CE7005F7989 /* wrp_mutex.c */; };
 		E7417BC418C26CE7005F7989 /* wrp_thread.c in Sources */ = {isa = PBXBuildFile; fileRef = E7417BB318C26CE7005F7989 /* wrp_thread.c */; };
+		E77CB4DF18D25B100082204E /* timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E77CB4DE18D25B100082204E /* timer.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -52,8 +52,6 @@
 		E7417BA418C26CE6005F7989 /* planet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = planet.h; sourceTree = "<group>"; };
 		E7417BA518C26CE6005F7989 /* simplespace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = simplespace.cpp; sourceTree = "<group>"; };
 		E7417BA618C26CE6005F7989 /* simplespace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = simplespace.h; sourceTree = "<group>"; };
-		E7417BA718C26CE6005F7989 /* timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timer.cpp; sourceTree = "<group>"; };
-		E7417BA818C26CE6005F7989 /* timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = timer.h; sourceTree = "<group>"; };
 		E7417BAD18C26CE6005F7989 /* wrp_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_common.c; sourceTree = "<group>"; };
 		E7417BAE18C26CE6005F7989 /* wrp_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_common.h; sourceTree = "<group>"; };
 		E7417BAF18C26CE7005F7989 /* wrp_cond.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_cond.c; sourceTree = "<group>"; };
@@ -62,6 +60,8 @@
 		E7417BB218C26CE7005F7989 /* wrp_mutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_mutex.h; sourceTree = "<group>"; };
 		E7417BB318C26CE7005F7989 /* wrp_thread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_thread.c; sourceTree = "<group>"; };
 		E7417BB418C26CE7005F7989 /* wrp_thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_thread.h; sourceTree = "<group>"; };
+		E77CB4DD18D25B070082204E /* timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = timer.h; sourceTree = "<group>"; };
+		E77CB4DE18D25B100082204E /* timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timer.cpp; sourceTree = "<group>"; };
 		E7B5189A16C31226001212E3 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		E7B5189B16C31226001212E3 /* simple_space.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; path = simple_space.1; sourceTree = "<group>"; };
 		E7D84C1416C30D25000EF9B6 /* simple-space */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "simple-space"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -121,8 +121,6 @@
 				E7417B9D18C26CE6005F7989 /* controls.cpp */,
 				E7417BA018C26CE6005F7989 /* mouse_and_keyboard.h */,
 				E7417B9F18C26CE6005F7989 /* mouse_and_keyboard.cpp */,
-				E7417BA818C26CE6005F7989 /* timer.h */,
-				E7417BA718C26CE6005F7989 /* timer.cpp */,
 			);
 			name = simplespace;
 			path = src/simplespace;
@@ -133,6 +131,8 @@
 			children = (
 				E7417BAE18C26CE6005F7989 /* wrp_common.h */,
 				E7417BAD18C26CE6005F7989 /* wrp_common.c */,
+				E77CB4DD18D25B070082204E /* timer.h */,
+				E77CB4DE18D25B100082204E /* timer.cpp */,
 				E7417BB218C26CE7005F7989 /* wrp_mutex.h */,
 				E7417BB118C26CE7005F7989 /* wrp_mutex.c */,
 				E7417BB418C26CE7005F7989 /* wrp_thread.h */,
@@ -219,7 +219,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E7417BC318C26CE7005F7989 /* wrp_mutex.c in Sources */,
-				E7417BBE18C26CE7005F7989 /* timer.cpp in Sources */,
 				E7417BBD18C26CE7005F7989 /* simplespace.cpp in Sources */,
 				E7417BBA18C26CE7005F7989 /* mouse_and_keyboard.cpp in Sources */,
 				E7417BC118C26CE7005F7989 /* wrp_common.c in Sources */,
@@ -229,6 +228,7 @@
 				E7417BB518C26CE7005F7989 /* main.cpp in Sources */,
 				E7417BC418C26CE7005F7989 /* wrp_thread.c in Sources */,
 				E7417BBC18C26CE7005F7989 /* planet.cpp in Sources */,
+				E77CB4DF18D25B100082204E /* timer.cpp in Sources */,
 				E7417BC218C26CE7005F7989 /* wrp_cond.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

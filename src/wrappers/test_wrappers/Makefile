@@ -24,9 +24,9 @@ LFLAGS = -lpthread -ldl
 endif
 
 files_c = $(wildcard $(src_dir)/*.c)
-#files_cpp = $(wildcard $(src_dir)/*.cpp)
+files_cpp = $(wildcard $(src_dir)/*.cpp)
 objects = $(patsubst $(src_dir)/%.c, $(obj_dir)/%.o, $(files_c))
-#objects += $(patsubst $(src_dir)/%.cpp, $(obj_dir)/%.o, $(files_cpp))
+objects += $(patsubst $(src_dir)/%.cpp, $(obj_dir)/%.o, $(files_cpp))
 objects += $(obj_dir)/test_wrappers.o
 
 .PHONY: all
@@ -42,9 +42,9 @@ $(obj_dir)/%.o: $(src_dir)/%.c
 	@echo "Compiling $<"
 	$(CC_C) -c $(CFLAGS) $< -o $@
 
-#$(obj_dir)/%.o: $(src_dir)/%.cpp
-#	@echo "Compiling $<"
-#	$(CC_CPP) -c $(CFLAGS) $< -o $@
+$(obj_dir)/%.o: $(src_dir)/%.cpp
+	@echo "Compiling $<"
+	$(CC_CPP) -c $(CFLAGS) $< -o $@
 
 $(obj_dir)/test_wrappers.o: ./test_wrappers.c	
 	@echo "Compiling $<"

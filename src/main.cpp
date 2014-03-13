@@ -51,9 +51,7 @@ using std::endl;
 //FT_Library  ft_library; // FreeType library handler
 //FT_Face     face;       // Face object handler
 
-#if defined(__WIN32__)
-LARGE_INTEGER gSystemFrequency;
-#endif
+const char* LogTag = "SimpleSapce";
 
 const int frame_rate = 60;
 
@@ -868,6 +866,9 @@ void initRendering() {
 //int main(int argc, const char * argv[])
 int main(int argc, char * argv[])
 {
+    INIT_LOGS("space.log");
+    LOGD(LogTag, "mian function started, testing logs");
+
     // Seed for random values
     srand(static_cast<unsigned int>(time(NULL)));
 
@@ -1006,8 +1007,6 @@ int main(int argc, char * argv[])
     glutMainLoop();
 
     // Never get here
+    DEINIT_LOGS();
     return 0;
 }
-
-// Known bugs:
-// 1. System constantly gains energy during long continious collision

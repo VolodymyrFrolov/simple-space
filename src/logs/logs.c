@@ -2,8 +2,6 @@
  * logs.c
  */
 
-#include <stdarg.h> // var args
-#include <time.h>
 #include "logs.h"
 
 #if defined(__linux__) || defined (__APPLE__) || defined (__android__)
@@ -18,6 +16,13 @@ static bool logs_init_done = false;
 static FILE* p_log_file = NULL;
 static wrp_mutex_t log_mutex;
 
+// These time valuse are for milliseconds in logs
+#if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+static struct timeval gTimeForMs;
+#elif defined(__WIN32__)
+static SYSTEMTIME gTimeForMs;
+#endif
+
 void init_logs_wothout_file() {
     if (!logs_init_done) {
         wrp_mutex_init(&log_mutex);
@@ -28,13 +33,16 @@ void init_logs_wothout_file() {
 void init_logs_with_file(const char* filename) {
     if (!logs_init_done) {
         wrp_mutex_init(&log_mutex);
-        if (filename == NULL && filename[0] == '\0') {
+
+        if ((filename == NULL) || (filename[0] == '\0')) {
             assert(0); // Error case
         }
+
         p_log_file = fopen(filename, "w");
         if (p_log_file == NULL) {
             assert(0); // Error case
         }
+
         logs_init_done = true;
     }
 }
@@ -42,16 +50,37 @@ void init_logs_with_file(const char* filename) {
 void deinit_logs_func() {
     if (logs_init_done) {
         wrp_mutex_destroy(&log_mutex);
+
         if ((LOG_DEST == LOG_DEST_FILE) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
             if (p_log_file == NULL) {
                 assert(0); // Error case
             }
+
             int ret = fclose(p_log_file);
             assert(ret == 0);
             p_log_file = NULL;
         }
+
         logs_init_done = false;
     }
+}
+
+// Used internally only
+unsigned long get_current_milliseconds() {
+
+    int retval;
+    int retcode;
+
+    #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    retcode = gettimeofday(&gTimeForMs, NULL);
+    assert(retcode == 0);
+    retval = gTimeForMs.tv_usec/1000;
+    #elif defined(__WIN32__)
+    GetSystemTime(&gTimeForMs);
+    retval = gTimeForMs.wMilliseconds;
+    #endif
+
+    return retval;
 }
 
 void print_usr_log(int type, const char* tag, const char* file, int line, const char* func, const char* usrfmt, ...)
@@ -87,9 +116,10 @@ void print_usr_log(int type, const char* tag, const char* file, int line, const 
     strftime(timestamp, sizeof(timestamp), "%d/%m/%Y %H:%M:%S", tm_struct);
 
     unsigned long thread_id = (unsigned long)get_thread_id();
+    unsigned long ms = get_current_milliseconds();
 
     // Stamp (full, including timestamp)
-    snprintf(stamp, sizeof(stamp), "%s %lu %c [%s] %s:%-3d %s: ", timestamp, thread_id, type_ch, tag, file, line, func);
+    snprintf(stamp, sizeof(stamp), "%s.%lu %lu %c [%s] %s:%-3d %s: ", timestamp, ms, thread_id, type_ch, tag, file, line, func);
 
     // User message from usrfmt and args
     va_start(args, usrfmt);
@@ -135,8 +165,9 @@ void print_enter_exit_func(const char* tag, const char* file, int line, const ch
     }
 
     unsigned long thread_id = (unsigned long)get_thread_id();
+    unsigned long ms = get_current_milliseconds();
 
-    snprintf(full_msg, sizeof(full_msg), "%s %lu %c [%s] %s:%-3d %s: %s", timestamp, thread_id, type_ch, tag, file, line, func, type_str);
+    snprintf(full_msg, sizeof(full_msg), "%s.%lu %lu %c [%s] %s:%-3d %s: %s", timestamp, ms, thread_id, type_ch, tag, file, line, func, type_str);
 
     // Final print to stdout
     if ((LOG_DEST == LOG_DEST_STDOUT) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
