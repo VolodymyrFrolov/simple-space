@@ -1,69 +1,71 @@
 
-#include <stdio.h>
 #include "wrp_thread.h"
 
-int wrp_thread_create(wrp_thread_t* thread, wrp_thread_func_t func, void* arg) {
-    int ret = 0;
+
+void wrp_thread_create(wrp_thread_t* thread, wrp_thread_func_t func, void* arg, bool joinable) {
+    int ret;
 
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    pthread_attr_t attr;
+    if (!joinable) {
+        ret = pthread_attr_init(&attr);
+        assert(ret == 0);
+        ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        assert(ret == 0);
+    }
+
     ret = pthread_create(thread, NULL, func, arg);
+    assert(ret == 0);
+
+    if (!joinable) {
+        ret = pthread_attr_destroy(&attr);
+        assert(ret == 0);
+    }
 
     #elif defined(__WIN32__)
     *thread = CreateThread(NULL, 0, func, arg, 0, NULL);
-    if (*thread == NULL)
-        ret = -1;
-    #endif
+    assert(*thread != NULL);
 
-    if (ret != 0)
-        printf("wrp_thread_create: ERROR\n");
-    return ret;
+    if (!joinable) {
+        ret = CloseHandle(thread);
+        assert(ret != 0);
+    }
+    #endif
 }
 
-int wrp_thread_join(wrp_thread_t thread, wrp_thread_ret_t* wrp_thread_ret) {
-    int ret = 0;
+void wrp_thread_join(wrp_thread_t thread, wrp_thread_ret_t* wrp_thread_ret) {
+    int ret;
 
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
     ret = pthread_join(thread, wrp_thread_ret);
-    if (ret != 0) {
-        printf("wrp_thread_join: ERROR\n");
-    }
-    return ret;
+    assert(ret == 0);
 
     #elif defined(__WIN32__)
-    ret = WaitForSingleObject(thread, INFINITE);
-    if (ret != WAIT_OBJECT_0) {
-        printf("wrp_thread_join: ERROR\n");
-        return ret;
-    }
+    ret = WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0);
+    assert(ret == WAIT_OBJECT_0);
 
     if (wrp_thread_ret != NULL) {
-        if (GetExitCodeThread(thread, wrp_thread_ret) == 0) {
-            printf("wrp_thread_join: ERROR\n");
-            return -1;
-        }
+        ret = GetExitCodeThread(thread, wrp_thread_ret);
+        assert(ret != 0);
     }
 
-    if (CloseHandle(thread) == 0) {
-        printf("wrp_thread_join: ERROR\n");
-        ret = -1;
-    }
-
-    return ret;
+    ret = CloseHandle(thread);
+    assert(ret != 0);
     #endif
 }
 
-int wrp_thread_terminate(wrp_thread_t thread) {
-    int ret = 0;
+void wrp_thread_terminate(wrp_thread_t thread) {
+    int ret;
 
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
     ret = pthread_cancel(thread);
+    assert(ret == 0);
 
     #elif defined(__WIN32__)
-    if (TerminateThread(thread, WRP_THREAD_TERMINATED) == 0)
-        ret = -1;
+    ret = TerminateThread(thread, WRP_THREAD_TERMINATED);
+    assert(ret != 0);
+    
+    ret = CloseHandle(thread);
+    assert(ret != 0);
     #endif
-
-    if (ret != 0)
-        printf("wrp_thread_terminate: ERROR\n");
-    return ret;
 }

@@ -14,15 +14,14 @@
 #ifndef __timer__simplespace__
 #define __timer__simplespace__
 
-#include <iostream>
-#include <sys/time.h> // gettimeofday()
-//#include <time.h>
 extern "C" {
+#include "wrp_common.h"
 #include "wrp_mutex.h"
 #include "wrp_thread.h"
 }
 
 #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
+    #include <sys/time.h> // gettimeofday()
     #define wrp_time_t timeval
 
 #elif defined(__WIN32__)
@@ -76,7 +75,7 @@ public:
     ~StopWatch();
     void start();
     void stop();
-    unsigned long time_elaplsed_usec() const;
+    unsigned long time_elaplsed_ms() const;
     bool running() const;
 };
 

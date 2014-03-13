@@ -165,9 +165,9 @@ void onTimer(int next_timer_tick) {
     need_to_render_scene = true;
     glutPostRedisplay();
 
-    int corrected_period = next_timer_tick - int(pStopWatch->time_elaplsed_usec()/1000);
+    int corrected_period = next_timer_tick - int(pStopWatch->time_elaplsed_ms());
     if (corrected_period < 0) {
-        cout << "    Warning: [onTimer] FPS degradation; calculation took: " << pStopWatch->time_elaplsed_usec()/1000 << "ms (> " << next_timer_tick << "ms)" << endl;
+        cout << "    Warning: [onTimer] FPS degradation; calculation took: " << pStopWatch->time_elaplsed_ms() << "ms (> " << next_timer_tick << "ms)" << endl;
         corrected_period = 0;
     }
 

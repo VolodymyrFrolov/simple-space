@@ -10,8 +10,7 @@ void func() {
 }
 
 int main() {
-    init_logs();
-    init_write_logs_to_file("test_logs.log");
+    INIT_LOGS("test_logs.log");
     LOG_ENTER_FUNC(tag);
 
     LOGE(tag, "this is error log");
@@ -21,8 +20,7 @@ int main() {
     func();
 
     LOG_EXIT_FUNC(tag);
-    deinit_write_logs_to_file();
-    deinit_logs();
+    DEINIT_LOGS();
 
     return 0;
 }

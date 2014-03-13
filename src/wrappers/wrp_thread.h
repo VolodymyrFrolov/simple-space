@@ -2,11 +2,14 @@
 #ifndef WRP_THREAD_H_
 #define WRP_THREAD_H_
 
+#include <stdbool.h>
+#include <assert.h> // #define NDEBUG will disable asserts in code
+
 #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
     #include <pthread.h>
     #define wrp_thread_t pthread_t
     #define wrp_thread_ret_t void*
-    #define win_attr // windows specific attribute
+    #define win_attr // win-specific attribute
     #define WRP_THREAD_TERMINATED PTHREAD_CANCELED
 
 #elif defined(__WIN32__)
@@ -26,8 +29,8 @@
 
 typedef wrp_thread_ret_t win_attr (*wrp_thread_func_t)(void* arg);
 
-int wrp_thread_create(wrp_thread_t* thread, wrp_thread_func_t func, void* arg);
-int wrp_thread_join(wrp_thread_t thread, wrp_thread_ret_t* wrp_thread_ret);
-int wrp_thread_terminate(wrp_thread_t thread); // Use this only in extreme situations
+void wrp_thread_create(wrp_thread_t* thread, wrp_thread_func_t func, void* arg, bool joinable);
+void wrp_thread_join(wrp_thread_t thread, wrp_thread_ret_t* wrp_thread_ret);
+void wrp_thread_terminate(wrp_thread_t thread); // Use this only, when no choice left
 
 #endif /* WRP_THREAD_H_ */

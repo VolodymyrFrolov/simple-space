@@ -14,54 +14,44 @@
     #error "Unsupported platform"
 #endif
 
+static bool logs_init_done = false;
 static FILE* p_log_file = NULL;
 static wrp_mutex_t log_mutex;
-bool logs_init_done = false;
 
-int init_logs() {
-    int ret = wrp_mutex_init(&log_mutex);
-    if (ret != 0) {
-        printf("init_logs: Error: pthread_mutex_init ret:[%d]\n", ret);
-    } else {
+void init_logs_wothout_file() {
+    if (!logs_init_done) {
+        wrp_mutex_init(&log_mutex);
         logs_init_done = true;
     }
-    return ret;
 }
 
-int deinit_logs() {
-    int ret = wrp_mutex_destroy(&log_mutex);
-    if (ret != 0) {
-        printf("init_logs: Error: pthread_mutex_destroy ret:[%d]\n", ret);
-    } else {
+void init_logs_with_file(const char* filename) {
+    if (!logs_init_done) {
+        wrp_mutex_init(&log_mutex);
+        if (filename == NULL && filename[0] == '\0') {
+            assert(0); // Error case
+        }
+        p_log_file = fopen(filename, "w");
+        if (p_log_file == NULL) {
+            assert(0); // Error case
+        }
+        logs_init_done = true;
+    }
+}
+
+void deinit_logs_func() {
+    if (logs_init_done) {
+        wrp_mutex_destroy(&log_mutex);
+        if ((LOG_DEST == LOG_DEST_FILE) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
+            if (p_log_file == NULL) {
+                assert(0); // Error case
+            }
+            int ret = fclose(p_log_file);
+            assert(ret == 0);
+            p_log_file = NULL;
+        }
         logs_init_done = false;
     }
-    return ret;
-}
-
-int init_write_logs_to_file(const char* file_name) {
-    if (!logs_init_done || p_log_file != NULL) {
-        printf("init_write_logs_to_file: Error: logs are not inited or log file is already opened\n");
-        return -1;
-    }
-
-    p_log_file = fopen(file_name, "w");
-
-    if (p_log_file == NULL) {
-        printf("init_write_logs_to_file: Error: log file could not be created/opened\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-int deinit_write_logs_to_file() {
-    if (p_log_file == NULL) {
-        printf("deinit_write_logs_to_file: Error: log file is already closed\n");
-        return -1;
-    }
-    fclose(p_log_file);
-    p_log_file = NULL;
-    return 0;
 }
 
 void print_usr_log(int type, const char* tag, const char* file, int line, const char* func, const char* usrfmt, ...)
@@ -87,10 +77,7 @@ void print_usr_log(int type, const char* tag, const char* file, int line, const 
             break;
     }
 
-    if (logs_init_done) {
-        if (wrp_mutex_lock(&log_mutex) != 0)
-            printf("print_usr_log: Error locking mutex\n");
-    }
+    wrp_mutex_lock(&log_mutex);
 
     va_list args;
    
@@ -108,21 +95,20 @@ void print_usr_log(int type, const char* tag, const char* file, int line, const 
     va_start(args, usrfmt);
     vsnprintf(usrmes, sizeof(usrmes), usrfmt, args);
 
-    // Final print
-    //printf("%s%s\n", stamp, usrmes);
+    // Final print to stdout
+    if ((LOG_DEST == LOG_DEST_STDOUT) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
+        printf("%s%s\n", stamp, usrmes);
+    }
 
-    // Copy log to file
-    if (p_log_file != NULL) {
+    // Final print to file
+    if ((LOG_DEST == LOG_DEST_FILE) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
         fprintf(p_log_file, "%s%s\n", stamp, usrmes);
         fflush(p_log_file);
     }
 
     va_end (args);
 
-    if (logs_init_done) {
-        if (wrp_mutex_unlock(&log_mutex) != 0)
-            printf("print_usr_log: Error unlocking mutex\n");
-    }
+    wrp_mutex_unlock(&log_mutex);
 }
 
 void print_enter_exit_func(const char* tag, const char* file, int line, const char* func, bool enter_func)
@@ -133,10 +119,7 @@ void print_enter_exit_func(const char* tag, const char* file, int line, const ch
     char type_ch;
     const char* type_str;
 
-    if (logs_init_done) {
-        if (wrp_mutex_lock(&log_mutex) != 0)
-            printf("print_enter_exit_func: Error locking mutex\n");
-    }
+    wrp_mutex_lock(&log_mutex);
 
     time_t now = time(0);
     struct tm* tm_struct = localtime(&now);
@@ -155,17 +138,16 @@ void print_enter_exit_func(const char* tag, const char* file, int line, const ch
 
     snprintf(full_msg, sizeof(full_msg), "%s %lu %c [%s] %s:%-3d %s: %s", timestamp, thread_id, type_ch, tag, file, line, func, type_str);
 
-    // Final print    
-    //printf("%s\n", full_msg);
+    // Final print to stdout
+    if ((LOG_DEST == LOG_DEST_STDOUT) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
+        printf("%s\n", full_msg);
+    }
 
-    // Copy log to file
-    if (p_log_file != NULL) {
+    // Final print to file
+    if ((LOG_DEST == LOG_DEST_FILE) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
         fprintf(p_log_file, "%s\n", full_msg);
         fflush(p_log_file);
     }
     
-    if (logs_init_done) {
-        if (wrp_mutex_unlock(&log_mutex) != 0)
-            printf("print_enter_exit_func: Error unlocking mutex\n");
-    }
+    wrp_mutex_unlock(&log_mutex);
 }

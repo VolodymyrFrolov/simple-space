@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include <unistd.h> // usleep()
 #include <stdbool.h>
 
 #include "wrp_mutex.h"
@@ -83,9 +82,9 @@ int main(void) {
     printf("Test Case 1: Started\n");
     wrp_mutex_init(&the_mutex);
 
-    wrp_thread_create(&thread1, some_func, (void*)1);
+    wrp_thread_create(&thread1, some_func, (void*)1, true);
     wrp_sleep_ms(50);
-    wrp_thread_create(&thread2, some_func, (void*)2);
+    wrp_thread_create(&thread2, some_func, (void*)2, true);
 
     wrp_thread_ret_t ret1;
     wrp_thread_ret_t ret2;
@@ -103,9 +102,9 @@ int main(void) {
     wrp_mutex_init(&the_mutex);
     wrp_cond_init(&the_cond);
 
-    wrp_thread_create(&thread1, consumer_func, (void*)3);
+    wrp_thread_create(&thread1, consumer_func, (void*)3, true);
     wrp_sleep_ms(50);
-    wrp_thread_create(&thread2, producer_func, (void*)3);
+    wrp_thread_create(&thread2, producer_func, (void*)3, true);
     
     wrp_thread_join(thread1, NULL);
     wrp_thread_join(thread2, NULL);

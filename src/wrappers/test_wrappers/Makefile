@@ -15,7 +15,7 @@ endif
 
 CC_C = gcc
 CC_CPP = g++
-CFLAGS = -g -Wall -MMD -MP -D"LOG_LEVEL=$(LOG_LEVEL)" -D"LOG_ENTER_EXIT=$(LOG_ENTER_EXIT)" -I$(inc_dir)
+CFLAGS = -g -Wall -MMD -MP -I$(inc_dir)
 
 ifeq ($(OS), Windows_NT)
 @echo "Compiling for Windows"

@@ -6,10 +6,9 @@
 //  Copyright (c) 2013 Vladimir Frolov. All rights reserved.
 //
 
+#include <stdio.h>
+
 #include "timer.h"
-#include <unistd.h>
-using std::cout;
-using std::endl;
 
 // ********** Common Functions **********
 
@@ -90,7 +89,7 @@ void Timer::start() {
 
     if (!_running) {
         _running = true;
-        wrp_thread_create(&loop_thread, Timer::loop_func, this);
+        wrp_thread_create(&loop_thread, Timer::loop_func, this, true);
     }
     wrp_mutex_unlock(&state_lock);
 }
@@ -99,8 +98,7 @@ void Timer::stop() {
     wrp_mutex_lock(&state_lock);
     if (_running) {
         _running = false;
-        if (wrp_thread_join(loop_thread, NULL) != 0)
-            printf("Timer::stop: Error on joining thread\n");
+        wrp_thread_join(loop_thread, NULL);
     }
     wrp_mutex_unlock(&state_lock);
 }
@@ -117,7 +115,7 @@ wrp_thread_ret_t win_attr Timer::loop_func(void* arg) {
     // Check here, not constructor,
     // as currently no exception implemented in constructor
     if (pTimer->_callback == NULL) {
-        cout << "ERROR: [Timer] callback is NULL" << endl;
+        printf("ERROR: [Timer] callback is NULL\n");
         pTimer->_running = false;
         return (void*)-10;
     }
@@ -128,7 +126,7 @@ wrp_thread_ret_t win_attr Timer::loop_func(void* arg) {
 
     do {
         while ((wrp_time_diff_ms(start, current) < (pTimer->_interval_ms)) && pTimer->_running) {
-            usleep(1000); // 1ms
+            wrp_sleep_ms(10);
             wrp_time_now(current);
         }
 
@@ -141,7 +139,7 @@ wrp_thread_ret_t win_attr Timer::loop_func(void* arg) {
 
         // Warn if callback took more time then interval
         if (wrp_time_diff_ms(start, current) > (pTimer->_interval_ms))
-            cout << "Warning: [Timer] callback took more time, than interval" << endl;
+            printf("Warning: [Timer] callback took more time, than interval\n");
 
     } while (pTimer->_running && pTimer->_repeating);
 
@@ -188,7 +186,7 @@ void StopWatch::stop() {
     wrp_mutex_unlock(&state_lock);
 }
 
-unsigned long StopWatch::time_elaplsed_usec() const {
+unsigned long StopWatch::time_elaplsed_ms() const {
     if (_running) {
         wrp_time_t now;
         wrp_time_now(now);

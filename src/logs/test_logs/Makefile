@@ -14,8 +14,12 @@ ifndef LOG_ENTER_EXIT
 LOG_ENTER_EXIT = 0
 endif
 
+ifndef LOG_DEST
+LOG_DEST = 3
+endif
+
 CC_C = gcc
-CFLAGS = -g -Wall -MMD -MP -D"LOG_LEVEL=$(LOG_LEVEL)" -D"LOG_ENTER_EXIT=$(LOG_ENTER_EXIT)" -I$(inc_dir) -I$(wrappers_dir)
+CFLAGS = -g -Wall -MMD -MP -D"LOG_LEVEL=$(LOG_LEVEL)" -D"LOG_ENTER_EXIT=$(LOG_ENTER_EXIT)" -D"LOG_DEST=$(LOG_DEST)" -I$(inc_dir) -I$(wrappers_dir)
 LFLAGS =
 
 files_c = $(wildcard $(src_dir)/*.c)
