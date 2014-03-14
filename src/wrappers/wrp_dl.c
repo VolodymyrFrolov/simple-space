@@ -20,14 +20,12 @@ int wrp_load_function(void** p_func_prt, wrp_library_handle lib_handle, const ch
 }
 
 void wrp_close_library(wrp_library_handle lib_handle) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = dlclose(lib_handle);
+    int ret = dlclose(lib_handle);
     assert(ret == 0);
 
     #elif defined(__WIN32__)
-    ret = FreeLibrary(lib_handle);
+    int ret = FreeLibrary(lib_handle);
     assert(ret != 0);
     #endif
 }

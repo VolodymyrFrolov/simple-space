@@ -20,6 +20,7 @@
 		E7417BC218C26CE7005F7989 /* wrp_cond.c in Sources */ = {isa = PBXBuildFile; fileRef = E7417BAF18C26CE7005F7989 /* wrp_cond.c */; };
 		E7417BC318C26CE7005F7989 /* wrp_mutex.c in Sources */ = {isa = PBXBuildFile; fileRef = E7417BB118C26CE7005F7989 /* wrp_mutex.c */; };
 		E7417BC418C26CE7005F7989 /* wrp_thread.c in Sources */ = {isa = PBXBuildFile; fileRef = E7417BB318C26CE7005F7989 /* wrp_thread.c */; };
+		E77A4A6518D2F63B00DA630F /* wrp_dl.c in Sources */ = {isa = PBXBuildFile; fileRef = E77A4A6418D2F63B00DA630F /* wrp_dl.c */; };
 		E77CB4DF18D25B100082204E /* timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E77CB4DE18D25B100082204E /* timer.cpp */; };
 /* End PBXBuildFile section */
 
@@ -60,6 +61,8 @@
 		E7417BB218C26CE7005F7989 /* wrp_mutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_mutex.h; sourceTree = "<group>"; };
 		E7417BB318C26CE7005F7989 /* wrp_thread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_thread.c; sourceTree = "<group>"; };
 		E7417BB418C26CE7005F7989 /* wrp_thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_thread.h; sourceTree = "<group>"; };
+		E77A4A6318D2F63B00DA630F /* wrp_dl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_dl.h; sourceTree = "<group>"; };
+		E77A4A6418D2F63B00DA630F /* wrp_dl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_dl.c; sourceTree = "<group>"; };
 		E77CB4DD18D25B070082204E /* timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = timer.h; sourceTree = "<group>"; };
 		E77CB4DE18D25B100082204E /* timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timer.cpp; sourceTree = "<group>"; };
 		E7B5189A16C31226001212E3 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
@@ -139,6 +142,8 @@
 				E7417BB318C26CE7005F7989 /* wrp_thread.c */,
 				E7417BB018C26CE7005F7989 /* wrp_cond.h */,
 				E7417BAF18C26CE7005F7989 /* wrp_cond.c */,
+				E77A4A6318D2F63B00DA630F /* wrp_dl.h */,
+				E77A4A6418D2F63B00DA630F /* wrp_dl.c */,
 			);
 			name = wrappers;
 			path = src/wrappers;
@@ -218,6 +223,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E77A4A6518D2F63B00DA630F /* wrp_dl.c in Sources */,
 				E7417BC318C26CE7005F7989 /* wrp_mutex.c in Sources */,
 				E7417BBD18C26CE7005F7989 /* simplespace.cpp in Sources */,
 				E7417BBA18C26CE7005F7989 /* mouse_and_keyboard.cpp in Sources */,

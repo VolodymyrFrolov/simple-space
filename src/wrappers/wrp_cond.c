@@ -2,10 +2,8 @@
 #include "wrp_cond.h"
 
 void wrp_cond_init(wrp_cond_t* cond) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = pthread_cond_init(cond, NULL);
+    int ret = pthread_cond_init(cond, NULL);
     assert(ret == 0);
 
     #elif defined(__WIN32__)
@@ -15,10 +13,8 @@ void wrp_cond_init(wrp_cond_t* cond) {
 }
 
 void wrp_cond_destroy(wrp_cond_t* cond) {
-    int ret = 0;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = pthread_cond_destroy(cond);
+    int ret = pthread_cond_destroy(cond);
     assert(ret == 0);
 
     #elif defined(__WIN32__)
@@ -70,14 +66,12 @@ int wrp_cond_wait(wrp_cond_t* cond, wrp_mutex_t* mutex, unsigned long timeout_ms
 }
 
 void wrp_cond_signal(wrp_cond_t* cond) {
-    int ret;
-
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = pthread_cond_signal(cond);
+    int ret = pthread_cond_signal(cond);
     assert(ret == 0);
     
     #elif defined(__WIN32__)
-    ret = SetEvent(*cond);
+    int ret = SetEvent(*cond);
     assert(ret != 0);
     #endif
 }

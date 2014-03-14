@@ -3,7 +3,7 @@
 
 void wrp_mutex_init(wrp_mutex_t* mutex) {
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    int = ret = pthread_mutex_init(mutex, NULL);
+    int ret = pthread_mutex_init(mutex, NULL);
     assert(ret == 0);
     #elif defined(__WIN32__)
     InitializeCriticalSection(mutex);

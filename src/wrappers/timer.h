@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 // ********** Common Functions **********
-int           wrp_time_now(wrp_time_t& time);
+void          wrp_time_now(wrp_time_t& time);
 unsigned long wrp_time_to_ms(const wrp_time_t& time);
 unsigned long wrp_time_diff_ms(const wrp_time_t& earlier, const wrp_time_t& later);
 

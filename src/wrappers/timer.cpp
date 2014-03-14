@@ -23,18 +23,14 @@ void init_freq() {
 }
 #endif
 
-int wrp_time_now(wrp_time_t& time) {
-    int ret;
-    
+void wrp_time_now(wrp_time_t& time) {
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    ret = gettimeofday(&time, NULL);
+    int ret = gettimeofday(&time, NULL);
     assert(ret == 0);
     #elif defined(__WIN32__)
-    ret = QueryPerformanceCounter(&time);
+    int ret = QueryPerformanceCounter(&time);
     assert(ret != 0);
     #endif
-
-    return ret;
 }
 
 unsigned long wrp_time_to_ms(const wrp_time_t& time) {
