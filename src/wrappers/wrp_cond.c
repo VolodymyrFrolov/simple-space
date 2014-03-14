@@ -18,7 +18,7 @@ void wrp_cond_destroy(wrp_cond_t* cond) {
     assert(ret == 0);
 
     #elif defined(__WIN32__)
-    ret = CloseHandle(*cond);
+    int ret = CloseHandle(*cond);
     assert(ret != 0);
     #endif
 }

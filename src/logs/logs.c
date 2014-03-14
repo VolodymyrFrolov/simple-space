@@ -68,19 +68,18 @@ void deinit_logs_func() {
 // Used internally only
 unsigned long get_current_milliseconds() {
 
-    int retval;
-    int retcode;
+    int milliseconds;
 
     #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    retcode = gettimeofday(&gTimeForMs, NULL);
-    assert(retcode == 0);
-    retval = gTimeForMs.tv_usec/1000;
+    int ret = gettimeofday(&gTimeForMs, NULL);
+    assert(ret == 0);
+    milliseconds = gTimeForMs.tv_usec/1000;
     #elif defined(__WIN32__)
     GetSystemTime(&gTimeForMs);
-    retval = gTimeForMs.wMilliseconds;
+    milliseconds = gTimeForMs.wMilliseconds;
     #endif
 
-    return retval;
+    return milliseconds;
 }
 
 void print_usr_log(int type, const char* tag, const char* file, int line, const char* func, const char* usrfmt, ...)
