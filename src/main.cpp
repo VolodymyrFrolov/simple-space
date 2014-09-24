@@ -868,7 +868,7 @@ void initRendering() {
 //int main(int argc, const char * argv[])
 int main(int argc, char * argv[])
 {
-    INIT_LOGS("space.log");
+    INIT_LOGS();
     LOGD(LogTag, "mian function started, testing logs");
 
     // Seed for random values
