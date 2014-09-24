@@ -6,6 +6,8 @@
 //  Copyright (c) 2013 Vladimir Frolov. All rights reserved.
 //
 
+// Test change
+
 #include <iostream>
 using std::cout;
 using std::endl;
