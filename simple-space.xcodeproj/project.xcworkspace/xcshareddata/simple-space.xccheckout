@@ -10,29 +10,29 @@
 	<string>simple-space</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>7D56797A-C89A-4588-88FC-B13ECDB61770</key>
+		<key>6F706D1CA2F136F5F993FA068FEF5BB3E37DB5B3</key>
 		<string>ssh://github.com/VolodymyrFrolov/simple-space.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>simple-space.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>7D56797A-C89A-4588-88FC-B13ECDB61770</key>
+		<key>6F706D1CA2F136F5F993FA068FEF5BB3E37DB5B3</key>
 		<string>../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>ssh://github.com/VolodymyrFrolov/simple-space.git</string>
 	<key>IDESourceControlProjectVersion</key>
-	<integer>110</integer>
+	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>7D56797A-C89A-4588-88FC-B13ECDB61770</string>
+	<string>6F706D1CA2F136F5F993FA068FEF5BB3E37DB5B3</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>7D56797A-C89A-4588-88FC-B13ECDB61770</string>
+			<string>6F706D1CA2F136F5F993FA068FEF5BB3E37DB5B3</string>
 			<key>IDESourceControlWCCName</key>
 			<string>simple-space</string>
 		</dict>

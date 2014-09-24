@@ -3,6 +3,7 @@
  */
 
 #include "logs.h"
+#include "wrp_mutex.h"
 
 #if defined(__linux__) || defined (__APPLE__) || defined (__android__)
     #define get_thread_id() pthread_self()
@@ -13,7 +14,6 @@
 #endif
 
 static bool logs_init_done = false;
-static FILE* p_log_file = NULL;
 static wrp_mutex_t log_mutex;
 
 // These time valuse are for milliseconds in logs
@@ -23,44 +23,16 @@ static struct timeval gTimeForMs;
 static SYSTEMTIME gTimeForMs;
 #endif
 
-void init_logs_wothout_file() {
+void init_logs() {
     if (!logs_init_done) {
         wrp_mutex_init(&log_mutex);
         logs_init_done = true;
     }
 }
 
-void init_logs_with_file(const char* filename) {
-    if (!logs_init_done) {
-        wrp_mutex_init(&log_mutex);
-
-        if ((filename == NULL) || (filename[0] == '\0')) {
-            assert(0); // Error case
-        }
-
-        p_log_file = fopen(filename, "w");
-        if (p_log_file == NULL) {
-            assert(0); // Error case
-        }
-
-        logs_init_done = true;
-    }
-}
-
-void deinit_logs_func() {
+void deinit_logs() {
     if (logs_init_done) {
         wrp_mutex_destroy(&log_mutex);
-
-        if ((LOG_DEST == LOG_DEST_FILE) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
-            if (p_log_file == NULL) {
-                assert(0); // Error case
-            }
-
-            int ret = fclose(p_log_file);
-            assert(ret == 0);
-            p_log_file = NULL;
-        }
-
         logs_init_done = false;
     }
 }
@@ -94,11 +66,11 @@ void print_usr_log(int type, const char* tag, const char* file, int line, const 
         case LOG_LEVEL_ERROR:
             type_ch = 'E';
             break;
+        case LOG_LEVEL_INFO:
+            type_ch = 'I';
+            break;
         case LOG_LEVEL_DEBUG:
             type_ch = 'D';
-            break;
-        case LOG_LEVEL_VERBOSE:
-            type_ch = 'V';
             break;
         default:
             type_ch = '0'; // Should not get here
@@ -125,59 +97,9 @@ void print_usr_log(int type, const char* tag, const char* file, int line, const 
     vsnprintf(usrmes, sizeof(usrmes), usrfmt, args);
 
     // Final print to stdout
-    if ((LOG_DEST == LOG_DEST_STDOUT) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
-        printf("%s%s\n", stamp, usrmes);
-    }
-
-    // Final print to file
-    if ((LOG_DEST == LOG_DEST_FILE) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
-        fprintf(p_log_file, "%s%s\n", stamp, usrmes);
-        fflush(p_log_file);
-    }
+    printf("%s%s\n", stamp, usrmes);
 
     va_end (args);
 
-    wrp_mutex_unlock(&log_mutex);
-}
-
-void print_enter_exit_func(const char* tag, const char* file, int line, const char* func, bool enter_func)
-{
-    // Timestamp
-    char timestamp[50];
-    char full_msg[300];
-    char type_ch;
-    const char* type_str;
-
-    wrp_mutex_lock(&log_mutex);
-
-    time_t now = time(0);
-    struct tm* tm_struct = localtime(&now);
-    strftime(timestamp, sizeof(timestamp), "%d/%m/%Y %H:%M:%S", tm_struct);
-
-    // Enter/Exit label (+/-)
-    if (enter_func) {
-        type_ch = '+';
-        type_str = "ENTER";
-    } else {
-        type_ch = '-';
-        type_str = "EXIT";
-    }
-
-    unsigned long thread_id = (unsigned long)get_thread_id();
-    unsigned long ms = get_current_milliseconds();
-
-    snprintf(full_msg, sizeof(full_msg), "%s.%lu %lu %c [%s] %s:%-3d %s: %s", timestamp, ms, thread_id, type_ch, tag, file, line, func, type_str);
-
-    // Final print to stdout
-    if ((LOG_DEST == LOG_DEST_STDOUT) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
-        printf("%s\n", full_msg);
-    }
-
-    // Final print to file
-    if ((LOG_DEST == LOG_DEST_FILE) || (LOG_DEST == LOG_DEST_STDOUT_AND_FILE)) {
-        fprintf(p_log_file, "%s\n", full_msg);
-        fflush(p_log_file);
-    }
-    
     wrp_mutex_unlock(&log_mutex);
 }
