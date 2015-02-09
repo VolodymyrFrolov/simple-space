@@ -4,3 +4,7 @@
 # XCode project files and folder
 #*.xcodeproj
 #*.xcodeproj/*
+
+# Output files
+obj/*
+bin/*

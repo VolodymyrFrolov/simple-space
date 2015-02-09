@@ -43,8 +43,8 @@ void print_usr_log(int type, const char* tag, const char* file, int line, const 
 
 #if   (LOG_LEVEL == LOG_LEVEL_OFF)
 #define LOGE(tag, usrfmt, ...)
+#define LOGI(tag, usrfmt, ...)
 #define LOGD(tag, usrfmt, ...)
-#define LOGV(tag, usrfmt, ...)
 
 #elif (LOG_LEVEL == LOG_LEVEL_ERROR)
 #define LOGE(tag, usrfmt, ...) print_usr_log(LOG_LEVEL_ERROR, tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
