@@ -99,7 +99,7 @@ all: create_folders $(MAIN_TARGET)
 
 $(MAIN_TARGET): $(OBJECTS_NOTDIR)
 	@echo "Linking target: $@"
-	$(Q)$(CC_CPP) $(LFLAGS) $(OBJECTS) -$(LIBS) -o $(BIN_DIR)/$@
+	$(Q)$(CC_CPP) $(LFLAGS) $(OBJECTS) $(LIBS) -o $(BIN_DIR)/$@
 
 %.o: %.c
 	@echo "Compiling: $(notdir $<)"
