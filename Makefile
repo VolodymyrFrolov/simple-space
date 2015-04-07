@@ -68,6 +68,7 @@ CC_CPP = g++
 CFLAGS := -g -c -Wall -D"LOG_LEVEL=$(LOG_LEVEL)"
 LFLAGS :=
 LIBS   :=
+CPPSTD := -std=c++0x
 
 # Platform specific flags
 ifeq ($(OS), Windows_NT)
@@ -84,7 +85,6 @@ else
         # MacOS
         CFLAGS += -I/opt/X11/include
         LFLAGS += -framework GLUT -framework OpenGL
-        APPLE_CPP_SPECIFIC := -std=c++0x
     endif
 endif
 
@@ -99,7 +99,7 @@ all: create_folders $(MAIN_TARGET)
 
 $(MAIN_TARGET): $(OBJECTS_NOTDIR)
 	@echo "Linking target: $@"
-	$(Q)$(CC_CPP) $(LFLAGS) $(LIBS) $(OBJECTS) -o $(BIN_DIR)/$@
+	$(Q)$(CC_CPP) $(LFLAGS) $(OBJECTS) -$(LIBS) -o $(BIN_DIR)/$@
 
 %.o: %.c
 	@echo "Compiling: $(notdir $<)"
@@ -107,7 +107,7 @@ $(MAIN_TARGET): $(OBJECTS_NOTDIR)
 
 %.o: %.cpp
 	@echo "Compiling: $(notdir $<)"
-	$(Q)$(CC_CPP) $(CFLAGS) $(APPLE_CPP_SPECIFIC) $(INCLUDES) $< -o $(OBJ_DIR)/$@
+	$(Q)$(CC_CPP) $(CFLAGS) $(CPPSTD) $(INCLUDES) $< -o $(OBJ_DIR)/$@
 
 .PHONY: $(TESTS_TARGET)
 $(TESTS_TARGET):
@@ -144,6 +144,8 @@ clean:
 # -std=c++11
 # -framework GLU
 # -lglut -lGLU -lGL -L/usr/X11R6/lib/ -lXmu -lXi -lXext -lX11 -lXt
+#
+# Add and satisfy -Wextra & -pedantic
 #
 # VPATH may be used for vpath purpose (vpath looks to be better choice)
 #
