@@ -15,11 +15,9 @@
 		2DF1179F1A88160800B1DE2B /* planet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DF117911A88160800B1DE2B /* planet.cpp */; };
 		2DF117A01A88160800B1DE2B /* simplespace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DF117921A88160800B1DE2B /* simplespace.cpp */; };
 		2DF117A11A88160800B1DE2B /* timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DF117941A88160800B1DE2B /* timer.cpp */; };
-		2DF117A21A88160800B1DE2B /* wrp_common.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DF117951A88160800B1DE2B /* wrp_common.c */; };
-		2DF117A31A88160800B1DE2B /* wrp_cond.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DF117961A88160800B1DE2B /* wrp_cond.c */; };
-		2DF117A41A88160800B1DE2B /* wrp_dl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DF117971A88160800B1DE2B /* wrp_dl.c */; };
-		2DF117A51A88160800B1DE2B /* wrp_mutex.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DF117981A88160800B1DE2B /* wrp_mutex.c */; };
-		2DF117A61A88160800B1DE2B /* wrp_thread.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DF117991A88160800B1DE2B /* wrp_thread.c */; };
+		2DFD534F1AE810A000A86297 /* FpsCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DFD534C1AE8109F00A86297 /* FpsCounter.cpp */; };
+		2DFD53501AE810A000A86297 /* osWrappers.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DFD534D1AE810A000A86297 /* osWrappers.c */; };
+		2DFD53511AE810A000A86297 /* Stopwatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DFD534E1AE810A000A86297 /* Stopwatch.cpp */; };
 		E7131B3E16CC3AFA00B1A51B /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7131B3D16CC3AFA00B1A51B /* OpenGL.framework */; };
 		E7131B4116CC3ECD00B1A51B /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7131B4016CC3ECD00B1A51B /* GLUT.framework */; };
 /* End PBXBuildFile section */
@@ -45,11 +43,6 @@
 		2DF117801A8815EF00B1DE2B /* planet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = planet.h; sourceTree = "<group>"; };
 		2DF117811A8815EF00B1DE2B /* simplespace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = simplespace.h; sourceTree = "<group>"; };
 		2DF117831A8815EF00B1DE2B /* timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = timer.h; sourceTree = "<group>"; };
-		2DF117841A8815EF00B1DE2B /* wrp_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_common.h; sourceTree = "<group>"; };
-		2DF117851A8815EF00B1DE2B /* wrp_cond.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_cond.h; sourceTree = "<group>"; };
-		2DF117861A8815EF00B1DE2B /* wrp_dl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_dl.h; sourceTree = "<group>"; };
-		2DF117871A8815EF00B1DE2B /* wrp_mutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_mutex.h; sourceTree = "<group>"; };
-		2DF117881A8815EF00B1DE2B /* wrp_thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wrp_thread.h; sourceTree = "<group>"; };
 		2DF1178B1A88160800B1DE2B /* logs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = logs.c; sourceTree = "<group>"; };
 		2DF1178C1A88160800B1DE2B /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = src/main.cpp; sourceTree = "<group>"; };
 		2DF1178E1A88160800B1DE2B /* controls.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = controls.cpp; sourceTree = "<group>"; };
@@ -58,11 +51,12 @@
 		2DF117911A88160800B1DE2B /* planet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = planet.cpp; sourceTree = "<group>"; };
 		2DF117921A88160800B1DE2B /* simplespace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = simplespace.cpp; sourceTree = "<group>"; };
 		2DF117941A88160800B1DE2B /* timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timer.cpp; sourceTree = "<group>"; };
-		2DF117951A88160800B1DE2B /* wrp_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_common.c; sourceTree = "<group>"; };
-		2DF117961A88160800B1DE2B /* wrp_cond.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_cond.c; sourceTree = "<group>"; };
-		2DF117971A88160800B1DE2B /* wrp_dl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_dl.c; sourceTree = "<group>"; };
-		2DF117981A88160800B1DE2B /* wrp_mutex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_mutex.c; sourceTree = "<group>"; };
-		2DF117991A88160800B1DE2B /* wrp_thread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wrp_thread.c; sourceTree = "<group>"; };
+		2DFD53491AE8107700A86297 /* FpsCounter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FpsCounter.h; sourceTree = "<group>"; };
+		2DFD534A1AE8107700A86297 /* osWrappers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = osWrappers.h; sourceTree = "<group>"; };
+		2DFD534B1AE8107700A86297 /* Stopwatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Stopwatch.h; sourceTree = "<group>"; };
+		2DFD534C1AE8109F00A86297 /* FpsCounter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FpsCounter.cpp; sourceTree = "<group>"; };
+		2DFD534D1AE810A000A86297 /* osWrappers.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = osWrappers.c; sourceTree = "<group>"; };
+		2DFD534E1AE810A000A86297 /* Stopwatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Stopwatch.cpp; sourceTree = "<group>"; };
 		E7131B3D16CC3AFA00B1A51B /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		E7131B4016CC3ECD00B1A51B /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		E7B5189A16C31226001212E3 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
@@ -139,12 +133,10 @@
 		2DF117821A8815EF00B1DE2B /* wrappers */ = {
 			isa = PBXGroup;
 			children = (
+				2DFD53491AE8107700A86297 /* FpsCounter.h */,
+				2DFD534A1AE8107700A86297 /* osWrappers.h */,
+				2DFD534B1AE8107700A86297 /* Stopwatch.h */,
 				2DF117831A8815EF00B1DE2B /* timer.h */,
-				2DF117841A8815EF00B1DE2B /* wrp_common.h */,
-				2DF117851A8815EF00B1DE2B /* wrp_cond.h */,
-				2DF117861A8815EF00B1DE2B /* wrp_dl.h */,
-				2DF117871A8815EF00B1DE2B /* wrp_mutex.h */,
-				2DF117881A8815EF00B1DE2B /* wrp_thread.h */,
 			);
 			name = wrappers;
 			path = inc/wrappers;
@@ -175,12 +167,10 @@
 		2DF117931A88160800B1DE2B /* wrappers */ = {
 			isa = PBXGroup;
 			children = (
+				2DFD534C1AE8109F00A86297 /* FpsCounter.cpp */,
+				2DFD534D1AE810A000A86297 /* osWrappers.c */,
+				2DFD534E1AE810A000A86297 /* Stopwatch.cpp */,
 				2DF117941A88160800B1DE2B /* timer.cpp */,
-				2DF117951A88160800B1DE2B /* wrp_common.c */,
-				2DF117961A88160800B1DE2B /* wrp_cond.c */,
-				2DF117971A88160800B1DE2B /* wrp_dl.c */,
-				2DF117981A88160800B1DE2B /* wrp_mutex.c */,
-				2DF117991A88160800B1DE2B /* wrp_thread.c */,
 			);
 			name = wrappers;
 			path = src/wrappers;
@@ -266,19 +256,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2DFD534F1AE810A000A86297 /* FpsCounter.cpp in Sources */,
+				2DFD53501AE810A000A86297 /* osWrappers.c in Sources */,
 				2DF1179C1A88160800B1DE2B /* controls.cpp in Sources */,
 				2DF117A11A88160800B1DE2B /* timer.cpp in Sources */,
 				2DF117A01A88160800B1DE2B /* simplespace.cpp in Sources */,
 				2DF1179A1A88160800B1DE2B /* logs.c in Sources */,
-				2DF117A21A88160800B1DE2B /* wrp_common.c in Sources */,
 				2DF1179D1A88160800B1DE2B /* mouse_and_keyboard.cpp in Sources */,
 				2DF1179F1A88160800B1DE2B /* planet.cpp in Sources */,
-				2DF117A61A88160800B1DE2B /* wrp_thread.c in Sources */,
-				2DF117A41A88160800B1DE2B /* wrp_dl.c in Sources */,
+				2DFD53511AE810A000A86297 /* Stopwatch.cpp in Sources */,
 				2DF1179E1A88160800B1DE2B /* physics.cpp in Sources */,
-				2DF117A51A88160800B1DE2B /* wrp_mutex.c in Sources */,
 				2DF1179B1A88160800B1DE2B /* main.cpp in Sources */,
-				2DF117A31A88160800B1DE2B /* wrp_cond.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

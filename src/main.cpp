@@ -48,7 +48,9 @@ using std::endl;
 #include "simplespace.h"
 #include "planet.h"
 #include "physics.h"
-#include "timer.h"
+#include "Timer.h"
+#include "Stopwatch.h"
+#include "FpsCounter.h"
 
 //FT_Library  ft_library; // FreeType library handler
 //FT_Face     face;       // Face object handler
@@ -115,11 +117,11 @@ AliasMode gMode = ALIAS_MODE_MULTISAMPLE;
 std::unique_ptr<SimpleSpace> pSimpleSpace(new SimpleSpace(1000/frame_rate));
 std::unique_ptr<ControlsManager> pControlsLeft(new ControlsManager(notify_to_update_menu1));
 std::unique_ptr<ControlsManager> pControlsRight(new ControlsManager(notify_to_update_menu2));
-std::unique_ptr<FPSCounter> pFPSCounter(new FPSCounter);
-std::unique_ptr<StopWatch> pStopWatch(new StopWatch(false));
+std::unique_ptr<FpsCounter> pFpsCounter(new FpsCounter);
+std::unique_ptr<Stopwatch> pStopwatch(new Stopwatch(false));
 
 // Temp stopwatch to count time of rendring frame
-//std::unique_ptr<StopWatch> pStopWatch_render(new StopWatch(false));
+//std::unique_ptr<Stopwatch> pStopwatch_render(new Stopwatch(false));
 
 void initRendering();
 void onTimer(int next_timer_tick);
@@ -158,16 +160,16 @@ Color_RGB getRandomColor();
 
 void onTimer(int next_timer_tick) {
 
-    pStopWatch->start();
+    pStopwatch->start();
     for (int i = 0; i < model_speed; ++i)
         pSimpleSpace->move_one_step();
-    pStopWatch->stop();
+    pStopwatch->stop();
     need_to_render_scene = true;
     glutPostRedisplay();
 
-    int corrected_period = next_timer_tick - int(pStopWatch->time_elaplsed_ms());
+    int corrected_period = next_timer_tick - int(pStopwatch->timeElaplsedMs());
     if (corrected_period < 0) {
-        cout << "    Warning: [onTimer] FPS degradation; calculation took: " << pStopWatch->time_elaplsed_ms() << "ms (> " << next_timer_tick << "ms)" << endl;
+        cout << "    Warning: [onTimer] FPS degradation; calculation took: " << pStopwatch->timeElaplsedMs() << "ms (> " << next_timer_tick << "ms)" << endl;
         corrected_period = 0;
     }
 
@@ -293,7 +295,7 @@ void render_window() {
     if (need_to_render_scene) {
         need_to_render_scene = false;
 
-        pFPSCounter->update_on_frame();
+        pFpsCounter->updateOnFrame();
 
         switch(gMode)
         {
@@ -422,7 +424,7 @@ void render_window() {
 
         glPopMatrix();
 
-        ss << pFPSCounter->get_fps();
+        ss << pFpsCounter->getFps();
         str = std::string("FPS: ") + ss.str();
         render_bitmap_string_2d(str.c_str(),
                                 menu1_width + 10,
@@ -511,8 +513,8 @@ void render_window() {
     glDisable(GL_SCISSOR_TEST);
     glutSwapBuffers();
 
-    //pStopWatch_render->stop();
-    //cout << "Frame rendering took " << pStopWatch_render->time_elaplsed_usec() << "us" << endl;
+    //pStopwatch_render->stop();
+    //cout << "Frame rendering took " << pStopwatch_render->time_elaplsed_usec() << "us" << endl;
 }
 
 void handle_window_visibility(int state) {
@@ -868,8 +870,10 @@ void initRendering() {
 //int main(int argc, const char * argv[])
 int main(int argc, char * argv[])
 {
-    INIT_LOGS();
-    LOGD(LogTag, "mian function started, testing logs");
+    wTimeInit();
+    logsInit();
+
+    LogI(LogTag, "mian function started, testing logs");
 
     // Seed for random values
     srand(static_cast<unsigned int>(time(NULL)));
@@ -1009,6 +1013,8 @@ int main(int argc, char * argv[])
     glutMainLoop();
 
     // Never get here
-    DEINIT_LOGS();
+
+    wTimeDeinit();
+    logsDeinit();
     return 0;
 }

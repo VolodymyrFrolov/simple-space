@@ -15,7 +15,7 @@ using std::cout;   // temp
 using std::endl;   // temp
 
 #include "mouse_and_keyboard.h"
-#include "timer.h"
+#include "Timer.h"
 
 #ifdef __APPLE__
     #include <OpenGL/OpenGL.h>
@@ -129,7 +129,7 @@ class NumericBox : public UIControl {
     bool check_label_is_numeric(const std::string& label);
     double label_to_value(const std::string& label) const;
 
-    static wrp_thread_ret_t win_attr static_cursor_toggle(void* param);
+    static int static_cursor_toggle(void* arg);
     int count_pix_offset(int unsigned char_offset) const;
     int unsigned count_char_offset(int offset_pix) const;
     void select_all();

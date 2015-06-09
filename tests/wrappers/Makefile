@@ -17,13 +17,12 @@ OBJ_DIR = $(ROOT_DIR)/obj
 BIN_DIR = $(ROOT_DIR)/bin
 
 # Sources
-SOURCES :=  $(TEST_WRP_SRC_DIR)/test_wrappers.c \
-            $(WRP_SRC_DIR)/timer.cpp            \
-            $(WRP_SRC_DIR)/wrp_mutex.c          \
-            $(WRP_SRC_DIR)/wrp_thread.c         \
-            $(WRP_SRC_DIR)/wrp_cond.c           \
-            $(WRP_SRC_DIR)/wrp_common.c         \
-            $(WRP_SRC_DIR)/wrp_dl.c
+SOURCES :=  $(TEST_WRP_SRC_DIR)/test_wrappers.cpp \
+            $(WRP_SRC_DIR)/osWrappers.c           \
+            $(WRP_SRC_DIR)/Timer.cpp              \
+            $(WRP_SRC_DIR)/Stopwatch.cpp          \
+            $(WRP_SRC_DIR)/FpsCounter.cpp
+
 
 # Objects
 OBJECTS_NOTDIR := $(patsubst %.c,   %.o, $(notdir $(filter %.c,   $(SOURCES))))
@@ -45,7 +44,9 @@ CC_C = gcc
 CC_CPP = g++
 
 # Common flags
-CFLAGS := -g -c -Wall -D"LOG_LEVEL=$(LOG_LEVEL)"
+# Add  for release version need to add -DNDEBUG -Wno-unused-variable
+CFLAGS := -g -O0 -c -Wall -Wextra -Werror
+CPPSTD := -std=c++11
 LFLAGS :=
 LIBS   :=
 
@@ -70,12 +71,12 @@ vpath %.cpp $(WRP_SRC_DIR)
 vpath %.h   $(WRP_INC_DIR)
 vpath %.o   $(OBJ_DIR)
 
-.PHONY: all
+.PHONY: all debug release
 all: create_folders $(TARGET)
 
 $(TARGET): $(OBJECTS_NOTDIR)
 	@echo "Linking target: $@"
-	$(Q)$(CC_CPP) $(LFLAGS) $(LIBS) $(OBJECTS) -o $(BIN_DIR)/$@
+	$(Q)$(CC_CPP) $(LFLAGS) $(OBJECTS) $(LIBS) -o $(BIN_DIR)/$@
 
 %.o: %.c
 	@echo "Compiling: $(notdir $<)"
@@ -83,7 +84,7 @@ $(TARGET): $(OBJECTS_NOTDIR)
 
 %.o: %.cpp
 	@echo "Compiling: $(notdir $<)"
-	$(Q)$(CC_CPP) $(CFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)/$@
+	$(Q)$(CC_CPP) $(CFLAGS) $(CPPSTD) $(INCLUDES) $< -o $(OBJ_DIR)/$@
 
 MAKE_DIR_P := mkdir -p
 

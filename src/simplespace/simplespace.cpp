@@ -15,10 +15,10 @@ using std::vector;
 const char* tag = "SimpleSpace";
 
 SimpleSpace::SimpleSpace(int Time_Step_ms) : time_step_ms(Time_Step_ms), planets_number_max(500) {
-    wrp_mutex_init(&movement_step_mutex);
+    wMutexInit(&movement_step_mutex);
 }
 SimpleSpace::~SimpleSpace() {
-    wrp_mutex_destroy(&movement_step_mutex);
+    wMutexDestroy(&movement_step_mutex);
 }
 
 unsigned long SimpleSpace::get_planets_count() const {
@@ -30,7 +30,7 @@ int SimpleSpace::get_model_time_step_ms() const {
 }
 
 void SimpleSpace::move_one_step() {
-    wrp_mutex_lock(&movement_step_mutex);
+    wMutexLock(&movement_step_mutex);
 
     if (planets.size() == 0)
         return;
@@ -83,7 +83,7 @@ void SimpleSpace::move_one_step() {
     }
     #endif
     
-    wrp_mutex_unlock(&movement_step_mutex);
+    wMutexUnlock(&movement_step_mutex);
 }
 
 void SimpleSpace::move_apart_bodies(Planet& p1, Planet& p2) {
@@ -179,7 +179,7 @@ void SimpleSpace::check_and_resolve_border_collision(Planet& pl) {
 }
 
 void SimpleSpace::add_planet(const Planet& pl) {
-    wrp_mutex_lock(&movement_step_mutex);
+    wMutexLock(&movement_step_mutex);
 
     unsigned int new_id = 0;
     while (std::any_of(planets.begin(), planets.end(), [&](Planet pl) {return pl.id == new_id;}))
@@ -196,11 +196,11 @@ void SimpleSpace::add_planet(const Planet& pl) {
     }
     planets.push_back(new_planet);
 
-    wrp_mutex_unlock(&movement_step_mutex);
+    wMutexUnlock(&movement_step_mutex);
 }
 
 void SimpleSpace::remove_planet(const unsigned int& id) {
-    wrp_mutex_lock(&movement_step_mutex);
+    wMutexLock(&movement_step_mutex);
 
     std::vector<Planet>::iterator it = std::find_if(planets.begin(), planets.end(), [&](Planet pl) {return pl.id == id;});
     if (it == planets.end()) {
@@ -209,11 +209,11 @@ void SimpleSpace::remove_planet(const unsigned int& id) {
         planets.erase(it);
     }
 
-    wrp_mutex_unlock(&movement_step_mutex);
+    wMutexUnlock(&movement_step_mutex);
 }
 
 std::pair<bool, unsigned int> SimpleSpace::find_planet_by_click(const Vector2d& click_pos) {
-    wrp_mutex_lock(&movement_step_mutex);
+    wMutexLock(&movement_step_mutex);
 
     pair<bool, unsigned int> result;
     result.first = false;
@@ -226,13 +226,13 @@ std::pair<bool, unsigned int> SimpleSpace::find_planet_by_click(const Vector2d& 
         }
     }
 
-    wrp_mutex_unlock(&movement_step_mutex);
+    wMutexUnlock(&movement_step_mutex);
     return result;
 }
 
 std::vector<unsigned int> SimpleSpace::find_planets_by_selection(const Vector2d& sel_start_pos,
                                                                  const Vector2d& sel_end_pos) {
-    wrp_mutex_lock(&movement_step_mutex);
+    wMutexLock(&movement_step_mutex);
     double border_right  = (sel_end_pos.x > sel_start_pos.x) ? sel_end_pos.x : sel_start_pos.x;
     double border_top    = (sel_end_pos.y > sel_start_pos.y) ? sel_end_pos.y : sel_start_pos.y;
     double border_left   = (sel_end_pos.x > sel_start_pos.x) ? sel_start_pos.x : sel_end_pos.x;
@@ -246,14 +246,14 @@ std::vector<unsigned int> SimpleSpace::find_planets_by_selection(const Vector2d&
             found_id_list.push_back(it->id);
         }
     }
-    wrp_mutex_unlock(&movement_step_mutex);
+    wMutexUnlock(&movement_step_mutex);
     return found_id_list;
 }
 
 void SimpleSpace::remove_all_objects() {
-    wrp_mutex_lock(&movement_step_mutex);
+    wMutexLock(&movement_step_mutex);
     planets.clear();
-    wrp_mutex_unlock(&movement_step_mutex);
+    wMutexUnlock(&movement_step_mutex);
 }
 
 void SimpleSpace::draw_planet(const float& rad, const float& x, const float& y) const {

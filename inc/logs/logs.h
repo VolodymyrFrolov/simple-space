@@ -1,75 +1,86 @@
-
-/*
- * logs.h
- */
+//
+//  logs.h
+//
+//  Created by Vladimir Frolov
+//
 
 #ifndef LOGS_H_
 #define LOGS_H_
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdarg.h> // var args
-#include <time.h>
-#include <assert.h> // #define NDEBUG will disable asserts in code
+#include <stdio.h>   // printf
+#include <stdbool.h> // bool
+#include <stdarg.h>  // va_list, vsnprintf
+#include <assert.h>  // assert() defining NDEBUG will disable asserts in code
 
-#if defined(__linux__) || defined (__APPLE__) || defined (__android__)
-    #include <sys/time.h> // gettimeofday()
-    #include <pthread.h>  // thread id
-#elif defined(__WIN32__)
-    #ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
+#if defined(__APPLE__) || defined(__linux__)
+
+    #include <pthread.h>    // pthread_mutex_t, pthread_self()
+
+    #if defined(__APPLE__)
+    #include <mach/clock.h> // clock_get_time()
+    #include <mach/mach.h>  // host_get_clock_service()
+    #else // Linux
+    #include <time.h>       // clock_gettime()
     #endif
-    #include <windows.h>  // thread id
+
+#elif defined(__WIN32__)
+
+    //#ifndef WIN32_LEAN_AND_MEAN
+    //#define WIN32_LEAN_AND_MEAN
+    //#endif
+    #include <windows.h>    // CRITICAL_SECTION, GetCurrentThreadId()
+
 #else
+
     #error "Unsupported platform"
+
 #endif
 
-// Use LOG_LEVEL to configure logging level
-// Use INIT_LOGS()/DEINIT_LOGS() before/after logging
+// Use LOGLEVEL to configure logging level at compile time
+// Use INIT_LOGS()/DEINIT_LOGS() at program beginning/end
 
-// Options
-#define LOG_LEVEL_OFF   0
-#define LOG_LEVEL_ERROR 1
-#define LOG_LEVEL_INFO  2
-#define LOG_LEVEL_DEBUG 3
+// Init / deinit
+// Forward declaration
+void logsInit();
+void logsDeinit();
+void logWrite(char logType, const char* tag, const char* file, int line, const char* func, const char* usrfmt, ...);
 
-// Defaults
-#ifndef LOG_LEVEL
-#define LOG_LEVEL      LOG_LEVEL_INFO
+// Log levels
+#define LOGLEVEL_OFF   0
+#define LOGLEVEL_ERROR 1
+#define LOGLEVEL_INFO  2
+#define LOGLEVEL_DEBUG 3
+
+// Default
+#ifndef LOGLEVEL
+#define LOGLEVEL LOGLEVEL_INFO
 #endif
 
-// LOG_LEVEL
-void print_usr_log(int type, const char* tag, const char* file, int line, const char* func, const char* usrfmt, ...);
+// LOGLEVEL
+#if   (LOGLEVEL == LOGLEVEL_OFF)
+#define LogE(tag, usrfmt, ...)
+#define LogI(tag, usrfmt, ...)
+#define LogD(tag, usrfmt, ...)
 
-#if   (LOG_LEVEL == LOG_LEVEL_OFF)
-#define LOGE(tag, usrfmt, ...)
-#define LOGI(tag, usrfmt, ...)
-#define LOGD(tag, usrfmt, ...)
+#elif (LOGLEVEL == LOGLEVEL_ERROR)
+#define LogE(tag, usrfmt, ...) logWrite('E', tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
+#define LogI(tag, usrfmt, ...)
+#define LogD(tag, usrfmt, ...)
 
-#elif (LOG_LEVEL == LOG_LEVEL_ERROR)
-#define LOGE(tag, usrfmt, ...) print_usr_log(LOG_LEVEL_ERROR, tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
-#define LOGI(tag, usrfmt, ...)
-#define LOGD(tag, usrfmt, ...)
+#elif (LOGLEVEL == LOGLEVEL_INFO)
+#define LogE(tag, usrfmt, ...) logWrite('E', tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
+#define LogI(tag, usrfmt, ...) logWrite('I', tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
+#define LogD(tag, usrfmt, ...)
 
-#elif (LOG_LEVEL == LOG_LEVEL_INFO)
-#define LOGE(tag, usrfmt, ...) print_usr_log(LOG_LEVEL_ERROR, tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
-#define LOGI(tag, usrfmt, ...) print_usr_log(LOG_LEVEL_INFO,  tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
-#define LOGD(tag, usrfmt, ...)
-
-#elif (LOG_LEVEL == LOG_LEVEL_DEBUG)
-#define LOGE(tag, usrfmt, ...) print_usr_log(LOG_LEVEL_ERROR, tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
-#define LOGI(tag, usrfmt, ...) print_usr_log(LOG_LEVEL_INFO,  tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
-#define LOGD(tag, usrfmt, ...) print_usr_log(LOG_LEVEL_DEBUG, tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
+#elif (LOGLEVEL == LOGLEVEL_DEBUG)
+#define LogE(tag, usrfmt, ...) logWrite('E', tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
+#define LogI(tag, usrfmt, ...) logWrite('I', tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
+#define LogD(tag, usrfmt, ...) logWrite('D', tag, __FILE__, __LINE__, __FUNCTION__, usrfmt, ##__VA_ARGS__)
 
 #else
-#error "Invalid LOG_LEVEL option"
+#error "Invalid LOGLEVEL option"
 #endif
 
-// INIT / DEINIT
-void init_logs();
-void deinit_logs();
 
-#define INIT_LOGS()   init_logs()
-#define DEINIT_LOGS() deinit_logs()
 
 #endif /* LOGS_H_ */

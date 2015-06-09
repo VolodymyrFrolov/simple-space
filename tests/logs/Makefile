@@ -20,7 +20,6 @@ BIN_DIR = $(ROOT_DIR)/bin
 
 # Sources
 SOURCES := $(TEST_LOGS_SRC_DIR)/test_logs.c \
-           $(WRP_SRC_DIR)/wrp_mutex.c       \
            $(LOGS_SRC_DIR)/logs.c
 
 # Objects
@@ -39,15 +38,16 @@ Q := @
 endif
 
 # Logging
-ifndef LOG_LEVEL
-LOG_LEVEL = 2
+ifndef LOGLEVEL
+LOGLEVEL = 2
 endif
 
 # Compiler
 CC = gcc
 
 # Common flags
-CFLAGS := -g -c -Wall -D"LOG_LEVEL=$(LOG_LEVEL)"
+# Add  for release version need to add -DNDEBUG -Wno-unused-variable
+CFLAGS := -g -O0 -c -Wall -Wextra -Werror -D"LOGLEVEL=$(LOGLEVEL)"
 LFLAGS :=
 LIBS   :=
 
@@ -76,7 +76,7 @@ all: create_folders $(TARGET)
 
 $(TARGET): $(OBJECTS_NOTDIR) 
 	@echo "Linking target: $@"
-	$(Q)$(CC) $(LFLAGS) $(LIBS) $(OBJECTS) -o $(BIN_DIR)/$@
+	$(Q)$(CC) $(LFLAGS) $(OBJECTS) $(LIBS) -o $(BIN_DIR)/$@
 
 %.o: %.c
 	@echo "Compiling: $(notdir $<)"

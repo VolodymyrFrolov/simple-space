@@ -277,8 +277,8 @@ NumericBox::NumericBox(int id,
     set_value(_value);
 }
 
-wrp_thread_ret_t win_attr NumericBox::static_cursor_toggle(void* param) {
-    NumericBox* pNumericBox = static_cast<NumericBox*>(param);
+int NumericBox::static_cursor_toggle(void* arg) {
+    NumericBox* pNumericBox = static_cast<NumericBox*>(arg);
     pNumericBox->_cursor_visible = !pNumericBox->_cursor_visible;
     if (pNumericBox->_redraw_notifier != NULL)
         pNumericBox->_redraw_notifier();

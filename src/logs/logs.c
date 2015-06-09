@@ -1,105 +1,145 @@
-/*
- * logs.c
- */
+//
+//  logs.c
+//
+//  Created by Vladimir Frolov
+//
 
 #include "logs.h"
-#include "wrp_mutex.h"
 
-#if defined(__linux__) || defined (__APPLE__) || defined (__android__)
-    #define get_thread_id() pthread_self()
+#define NSEC_IN_MSEC 1000000
+
+#if defined (__APPLE__) || defined(__linux__)
+#define getThreadId()    pthread_self()
+typedef pthread_mutex_t  lock_t;
 #elif defined(__WIN32__)
-    #define get_thread_id() GetCurrentThreadId()
-#else
-    #error "Unsupported platform"
+#define getThreadId()    GetCurrentThreadId()
+typedef CRITICAL_SECTION lock_t;
 #endif
 
-static bool logs_init_done = false;
-static wrp_mutex_t log_mutex;
-
-// These time valuse are for milliseconds in logs
-#if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-static struct timeval gTimeForMs;
-#elif defined(__WIN32__)
-static SYSTEMTIME gTimeForMs;
+static lock_t       gLogLock;
+static bool         gLogInitDone = false;
+#if defined(__APPLE__)
+static clock_serv_t gClockServ;
 #endif
 
-void init_logs() {
-    if (!logs_init_done) {
-        wrp_mutex_init(&log_mutex);
-        logs_init_done = true;
-    }
-}
-
-void deinit_logs() {
-    if (logs_init_done) {
-        wrp_mutex_destroy(&log_mutex);
-        logs_init_done = false;
-    }
-}
-
-// Used internally only
-unsigned long get_current_milliseconds() {
-
-    int milliseconds;
-
-    #if defined(__linux__) || defined(__APPLE__) || defined(__android__)
-    int ret = gettimeofday(&gTimeForMs, NULL);
-    assert(ret == 0);
-    milliseconds = gTimeForMs.tv_usec/1000;
-    #elif defined(__WIN32__)
-    GetSystemTime(&gTimeForMs);
-    milliseconds = gTimeForMs.wMilliseconds;
-    #endif
-
-    return milliseconds;
-}
-
-void print_usr_log(int type, const char* tag, const char* file, int line, const char* func, const char* usrfmt, ...)
+// wTimeInit() is executed inside
+void logsInit()
 {
-    char stamp[200];  // date-time thread_id log-type file line tag function
-    char usrmes[300]; // usrfmt + args
-    char timestamp[50];
-    char type_ch;
-
-    switch (type)
+    assert(!gLogInitDone);
+    if (!gLogInitDone)
     {
-        case LOG_LEVEL_ERROR:
-            type_ch = 'E';
-            break;
-        case LOG_LEVEL_INFO:
-            type_ch = 'I';
-            break;
-        case LOG_LEVEL_DEBUG:
-            type_ch = 'D';
-            break;
-        default:
-            type_ch = '0'; // Should not get here
-            break;
-    }
+        gLogInitDone = true;
 
-    wrp_mutex_lock(&log_mutex);
+        int ret;
+
+        #if defined(__APPLE__)
+        ret = host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &gClockServ);
+        assert(ret == 0);
+        #endif
+
+        #if defined(__APPLE__) || defined(__linux__)
+        ret = pthread_mutex_init(&gLogLock, NULL);
+        assert(ret == 0);
+        #elif defined(__WIN32__)
+        InitializeCriticalSection(&gLogLock);
+        (void)ret; // Unused
+        #endif
+    }
+}
+
+void logsDeinit()
+{
+    assert(gLogInitDone);
+    if (gLogInitDone)
+    {
+        gLogInitDone = false;
+        
+        int ret;
+
+        #if defined(__APPLE__)
+        ret = mach_port_deallocate(mach_task_self(), gClockServ);
+        assert(ret == 0);
+        #endif
+
+        #if defined(__APPLE__) || defined(__linux__)
+        ret = pthread_mutex_destroy(&gLogLock);
+        assert(ret == 0);
+        #elif defined(__WIN32__)
+        DeleteCriticalSection(&gLogLock);
+        (void)ret; // Unused
+        #endif
+    }
+}
+
+unsigned long getCurrentMilliseconds()
+{
+    #if defined(__APPLE__) 
+    
+    mach_timespec_t mts;
+    int ret = clock_get_time(gClockServ, &mts);
+    assert(ret == 0);
+    return mts.tv_nsec / NSEC_IN_MSEC;
+    
+    #elif defined(__linux__)
+    
+    struct timespec ts;
+    int ret = clock_gettime(CLOCK_REALTIME, &ts);
+    assert(ret == 0);
+    return ts.tv_nsec / NSEC_IN_MSEC;
+
+    #elif defined(__WIN32__)
+
+    SYSTEMTIME st;
+    GetSystemTime(&st);
+    return st.wMilliseconds;
+
+    #endif
+}
+
+void logWrite(char logType, const char* tag, const char* file, int line, const char* func, const char* usrfmt, ...)
+{
+    int ret;
+    char timestamp[64]; // yyyy-mm-dd hh:mm:ss
+    char prefix[256];   // date/time threadId logType file line tag function
+    char usrmsg[256];   // usrfmt + args
+
+    #if defined(__APPLE__) || defined(__linux__)
+    ret = pthread_mutex_lock(&gLogLock);
+    assert(ret == 0);
+    #elif defined(__WIN32__)
+    EnterCriticalSection(&gLogLock);
+    #endif
 
     va_list args;
    
     // Timestamp
-    time_t now = time(0);
+    time_t now = time(NULL);
     struct tm* tm_struct = localtime(&now);
-    strftime(timestamp, sizeof(timestamp), "%d/%m/%Y %H:%M:%S", tm_struct);
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm_struct);
 
-    unsigned long thread_id = (unsigned long)get_thread_id();
-    unsigned long ms = get_current_milliseconds();
+    unsigned long threadId = (unsigned long)getThreadId();
+    unsigned long milliseconds = getCurrentMilliseconds();
 
     // Stamp (full, including timestamp)
-    snprintf(stamp, sizeof(stamp), "%s.%lu %lu %c [%s] %s:%-3d %s: ", timestamp, ms, thread_id, type_ch, tag, file, line, func);
+    ret = snprintf(prefix, sizeof(prefix), "%s.%03lu %s %c %lu %s:%-4d %s: ",
+            timestamp, milliseconds, tag, logType, threadId, file, line, func);
+    assert(ret > 0);
 
     // User message from usrfmt and args
     va_start(args, usrfmt);
-    vsnprintf(usrmes, sizeof(usrmes), usrfmt, args);
+    ret = vsnprintf(usrmsg, sizeof(usrmsg), usrfmt, args);
+    assert(ret > 0);
 
     // Final print to stdout
-    printf("%s%s\n", stamp, usrmes);
+    ret = printf("%s%s\n", prefix, usrmsg);
+    assert(ret > 0);
 
-    va_end (args);
+    va_end(args);
 
-    wrp_mutex_unlock(&log_mutex);
+    #if defined(__APPLE__) || defined(__linux__)
+    ret = pthread_mutex_unlock(&gLogLock);
+    assert(ret == 0);
+    #elif defined(__WIN32__)
+    LeaveCriticalSection(&gLogLock);
+    #endif
 }

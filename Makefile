@@ -30,11 +30,10 @@ SOURCES :=  $(ROOT_SRC_DIR)/main.cpp             \
             $(SS_SRC_DIR)/planet.cpp             \
             $(SS_SRC_DIR)/controls.cpp           \
             $(SS_SRC_DIR)/mouse_and_keyboard.cpp \
-            $(WRP_SRC_DIR)/timer.cpp             \
-            $(WRP_SRC_DIR)/wrp_mutex.c           \
-            $(WRP_SRC_DIR)/wrp_thread.c          \
-            $(WRP_SRC_DIR)/wrp_cond.c            \
-            $(WRP_SRC_DIR)/wrp_common.c          \
+            $(WRP_SRC_DIR)/osWrappers.c          \
+            $(WRP_SRC_DIR)/Timer.cpp             \
+            $(WRP_SRC_DIR)/Stopwatch.cpp         \
+            $(WRP_SRC_DIR)/FpsCounter.cpp        \
             $(LOGS_SRC_DIR)/logs.c
 
 # Objects
@@ -79,7 +78,7 @@ else
     UNAME_S := $(firstword $(shell uname -s))
     ifeq ($(UNAME_S), Linux)
         # Linux
-        LIBS += -lGL -lglut
+        LIBS += -ldl -lGL -lglut
     endif
     ifeq ($(UNAME_S), Darwin)
         # MacOS

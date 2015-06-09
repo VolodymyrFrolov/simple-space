@@ -15,9 +15,10 @@
 using std::cout;   // temp
 using std::endl;   // temp
 
-extern "C" {
-#include "wrp_mutex.h"
-#include "logs.h"
+extern "C"
+{
+    #include "osWrappers.h"
+    #include "logs.h"
 }
 
 #ifdef __APPLE__
@@ -54,7 +55,7 @@ class SimpleSpace
     void resolve_body_collision(Planet& pla, Planet& plb);
     void check_and_resolve_border_collision(Planet& pl);
 
-    wrp_mutex_t movement_step_mutex;
+    wMutex movement_step_mutex;
     double time_step_ms;
 
     void draw_planet(const float& rad, const float& x, const float& y) const;
